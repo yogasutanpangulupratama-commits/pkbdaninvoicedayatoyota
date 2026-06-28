@@ -62,21 +62,21 @@
             max-height: 300px;
             overflow-y: auto;
         }
-        .history-item {
+        .history-list-item, .history-item {
             padding: 8px 10px;
             border-bottom: 1px solid #eee;
             cursor: pointer;
             transition: background 0.2s;
         }
-        .history-item:hover {
+        .history-list-item:hover, .history-item:hover {
             background: #f0f4f8;
         }
-        .history-item .item-main {
+        .history-list-item .item-main, .history-item .item-main {
             font-weight: bold;
             display: flex;
             justify-content: space-between;
         }
-        .history-item .item-sub {
+        .history-list-item .item-sub, .history-item .item-sub {
             font-size: 9px;
             color: #666;
             margin-top: 2px;
@@ -406,7 +406,8 @@
                     </div>
                 </td>
                 <td style="width: 50%;">
-                    <div class="plate-number"><input type="text" id="v-plate" class="input-field input-num" placeholder="[NO POLISI]" style="font-size:20px; font-weight:bold;"></div>
+                    <!-- PERBAIKAN PRESISI: Menambahkan text-transform: uppercase langsung di baris style -->
+                    <div class="plate-number"><input type="text" id="v-plate" class="input-field input-num" placeholder="[NO POLISI]" style="font-size:20px; font-weight:bold; text-transform: uppercase;"></div>
                     <div class="meta-details">
                         <table>
                             <tr>
@@ -475,6 +476,7 @@
                 <td style="font-weight: bold;">NO KTP / NPWP</td>
                 <td>:</td>
                 <td><input type="text" id="c-tax-id" class="input-field" placeholder="Masukan Nomor KTP / NPWP"></td>
+                <td></td>
                 <td></td>
                 <td></td>
             </tr>
@@ -645,6 +647,28 @@
         refreshTimestamp();
         renderHistory();
         calculateAll();
+        
+        // =======================================================================
+        // PERBAIKAN PRESISI: PENYELIPAN AUTO-SAVE REALTIME SAAT PRINT (CTRL+P / SISTEM)
+        // =======================================================================
+        if (window.matchMedia) {
+            var mediaQueryList = window.matchMedia('print');
+            mediaQueryList.addListener(function(mql) {
+                if (mql.matches) {
+                    console.log("Sistem mendeteksi jendela print aktif, menyimpan data otomatis...");
+                    refreshTimestamp();
+                    saveInvoiceData();
+                }
+            });
+        }
+        
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+                console.log("Shortcut Ctrl+P terdeteksi, menyimpan data otomatis...");
+                refreshTimestamp();
+                saveInvoiceData();
+            }
+        });
     });
 
     function checkSharedPkbData() {
@@ -835,7 +859,7 @@
     }
 
     function generateCurrentObject() {
-        let plate = document.getElementById("v-plate").value.trim() || "TANPA-PLAT";
+        let plate = document.getElementById("v-plate").value.trim().toUpperCase() || "TANPA-PLAT";
         let customerName = document.getElementById("c-name").value.trim() || "Umum";
 
         let listJasa = [];
@@ -901,6 +925,9 @@
         localStorage.setItem("faktur_service_db", JSON.stringify(invoices));
         renderHistory();
     }
+
+    // ====== MEMASTIKAN EXPOSE KE WINDOW GLOBAL UNTUK EDIT RIWAYAT SIDEBAR ======
+    window.loadInvoice = loadInvoice;
 
     function renderHistory() {
         const container = document.getElementById("history-list-container");
@@ -1019,7 +1046,7 @@
             waNumber = '62' + waNumber.slice(1);
         }
 
-        // Simpan data terkini ke localStorage
+        // Simpan data terkini ke localStorage sebelum kirim WA
         saveInvoiceData();
 
         // GENERATE KODE DATA OTOMATIS (Payload Base64)
@@ -1030,7 +1057,6 @@
         const currentLogPath = window.location.href.split('?')[0];
         const directEditableLink = `${currentLogPath}?data=${base64Data}`;
 
-        // TEXT FORMAT BARU: Berisi rincian tagihan + Link Otomatis untuk Load Data & Edit ulang
         const message = `Halo Bpk/Ibu ${customerName},\n\nBerikut kami lampirkan rincian tagihan Faktur Service kendaraan Anda dengan No. Polisi: *${plate}*.\n\n*Total Tagihan:* Rp ${totalBill}\n\nUntuk melihat lembar asli, mencetak PDF, atau mengedit kembali data estimasi ini, silakan klik tautan berikut:\n👉 ${directEditableLink}\n\nTerima kasih telah mempercayakan kendaraan Anda kepada kami.`;
         const encodedMessage = encodeURIComponent(message);
         

@@ -626,5 +626,29 @@
 
     window.onload = function() { aturWaktuOtomatis(); aturNoPKBOtomatis(); tampilkanLaporan(); };
 </script>
+	<!-- Tempatkan kode ini tepat di atas tag penutup </body> -->
+
+<script type="module">
+  // 1. Import library Firebase core & analytics menggunakan URL CDN resmi
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+
+  // 2. Konfigurasi proyek Firebase milikmu sendiri
+  const firebaseConfig = {
+    apiKey: "AIzaSyDhHmuJjcJn4weiMYSFTnsdetqkYut62Ys",
+    authDomain: "pkbmanualdaninvoice.firebaseapp.com",
+    projectId: "pkbmanualdaninvoice",
+    storageBucket: "pkbmanualdaninvoice.firebasestorage.app",
+    messagingSenderId: "812674696678",
+    appId: "1:812674696678:web:19ef84fdeaa645bf6e4227",
+    measurementId: "G-1YCZQ9TNHZ"
+  };
+
+  // 3. Inisialisasi Firebase agar terhubung ke aplikasi web
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+
+  console.log("Firebase pkbmanualdaninvoice berhasil online!");
+</script>
 </body>
 </html>

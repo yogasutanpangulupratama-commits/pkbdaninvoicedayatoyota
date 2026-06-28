@@ -3,1039 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Report Viewer TSINDO - Faktur Service dengan Riwayat</title>
+    <title>Faktur Service - Daya Toyota</title>
     <style>
-        *, *::before, *::after {
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Arial', sans-serif;
-            font-size: 11px;
-            color: #333;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .main-layout {
-            display: flex;
-            flex-direction: column;
-            max-width: 1150px;
-            margin: 0 auto;
-            gap: 20px;
-        }
-        .invoice-container {
-            width: 100%;
-            background: #ffffff;
-            padding: 30px;
-            border: 1px solid #e0e0e0;
-            box-shadow: 0 0 10px rgba(0,0,0,0.05);
-            position: relative;
-        }
-        .sidebar {
-            width: 100%;
-            background: #ffffff;
-            padding: 20px;
-            border: 1px solid #e0e0e0;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.05);
-        }
-        .sidebar-title {
-            font-size: 13px;
-            font-weight: bold;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            border-bottom: 2px solid #24292e;
-            padding-bottom: 5px;
-        }
-        .search-box {
-            width: 100%;
-            padding: 6px 10px;
-            font-size: 11px;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-            margin-bottom: 15px;
-        }
-        .history-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        .history-item {
-            padding: 8px 10px;
-            border-bottom: 1px solid #eee;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .history-item:hover {
-            background: #f0f4f8;
-        }
-        .history-item .item-main {
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-        }
-        .history-item .item-sub {
-            font-size: 9px;
-            color: #666;
-            margin-top: 2px;
-        }
-        .action-bar {
-            background: #fff;
-            padding: 10px 20px;
-            max-width: 1150px;
-            margin: 0 auto 15px auto;
-            border: 1px solid #e0e0e0;
-            border-radius: 5px;
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .wa-panel-container {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            margin-right: auto;
-            background: #f9f9f9;
-            padding: 4px 10px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-        }
-        .wa-panel-container label {
-            font-weight: bold;
-            color: #128C7E;
-        }
-        .wa-input-panel {
-            padding: 4px 8px;
-            font-size: 11px;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-            width: 160px;
-            font-weight: bold;
-        }
-        .btn-action {
-            padding: 6px 15px;
-            font-size: 11px;
-            font-weight: bold;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .btn-print {
-            background-color: #28a745;
-            color: white;
-        }
-        .btn-print:hover {
-            background-color: #218838;
-        }
-        .btn-new {
-            background-color: #007bff;
-            color: white;
-        }
-        .btn-new:hover {
-            background-color: #0069d9;
-        }
-        .btn-wa {
-            background-color: #25D366;
-            color: white;
-        }
-        .btn-wa:hover {
-            background-color: #128C7E;
-        }
-        .btn-back-pkb {
-            background-color: #4a5568;
-            color: white;
-        }
-        .btn-back-pkb:hover {
-            background-color: #2d3748;
-        }
-        .header-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 15px;
-        }
-        .header-table td {
-            vertical-align: top;
-            padding: 2px 0;
-        }
-        .company-title {
-            font-size: 13px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .company-subtitle {
-            font-size: 11px;
-            font-weight: bold;
-        }
-        .company-details {
-            font-size: 9px;
-            color: #555;
-        }
-        .plate-number {
-            font-size: 20px;
-            font-weight: bold;
-            text-align: right;
-        }
-        .meta-details {
-            font-size: 10px;
-            text-align: right;
-        }
-        .meta-details table {
-            float: right;
-        }
-        .meta-details td {
-            padding: 1px 3px;
-            text-align: left;
-        }
-        .title-section {
-            font-size: 16px;
-            font-weight: bold;
-            margin: 15px 0 5px 0;
-        }
-        .tax-info {
-            font-size: 9px;
-            margin-bottom: 15px;
-        }
-        .tax-info td {
-            padding: 1px 0;
-        }
-        .info-grid {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 15px;
-        }
-        .info-grid td {
-            padding: 3px 0;
-            vertical-align: top;
-        }
-        .divider {
-            border-top: 1px dashed #333;
-            margin: 10px 0;
-        }
-        .section-header-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 10px 0 5px 0;
-        }
-        .section-title {
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .btn-add {
-            background-color: #24292e;
-            color: #fff;
-            border: none;
-            padding: 3px 8px;
-            font-size: 10px;
-            cursor: pointer;
-            border-radius: 3px;
-        }
-        .btn-add:hover {
-            background-color: #555;
-        }
-        .btn-delete {
-            background: none;
-            border: none;
-            color: #de3545;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 15px;
-        }
-        .data-table th {
-            border-top: 1px solid #333;
-            border-bottom: 1px solid #333;
-            padding: 5px;
-            text-align: left;
-            font-weight: bold;
-        }
-        .data-table td {
-            padding: 5px;
-            vertical-align: top;
-        }
-        .data-table .num-col {
-            text-align: right;
-        }
-        .data-table .center-col {
-            text-align: center;
-        }
-        .item-code {
-            font-size: 9px;
-            color: #666;
-            padding-left: 15px;
-        }
-        .financial-matrix {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        .financial-matrix th {
-            font-weight: bold;
-            text-align: right;
-            padding: 4px;
-            font-size: 10px;
-        }
-        .financial-matrix td {
-            padding: 4px;
-            text-align: right;
-            border: none;
-        }
-        .financial-matrix .label-cell {
-            font-weight: bold;
-            text-align: left;
-            width: 15%;
-        }
-        .grand-total-table {
-            width: 40%;
-            float: right;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        .grand-total-table td {
-            padding: 4px;
-            text-align: right;
-        }
-        .grand-total-table .label {
-            font-weight: bold;
-            text-align: left;
-        }
-        .clear {
-            clear: both;
-        }
-        .footer-section {
-            margin-top: 35px;
-            font-size: 10px;
-        }
-        .footer-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .footer-table td {
-            vertical-align: top;
-        }
-        .signature-space {
-            margin-top: 50px;
-            font-weight: bold;
-            text-decoration: underline;
-        }
-        .disclaimer {
-            margin-top: 25px;
-            font-style: italic;
-            font-size: 9px;
-        }
-        .input-field {
-            border: none;
-            border-bottom: 1px solid #eee;
-            font-family: inherit;
-            font-size: inherit;
-            width: 95%;
-            padding: 1px 2px;
-            background: transparent;
-        }
-        .input-field:focus {
-            outline: none;
-            border-bottom: 1px solid #000;
-            background: #fffdf0;
-        }
-        .input-num {
-            text-align: right;
-        }
-        @media print {
-            body {
-                background: none;
-                padding: 0;
-            }
-            .sidebar, .action-bar, .no-print, .btn-add, .btn-delete {
-                display: none !important;
-            }
-            .main-layout {
-                display: block;
-            }
-            .invoice-container {
-                border: none;
-                box-shadow: none;
-                padding: 0;
-            }
-            .input-field {
-                border-bottom: none;
-            }
-        }
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+        .container { max-width: 900px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); margin: auto; }
+        h2, h3 { text-align: center; color: #333; }
+        .form-group { margin-bottom: 15px; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; }
+        input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        button:hover { background-color: #0069d9; }
+        .btn-nav { background-color: #28a745; margin-bottom: 20px; }
+        .btn-nav:hover { background-color: #218838; }
+        .btn-danger { background-color: #dc3545; width: auto; padding: 5px 10px; font-size: 12px; }
+        .btn-danger:hover { background-color: #c82333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
+        th { background-color: #343a40; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        .search-box { margin-bottom: 15px; padding: 8px; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
     </style>
 </head>
 <body>
 
-<!-- Action Bar (Top Control) -->
-<div class="action-bar no-print">
-    <div class="wa-panel-container">
-        <label for="c-wa">KIRIM WA KE :</label>
-        <input type="text" id="c-wa" class="wa-input-panel" placeholder="Contoh: 08123456789">
-        <button class="btn-action btn-wa" onclick="sendWhatsApp()">💬 Kirim Estimasi & Link Edit</button>
+<div class="container">
+    <button class="btn-nav" onclick="window.location.href='pkb.html'">KEMBALI KE PKB</button>
+    
+    <h2>Sistem Buat Faktur / Invoice Service</h2>
+    <h3>Daya Toyota</h3>
+    
+    <div class="form-group">
+        <label>No. Invoice / Faktur:</label>
+        <input type="text" id="noInvoice" placeholder="Contoh: INV/2026/001">
+    </div>
+    <div class="form-group">
+        <label>No. Polisi Kendaraan:</label>
+        <input type="text" id="noPolisiInv" placeholder="Contoh: B 1234 ABC">
+    </div>
+    <div class="form-group">
+        <label>Total Biaya Jasa Servis (Rp):</label>
+        <input type="number" id="biayaJasa" placeholder="0">
+    </div>
+    <div class="form-group">
+        <label>Total Biaya Suku Cadang / Part (Rp):</label>
+        <input type="number" id="biayaPart" placeholder="0">
     </div>
     
-    <!-- Tombol navigasi kembali ke PKB -->
-    <button class="btn-action btn-back-pkb" onclick="window.location.href='pkb.html'">⬅️ Kembali ke PKB</button>
-    <button class="btn-action btn-new" onclick="createNewInvoice()">+ Buat Baru</button>
-    <button class="btn-action btn-print" onclick="saveAndPrint()">🖨️ Simpan & Cetak Faktur</button>
+    <button onclick="simpanInvoice()">SIMPAN DATA FAKTUR</button>
+    
+    <hr style="margin: 30px 0;">
+    
+    <h3>Riwayat Faktur Penjualan Service</h3>
+    <input type="text" id="searchInv" class="search-box" placeholder="Cari berdasarkan No. Invoice atau No. Polisi..." onkeyup="cariInvoice()">
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Tanggal Pembuatan</th>
+                <th>No. Invoice</th>
+                <th>No. Polisi</th>
+                <th>Biaya Jasa</th>
+                <th>Biaya Part</th>
+                <th>Total Pembayaran</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody id="tabelInvoice">
+            <!-- Data dari Firebase akan muncul di sini -->
+        </tbody>
+    </table>
 </div>
 
-<div class="main-layout">
-    <!-- Invoice Template Data Container -->
-    <div class="invoice-container">
-        <input type="hidden" id="current-invoice-id" value="">
+<!-- Ambil modul Firebase SDK -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDhHmuJjcJn4weiMYSFTnsdetqkYut62Ys",
+        authDomain: "pkbmanualdaninvoice.firebaseapp.com",
+        databaseURL: "https://pkbmanualdaninvoice-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "pkbmanualdaninvoice",
+        storageBucket: "pkbmanualdaninvoice.firebasestorage.app",
+        messagingSenderId: "812674696678",
+        appId: "1:812674696678:web:19ef84fdeaa645bf6e4227"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Fungsi Simpan Invoice Online
+    window.simpanInvoice = function() {
+        const noInvoice = document.getElementById('noInvoice').value.trim();
+        const noPolisi = document.getElementById('noPolisiInv').value.trim();
+        const biayaJasa = parseFloat(document.getElementById('biayaJasa').value) || 0;
+        const biayaPart = parseFloat(document.getElementById('biayaPart').value) || 0;
         
-        <!-- Top Header -->
-        <table class="header-table">
-            <tr>
-                <td style="width: 50%;">
-                    <div class="company-title"><input type="text" id="comp-name" class="input-field" value="DAYA ADICIPTA SANDIKA" style="font-weight:bold;"></div>
-                    <div class="company-subtitle"><input type="text" id="comp-branch" class="input-field" value="Daya Toyota Cakung"></div>
-                    <div class="company-details">
-                        <input type="text" id="comp-address" class="input-field" value="Cabang Cakung - Jl. Raya Bekasi KM 26.5"><br>
-                        <input type="text" id="comp-phone" class="input-field" value="Telp. (021) 8896 8800   Fax. -">
-                    </div>
-                </td>
-                <td style="width: 50%;">
-                    <div class="plate-number"><input type="text" id="v-plate" class="input-field input-num" placeholder="[NO POLISI]" style="font-size:20px; font-weight:bold;"></div>
-                    <div class="meta-details">
-                        <table>
-                            <tr>
-                                <td>Tanggal Cetak</td>
-                                <td>:</td>
-                                <td><input type="text" id="tanggal-cetak" class="input-field" value=""></td>
-                            </tr>
-                        </table>
-                    </div>
-                </td>
-            </tr>
-        </table>
-
-        <div class="title-section">FAKTUR SERVICE</div>
-
-        <!-- Tax Information -->
-        <table class="tax-info" style="width: 350px;">
-            <tr>
-                <td style="width: 35%;">NO KTP / NPWP Perusahaan</td>
-                <td style="width: 5%;">:</td>
-                <td><input type="text" id="comp-tax-id" class="input-field" value="0312862253006000"></td>
-            </tr>
-        </table>
-
-        <!-- Vehicle Details Grid -->
-        <table class="info-grid">
-            <tr>
-                <td style="width: 15%;">Tipe/Tahun</td>
-                <td style="width: 2%;">:</td>
-                <td style="width: 33%;"><input type="text" id="v-type" class="input-field" placeholder="Contoh: Fortuner 2.4 VRZ / 2021"></td>
-                <td style="width: 18%;">Tanggal Pembuatan</td>
-                <td style="width: 2%;">:</td>
-                <td style="width: 30%; font-weight: bold;"><input type="text" id="v-build-date" class="input-field" placeholder="DD/MM/YYYY HH:mm" style="font-weight:bold;"></td>
-            </tr>
-            <tr>
-                <td>Warna</td>
-                <td>:</td>
-                <td><input type="text" id="v-color" class="input-field" placeholder="Masukan Warna"></td>
-                <td>Nama SA</td>
-                <td>:</td>
-                <td><input type="text" id="v-sa" class="input-field" placeholder="Nama Service Advisor"></td>
-            </tr>
-            <tr>
-                <td>Kilometer</td>
-                <td>:</td>
-                <td><input type="text" id="v-km" class="input-field" placeholder="00000"></td>
-                <td></td>
-                <td></td>
-                <td></td>
-            </tr>
-        </table>
-
-        <div class="divider"></div>
-
-        <!-- Customer Details -->
-        <table class="info-grid">
-            <tr>
-                <td style="width: 15%; font-weight: bold;">NAMA CUSTOMER</td>
-                <td style="width: 2%;">:</td>
-                <td style="width: 33%; font-weight: bold;"><input type="text" id="c-name" class="input-field" placeholder="Masukan Nama Customer" style="font-weight:bold;"></td>
-                <td style="width: 15%; font-weight: bold;">ALAMAT</td>
-                <td style="width: 2%;">:</td>
-                <td style="width: 33%; font-weight: bold;" rowspan="2"><input type="text" id="c-address" class="input-field" placeholder="Masukan Alamat Lengkap" style="font-weight:bold;"></td>
-            </tr>
-            <tr>
-                <td style="font-weight: bold;">NO KTP / NPWP</td>
-                <td>:</td>
-                <td><input type="text" id="c-tax-id" class="input-field" placeholder="Masukan Nomor KTP / NPWP"></td>
-                <td></td>
-                <td></td>
-            </tr>
-            <tr>
-                <td style="font-weight: bold;">TELEPON</td>
-                <td>:</td>
-                <td><input type="text" id="c-phone" class="input-field" placeholder="Masukan Nomor Telepon"></td>
-                <td></td>
-                <td></td>
-                <td></td>
-            </tr>
-        </table>
-
-        <div class="divider"></div>
-
-        <!-- Rincian Pekerjaan -->
-        <div class="section-header-container">
-            <div class="section-title">Rincian Pekerjaan</div>
-            <button class="btn-add no-print" onclick="addJasaRow()">+ Tambah Jasa</button>
-        </div>
-        <table class="data-table" id="table-jasa">
-            <thead>
-                <tr>
-                    <th style="width: 5%;" class="center-col">NO</th>
-                    <th style="width: 45%;">NAMA PEKERJAAN</th>
-                    <th style="width: 15%;" class="num-col">HARGA SATUAN</th>
-                    <th style="width: 15%;" class="num-col">POT%</th>
-                    <th style="width: 15%;" class="num-col">HARGA TOTAL</th>
-                    <th style="width: 5%;" class="center-col no-print"></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td class="center-col row-num">1</td>
-                    <td><input type="text" class="input-field job-name" placeholder="Nama Pekerjaan / Jasa"></td>
-                    <td class="num-col"><input type="number" class="input-field input-num input-price" value="0" oninput="calculateAll()"></td>
-                    <td class="num-col"><input type="number" class="input-field input-num input-pot" value="0" step="0.01" oninput="calculateAll()"></td>
-                    <td class="num-col"><input type="number" class="input-field input-num input-total" value="0" readonly style="background:#f9f9f9;"></td>
-                    <td class="center-col no-print"><button class="btn-delete" onclick="deleteRow(this)">×</button></td>
-                </tr>
-            </tbody>
-        </table>
-
-        <!-- Rincian Barang -->
-        <div class="section-header-container">
-            <div class="section-title">Rincian Barang</div>
-            <button class="btn-add no-print" onclick="addBarangRow()">+ Tambah Part / Bahan</button>
-        </div>
-        <table class="data-table" id="table-barang">
-            <thead>
-                <tr>
-                    <th style="width: 5%;" class="center-col">NO</th>
-                    <th style="width: 35%;">NAMA / NOMOR BARANG</th>
-                    <th style="width: 15%;" class="num-col">HARGA SATUAN</th>
-                    <th style="width: 15%;" class="center-col">QTY</th>
-                    <th style="width: 15%;" class="num-col">POT%</th>
-                    <th style="width: 15%;" class="num-col">HARGA TOTAL</th>
-                    <th style="width: 5%;" class="center-col no-print"></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td class="center-col row-num">1</td>
-                    <td>
-                        <input type="text" class="input-field part-name" placeholder="Nama Barang"><br>
-                        <span class="item-code"><input type="text" class="input-field part-code" placeholder="Nomor Part / Suku Cadang" style="width:50%;"></span>
-                    </td>
-                    <td class="num-col"><input type="number" class="input-field input-num input-price" value="0" oninput="calculateAll()"></td>
-                    <td class="center-col"><input type="number" class="input-field input-num input-qty" value="1" style="text-align:center;" oninput="calculateAll()"></td>
-                    <td class="num-col"><input type="number" class="input-field input-num input-pot" value="0" step="0.01" oninput="calculateAll()"></td>
-                    <td class="num-col"><input type="number" class="input-field input-num input-total" value="0" readonly style="background:#f9f9f9;"></td>
-                    <td class="center-col no-print"><button class="btn-delete" onclick="deleteRow(this)">×</button></td>
-                </tr>
-            </tbody>
-        </table>
-
-        <!-- Summary Financial Matrix -->
-        <table class="financial-matrix">
-            <thead>
-                <tr>
-                    <th style="width: 15%;"></th>
-                    <th>HARGA GROSS</th>
-                    <th>POT</th>
-                    <th>DPP (Dasar Pengenaan Pajak)</th>
-                    <th>PPN (11%)</th>
-                    <th>HARGA NET</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td class="label-cell">JASA</td>
-                    <td id="jasa-gross">0</td>
-                    <td id="jasa-pot">0</td>
-                    <td id="jasa-dpp">0</td>
-                    <td id="jasa-ppn">0</td>
-                    <td id="jasa-net" style="font-weight: bold;">0</td>
-                </tr>
-                <tr>
-                    <td class="label-cell">BARANG</td>
-                    <td id="barang-gross">0</td>
-                    <td id="barang-pot">0</td>
-                    <td id="barang-dpp">0</td>
-                    <td id="barang-ppn">0</td>
-                    <td id="barang-net" style="font-weight: bold;">0</td>
-                </tr>
-            </tbody>
-        </table>
-
-        <!-- Grand Totals -->
-        <table class="grand-total-table">
-            <tr>
-                <td class="label">TOTAL</td>
-                <td style="font-weight: bold; font-size: 13px;" id="grand-total">0</td>
-            </tr>
-            <tr>
-                <td class="label">DP</td>
-                <td><input type="number" class="input-field input-num" id="input-dp" value="0" oninput="calculateAll()" style="font-weight: bold;"></td>
-            </tr>
-            <tr>
-                <td class="label">TOTAL SETELAH DP</td>
-                <td style="font-weight: bold; border-top: 1px solid #333; border-bottom: 2px double #333; font-size: 14px; color: #000;" id="grand-total-after-dp">0</td>
-            </tr>
-        </table>
-
-        <div class="clear"></div>
-
-        <!-- Footer Notes & Signature -->
-        <div class="footer-section">
-            <table class="footer-table">
-                <tr>
-                    <td style="width: 60%;">
-                        <div style="font-weight: bold; margin-bottom: 3px;">JAMINAN PERBAIKAN : <span style="font-weight: normal; margin-left: 20px;">SARAN : -</span></div>
-                        <div>Berlaku sejak tanggal serah terima kendaraan</div>
-                        <div>1. General Repair, 15 hari atau 1000 Km * )</div>
-                        <div>2. Engine overhaul, 1 month atau 1000 Km * )</div>
-                        <div>3. Pengecatan 3 bulan</div>
-                        <div style="font-style: italic; margin-top: 3px;">(* Mana yang tercapai lebih dulu)</div>
-                    </td>
-                    <td style="width: 40%; text-align: center;">
-                        <div>Kepala Administrasi,</div>
-                        <div class="signature-space"><input type="text" id="admin-signature" class="input-field" placeholder="Nama Penanggung Jawab" style="text-align:center; font-weight:bold;"></div>
-                    </td>
-                </tr>
-            </table>
-
-            <div class="disclaimer">
-                Kami tidak bertanggungjawab atas hilang atau terbuangnya suku cadang bekas bila tidak diambil dalam 2 hari dari waktu perbaikan
-            </div>
-        </div>
-    </div>
-
-    <!-- Sidebar Riwayat Penyimpanan -->
-    <div class="sidebar no-print">
-        <div class="sidebar-title">Riwayat Faktur</div>
-        <input type="text" class="search-box" id="search-input" placeholder="Cari No Polisi / Nama..." oninput="renderHistory()">
-        <ul class="history-list" id="history-list-container">
-            <!-- Data Terpanggil Lewat JS -->
-        </ul>
-    </div>
-</div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // Cek intergrasi data real-time dari PKB manual
-        checkSharedPkbData();
-        // Fungsi membaca kode data otomatis dari link WA
-        checkUrlForSharedData();
-        refreshTimestamp();
-        renderHistory();
-        calculateAll();
-    });
-
-    function checkSharedPkbData() {
-        const sharedData = localStorage.getItem('shared_pkb_to_invoice');
-        if (sharedData) {
-            try {
-                const pkb = JSON.parse(sharedData);
-                if(pkb.vPlate) document.getElementById("v-plate").value = pkb.vPlate;
-                if(pkb.cName) document.getElementById("c-name").value = pkb.cName;
-                if(pkb.cTaxId) document.getElementById("c-tax-id").value = pkb.cTaxId;
-                if(pkb.cPhone) {
-                    document.getElementById("c-phone").value = pkb.cPhone;
-                    document.getElementById("c-wa").value = pkb.cPhone;
-                }
-                if(pkb.cAddress) document.getElementById("c-address").value = pkb.cAddress;
-                if(pkb.vType) document.getElementById("v-type").value = pkb.vType;
-                if(pkb.vKM) document.getElementById("v-km").value = pkb.vKM;
-                if(pkb.vSA) document.getElementById("v-sa").value = pkb.vSA;
-                
-                // Hapus data temporary setelah berhasil di-consume agar tidak overwriting di form baru berikutnya
-                localStorage.removeItem('shared_pkb_to_invoice');
-            } catch (e) {
-                console.error("Gagal memetakan integrasi data PKB:", e);
-            }
-        }
-    }
-
-    function checkUrlForSharedData() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const encodedData = urlParams.get('data');
-        if (encodedData) {
-            try {
-                const decodedData = JSON.parse(atob(encodedData));
-                loadInvoiceDirectly(decodedData);
-                // Bersihkan URL parameter tanpa reload agar rapi
-                window.history.replaceState({}, document.title, window.location.pathname);
-                alert("Data Estimasi dari WhatsApp berhasil dimuat!");
-            } catch (e) {
-                console.error("Gagal membaca payload data share:", e);
-            }
-        }
-    }
-
-    function refreshTimestamp() {
-        const today = new Date();
-        const dd = String(today.getDate()).padStart(2, '0');
-        const mm = String(today.getMonth() + 1).padStart(2, '0');
-        const yyyy = today.getFullYear();
-        const hh = String(today.getHours()).padStart(2, '0');
-        const min = String(today.getMinutes()).padStart(2, '0');
-        const formattedDate = dd + '/' + mm + '/' + yyyy + ' ' + hh + ':' + min;
-        
-        document.getElementById("tanggal-cetak").value = formattedDate;
-        
-        const buildField = document.getElementById("v-build-date");
-        if(!buildField.value) {
-            buildField.value = formattedDate;
-        }
-    }
-
-    function reindexRows(tableId) {
-        const rows = document.querySelectorAll(`#${tableId} tbody tr`);
-        rows.forEach((row, index) => {
-            row.querySelector('.row-num').innerText = index + 1;
-        });
-    }
-
-    function deleteRow(btn) {
-        const row = btn.closest('tr');
-        const tbody = row.parentNode;
-        const tableId = tbody.parentNode.id;
-        
-        if (tbody.querySelectorAll('tr').length > 1) {
-            row.remove();
-            reindexRows(tableId);
-            calculateAll();
-        } else {
-            alert("Minimal harus ada satu baris data.");
-        }
-    }
-
-    function addJasaRow(name='', price=0, pot=0) {
-        const tbody = document.querySelector("#table-jasa tbody");
-        const newRow = document.createElement("tr");
-        newRow.innerHTML = `
-            <td class="center-col row-num"></td>
-            <td><input type="text" class="input-field job-name" value="${name}" placeholder="Nama Pekerjaan / Jasa"></td>
-            <td class="num-col"><input type="number" class="input-field input-num input-price" value="${price}" oninput="calculateAll()"></td>
-            <td class="num-col"><input type="number" class="input-field input-num input-pot" value="${pot}" step="0.01" oninput="calculateAll()"></td>
-            <td class="num-col"><input type="number" class="input-field input-num input-total" value="0" readonly style="background:#f9f9f9;"></td>
-            <td class="center-col no-print"><button class="btn-delete" onclick="deleteRow(this)">×</button></td>
-        `;
-        tbody.appendChild(newRow);
-        reindexRows("table-jasa");
-        calculateAll();
-    }
-
-    function addBarangRow(name='', code='', price=0, qty=1, pot=0) {
-        const tbody = document.querySelector("#table-barang tbody");
-        const newRow = document.createElement("tr");
-        newRow.innerHTML = `
-            <td class="center-col row-num"></td>
-            <td>
-                <input type="text" class="input-field part-name" value="${name}" placeholder="Nama Barang"><br>
-                <span class="item-code"><input type="text" class="input-field part-code" value="${code}" placeholder="Nomor Part / Suku Cadang" style="width:50%;"></span>
-            </td>
-            <td class="num-col"><input type="number" class="input-field input-num input-price" value="${price}" oninput="calculateAll()"></td>
-            <td class="center-col"><input type="number" class="input-field input-num input-qty" value="${qty}" style="text-align:center;" oninput="calculateAll()"></td>
-            <td class="num-col"><input type="number" class="input-field input-num input-pot" value="${pot}" step="0.01" oninput="calculateAll()"></td>
-            <td class="num-col"><input type="number" class="input-field input-num input-total" value="0" readonly style="background:#f9f9f9;"></td>
-            <td class="center-col no-print"><button class="btn-delete" onclick="deleteRow(this)">×</button></td>
-        `;
-        tbody.appendChild(newRow);
-        reindexRows("table-barang");
-        calculateAll();
-    }
-
-    function formatIDR(num) {
-        return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num);
-    }
-
-    function calculateAll() {
-        let jasaGross = 0;
-        let totalPotJasa = 0;
-        
-        document.querySelectorAll("#table-jasa tbody tr").forEach(row => {
-            const price = parseFloat(row.querySelector(".input-price").value) || 0;
-            const potPercent = parseFloat(row.querySelector(".input-pot").value) || 0;
-            
-            const itemGross = price;
-            const itemPot = itemGross * (potPercent / 100);
-            const itemTotal = itemGross - itemPot;
-            
-            row.querySelector(".input-total").value = Math.round(itemTotal);
-            
-            jasaGross += itemGross;
-            totalPotJasa += itemPot;
-        });
-
-        let jasaNet = jasaGross - totalPotJasa;
-        let jasaDpp = jasaNet / 1.11;
-        let jasaPpn = jasaDpp * 0.11;
-
-        document.getElementById("jasa-gross").innerText = formatIDR(jasaGross);
-        document.getElementById("jasa-pot").innerText = formatIDR(totalPotJasa);
-        document.getElementById("jasa-dpp").innerText = formatIDR(jasaDpp);
-        document.getElementById("jasa-ppn").innerText = formatIDR(jasaPpn);
-        document.getElementById("jasa-net").innerText = formatIDR(jasaNet);
-
-        let barangGross = 0;
-        let totalPotBarang = 0;
-        
-        document.querySelectorAll("#table-barang tbody tr").forEach(row => {
-            const price = parseFloat(row.querySelector(".input-price").value) || 0;
-            const qty = parseFloat(row.querySelector(".input-qty").value) || 0;
-            const potPercent = parseFloat(row.querySelector(".input-pot").value) || 0;
-            
-            const itemGross = price * qty;
-            const itemPot = itemGross * (potPercent / 100);
-            const itemTotal = itemGross - itemPot;
-            
-            row.querySelector(".input-total").value = Math.round(itemTotal);
-            
-            barangGross += itemGross;
-            totalPotBarang += itemPot;
-        });
-
-        let barangNet = barangGross - totalPotBarang;
-        let barangDpp = barangNet / 1.11;
-        let barangPpn = barangDpp * 0.11;
-
-        document.getElementById("barang-gross").innerText = formatIDR(barangGross);
-        document.getElementById("barang-pot").innerText = formatIDR(totalPotBarang);
-        document.getElementById("barang-dpp").innerText = formatIDR(barangDpp);
-        document.getElementById("barang-ppn").innerText = formatIDR(barangPpn);
-        document.getElementById("barang-net").innerText = formatIDR(barangNet);
-
-        let grandTotal = jasaNet + barangNet;
-        let dp = parseFloat(document.getElementById("input-dp").value) || 0;
-        let totalAfterDp = grandTotal - dp;
-
-        document.getElementById("grand-total").innerText = formatIDR(grandTotal);
-        document.getElementById("grand-total-after-dp").innerText = formatIDR(totalAfterDp);
-    }
-
-    function getInvoicesFromStorage() {
-        return JSON.parse(localStorage.getItem("faktur_service_db")) || [];
-    }
-
-    function generateCurrentObject() {
-        let plate = document.getElementById("v-plate").value.trim() || "TANPA-PLAT";
-        let customerName = document.getElementById("c-name").value.trim() || "Umum";
-
-        let listJasa = [];
-        document.querySelectorAll("#table-jasa tbody tr").forEach(row => {
-            listJasa.push({
-                name: row.querySelector(".job-name").value,
-                price: row.querySelector(".input-price").value,
-                pot: row.querySelector(".input-pot").value
-            });
-        });
-
-        let listBarang = [];
-        document.querySelectorAll("#table-barang tbody tr").forEach(row => {
-            listBarang.push({
-                name: row.querySelector(".part-name").value,
-                code: row.querySelector(".part-code").value,
-                price: row.querySelector(".input-price").value,
-                qty: row.querySelector(".input-qty").value,
-                pot: row.querySelector(".input-pot").value
-            });
-        });
-
-        return {
-            id: document.getElementById("current-invoice-id").value || "id_" + Date.now(),
-            compName: document.getElementById("comp-name").value,
-            compBranch: document.getElementById("comp-branch").value,
-            compAddress: document.getElementById("comp-address").value,
-            compPhone: document.getElementById("comp-phone").value,
-            vPlate: plate,
-            tanggalCetak: document.getElementById("tanggal-cetak").value,
-            compTaxId: document.getElementById("comp-tax-id").value,
-            vType: document.getElementById("v-type").value,
-            vBuildDate: document.getElementById("v-build-date").value,
-            vColor: document.getElementById("v-color").value,
-            vSA: document.getElementById("v-sa").value,
-            vKM: document.getElementById("v-km").value,
-            cName: customerName,
-            cAddress: document.getElementById("c-address").value,
-            cTaxId: document.getElementById("c-tax-id").value,
-            cPhone: document.getElementById("c-phone").value,
-            cWa: document.getElementById("c-wa").value,
-            jasaItems: listJasa,
-            barangItems: listBarang,
-            dpValue: document.getElementById("input-dp").value,
-            adminSignature: document.getElementById("admin-signature").value
-        };
-    }
-
-    function saveInvoiceData() {
-        let invoices = getInvoicesFromStorage();
-        let currentId = document.getElementById("current-invoice-id").value;
-        let invoiceData = generateCurrentObject();
-
-        if (currentId) {
-            let index = invoices.findIndex(inv => inv.id === currentId);
-            if (index !== -1) invoices[index] = invoiceData;
-            else invoices.push(invoiceData);
-        } else {
-            invoices.push(invoiceData);
-            document.getElementById("current-invoice-id").value = invoiceData.id;
-        }
-
-        localStorage.setItem("faktur_service_db", JSON.stringify(invoices));
-        renderHistory();
-    }
-
-    function renderHistory() {
-        const container = document.getElementById("history-list-container");
-        const searchVal = document.getElementById("search-input").value.toLowerCase();
-        const invoices = getInvoicesFromStorage();
-        
-        container.innerHTML = "";
-        
-        [...invoices].reverse().forEach(inv => {
-            if (inv.vPlate.toLowerCase().includes(searchVal) || inv.cName.toLowerCase().includes(searchVal)) {
-                let li = document.createElement("li");
-                li.className = "history-item";
-                li.setAttribute("onclick", `loadInvoice('${inv.id}')`);
-                li.innerHTML = `
-                    <div class="item-main"><span>${inv.vPlate}</span></div>
-                    <div class="item-sub">${inv.cName} | Cetak: ${inv.tanggalCetak}</div>
-                `;
-                container.appendChild(li);
-            }
-        });
-    }
-
-    function loadInvoice(id) {
-        const invoices = getInvoicesFromStorage();
-        const inv = invoices.find(item => item.id === id);
-        if (!inv) return;
-        loadInvoiceDirectly(inv);
-    }
-
-    function loadInvoiceDirectly(inv) {
-        document.getElementById("current-invoice-id").value = inv.id;
-        document.getElementById("comp-name").value = inv.compName || "";
-        document.getElementById("comp-branch").value = inv.compBranch || "";
-        document.getElementById("comp-address").value = inv.compAddress || "";
-        document.getElementById("comp-phone").value = inv.compPhone || "";
-        document.getElementById("v-plate").value = inv.vPlate || "";
-        document.getElementById("tanggal-cetak").value = inv.tanggalCetak || "";
-        document.getElementById("comp-tax-id").value = inv.compTaxId || "";
-        document.getElementById("v-type").value = inv.vType || "";
-        document.getElementById("v-build-date").value = inv.vBuildDate || "";
-        document.getElementById("v-color").value = inv.vColor || "";
-        document.getElementById("v-sa").value = inv.vSA || "";
-        document.getElementById("v-km").value = inv.vKM || "";
-        document.getElementById("c-name").value = inv.cName || "";
-        document.getElementById("c-address").value = inv.cAddress || "";
-        document.getElementById("c-tax-id").value = inv.cTaxId || "";
-        document.getElementById("c-phone").value = inv.cPhone || "";
-        document.getElementById("c-wa").value = inv.cWa || "";
-        document.getElementById("input-dp").value = inv.dpValue || "0";
-        document.getElementById("admin-signature").value = inv.adminSignature || "";
-
-        const tbodyJasa = document.querySelector("#table-jasa tbody");
-        tbodyJasa.innerHTML = "";
-        if (inv.jasaItems && inv.jasaItems.length > 0) {
-            inv.jasaItems.forEach(item => addJasaRow(item.name, item.price, item.pot));
-        } else {
-            addJasaRow();
-        }
-
-        const tbodyBarang = document.querySelector("#table-barang tbody");
-        tbodyBarang.innerHTML = "";
-        if (inv.barangItems && inv.barangItems.length > 0) {
-            inv.barangItems.forEach(item => addBarangRow(item.name, item.code, item.price, item.qty, item.pot));
-        } else {
-            addBarangRow();
-        }
-
-        reindexRows("table-jasa");
-        reindexRows("table-barang");
-        calculateAll();
-    }
-
-    function createNewInvoice() {
-        document.getElementById("current-invoice-id").value = "";
-        document.getElementById("v-plate").value = "";
-        document.getElementById("v-type").value = "";
-        document.getElementById("v-build-date").value = "";
-        document.getElementById("v-color").value = "";
-        document.getElementById("v-sa").value = "";
-        document.getElementById("v-km").value = "";
-        document.getElementById("c-name").value = "";
-        document.getElementById("c-address").value = "";
-        document.getElementById("c-tax-id").value = "";
-        document.getElementById("c-phone").value = "";
-        document.getElementById("c-wa").value = "";
-        document.getElementById("input-dp").value = "0";
-
-        document.querySelector("#table-jasa tbody").innerHTML = "";
-        document.querySelector("#table-barang tbody").innerHTML = "";
-        addJasaRow();
-        addBarangRow();
-        
-        refreshTimestamp();
-        calculateAll();
-    }
-
-    function saveAndPrint() {
-        refreshTimestamp();
-        saveInvoiceData();
-        window.print();
-    }
-
-    function sendWhatsApp() {
-        let waNumber = document.getElementById("c-wa").value.trim();
-        let customerName = document.getElementById("c-name").value.trim() || "Pelanggan";
-        let plate = document.getElementById("v-plate").value.trim() || "-";
-        let totalBill = document.getElementById("grand-total-after-dp").innerText;
-
-        if (!waNumber) {
-            alert("Silakan isi Nomor WA Terlebih Dahulu!");
+        if(!noInvoice || !noPolisi) {
+            alert('Mohon isi nomor invoice dan nomor polisi terlebih dahulu!');
             return;
         }
 
-        waNumber = waNumber.replace(/[^0-9]/g, '');
-        if (waNumber.startsWith('0')) {
-            waNumber = '62' + waNumber.slice(1);
+        const totalBayar = biayaJasa + biayaPart;
+        const waktuSekarang = new Date().toLocaleString('id-ID');
+
+        const invRef = ref(db, 'riwayatInvoice');
+        const dataBaruRef = push(invRef);
+
+        set(dataBaruRef, {
+            waktu: waktuSekarang,
+            noInvoice: noInvoice,
+            noPolisi: noPolisi,
+            biayaJasa: biayaJasa,
+            biayaPart: biayaPart,
+            totalBayar: totalBayar
+        }).then(() => {
+            alert('Data Faktur Berhasil Tersimpan Online!');
+            // Reset Form
+            document.getElementById('noInvoice').value = '';
+            document.getElementById('noPolisiInv').value = '';
+            document.getElementById('biayaJasa').value = '';
+            document.getElementById('biayaPart').value = '';
+        }).catch((error) => {
+            alert('Gagal menyimpan: ' + error.message);
+        });
+    }
+
+    // Tampilkan Riwayat Invoice Real-time
+    const riwayatInvRef = ref(db, 'riwayatInvoice');
+    onValue(riwayatInvRef, (snapshot) => {
+        const tbody = document.getElementById('tabelInvoice');
+        tbody.innerHTML = '';
+        const data = snapshot.val();
+        
+        if (data) {
+            Object.keys(data).forEach((key) => {
+                const item = data[key];
+                const row = `<tr>
+                    <td>${item.waktu}</td>
+                    <td><b>${item.noInvoice}</b></td>
+                    <td>${item.noPolisi}</td>
+                    <td>Rp ${item.biayaJasa.toLocaleString('id-ID')}</td>
+                    <td>Rp ${item.biayaPart.toLocaleString('id-ID')}</td>
+                    <td><b>Rp ${item.totalBayar.toLocaleString('id-ID')}</b></td>
+                    <td><button class="btn-danger" onclick="hapusInvoice('${key}')">Hapus</button></td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+        } else {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#999;">Belum ada riwayat invoice.</td></tr>';
         }
+    });
 
-        // Simpan data terkini ke localStorage
-        saveInvoiceData();
+    // Fungsi Hapus Invoice Online
+    window.hapusInvoice = function(id) {
+        if(confirm('Apakah Anda yakin ingin menghapus permanen data invoice ini?')) {
+            remove(ref(db, 'riwayatInvoice/' + id));
+        }
+    }
 
-        // GENERATE KODE DATA OTOMATIS (Payload Base64)
-        const currentData = generateCurrentObject();
-        const base64Data = btoa(JSON.stringify(currentData));
-        
-        // Membuat path link file HTML ini yang sedang aktif berjalan di browser Anda
-        const currentLogPath = window.location.href.split('?')[0];
-        const directEditableLink = `${currentLogPath}?data=${base64Data}`;
-
-        // TEXT FORMAT BARU: Berisi rincian tagihan + Link Otomatis untuk Load Data & Edit ulang
-        const message = `Halo Bpk/Ibu ${customerName},\n\nBerikut kami lampirkan rincian tagihan Faktur Service kendaraan Anda dengan No. Polisi: *${plate}*.\n\n*Total Tagihan:* Rp ${totalBill}\n\nUntuk melihat lembar asli, mencetak PDF, atau mengedit kembali data estimasi ini, silakan klik tautan berikut:\n👉 ${directEditableLink}\n\nTerima kasih telah mempercayakan kendaraan Anda kepada kami.`;
-        const encodedMessage = encodeURIComponent(message);
-        
-        const waUrl = `https://api.whatsapp.com/send?phone=${waNumber}&text=${encodedMessage}`;
-        window.open(waUrl, '_blank');
+    // Fungsi Pencarian Lokal Invoice
+    window.cariInvoice = function() {
+        const input = document.getElementById('searchInv').value.toUpperCase();
+        const rows = document.getElementById('tabelInvoice').getElementsByTagName('tr');
+        for (let i = 0; i < rows.length; i++) {
+            const tdInv = rows[i].getElementsByTagName('td')[1];
+            const tdPolisi = rows[i].getElementsByTagName('td')[2];
+            if (tdInv || tdPolisi) {
+                const txtInv = tdInv.textContent || tdInv.innerText;
+                const txtPolisi = tdPolisi.textContent || tdPolisi.innerText;
+                if (txtInv.toUpperCase().indexOf(input) > -1 || txtPolisi.toUpperCase().indexOf(input) > -1) {
+                    rows[i].style.display = "";
+                } else {
+                    rows[i].style.display = "none";
+                }
+            }
+        }
     }
 </script>
 </body>

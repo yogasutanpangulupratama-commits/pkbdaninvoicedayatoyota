@@ -643,17 +643,90 @@
     }
 
     function sinkronisasiKeInvoice() {
+        // Ambil rincian data pekerjaan dari tabel PKB saat ini
+        var rows = document.querySelectorAll('#work-rows-container tr');
+        var itemsArr = [];
+        
+        rows.forEach(function(row) {
+            var desc = row.querySelector('.item-desc').value;
+            var qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+            var harga = window.getPureNumber(row.querySelector('.item-harga').value);
+            var diskonVal = window.getPureNumber(row.querySelector('.item-diskon').value);
+            var tipeDiskon = row.querySelector('.item-tipe-diskon').value;
+            
+            if(desc.trim() !== "") {
+                // Konversi potongan harga menjadi persen desimal jika tipe input adalah Rp agar kompatibel dengan sistem hitung Invoice
+                var potPercent = 0;
+                if (tipeDiskon === "Rp" && harga > 0) {
+                    potPercent = (diskonVal / (harga * qty)) * 100;
+                } else {
+                    potPercent = diskonVal;
+                }
+                
+                itemsArr.push({ 
+                    name: desc, 
+                    price: harga, 
+                    qty: qty, 
+                    pot: potPercent 
+                });
+            }
+        });
+
         var payloadInvoice = {
-            vPlate: document.getElementById('in_nopol').value,
+            vPlate: document.getElementById('in_nopol').value.toUpperCase(),
             cName: document.getElementById('in_nama').value,
             cTaxId: document.getElementById('in_ktp').value,
             cPhone: document.getElementById('in_hp').value,
             cAddress: document.getElementById('in_alamat').value,
             vType: document.getElementById('in_tipe').value,
             vKM: document.getElementById('in_km').value,
-            vSA: document.getElementById('in_sa').value
+            vSA: document.getElementById('in_sa').value,
+            pkbItems: itemsArr // Menyertakan array pekerjaan PKB ke Invoice
         };
         localStorage.setItem('shared_pkb_to_invoice', JSON.stringify(payloadInvoice));
+        
+        // PERBAIKAN: Otomatis daftarkan langsung ke database Riwayat Faktur Invoice (faktur_service_db)
+        if (payloadInvoice.vPlate.trim() !== "") {
+            var historyInvoice = JSON.parse(localStorage.getItem('faktur_service_db')) || [];
+            
+            // Buat ID Unik baru untuk Invoice ini
+            var invId = "id_" + Date.now();
+            
+            var invoiceDataPayload = {
+                id: invId,
+                compName: "DAYA ADICIPTA SANDIKA",
+                compBranch: "Daya Toyota Cakung",
+                compAddress: "Cabang Cakung - Jl. Raya Bekasi KM 26.5",
+                compPhone: "Telp. (021) 8896 8800   Fax. -",
+                vPlate: payloadInvoice.vPlate,
+                tanggalCetak: new Date().toLocaleDateString('id-ID') + " " + new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}),
+                compTaxId: "0312862253006000",
+                vType: payloadInvoice.vType,
+                vBuildDate: new Date().toLocaleDateString('id-ID'),
+                vColor: "",
+                vSA: payloadInvoice.vSA,
+                vKM: payloadInvoice.vKM,
+                cName: payloadInvoice.cName || "Umum",
+                cAddress: payloadInvoice.cAddress,
+                cTaxId: payloadInvoice.cTaxId,
+                cPhone: payloadInvoice.cPhone,
+                cWa: payloadInvoice.cPhone,
+                jasaItems: payloadInvoice.pkbItems, // Menyimpan rincian pekerjaan PKB langsung ke riwayat jasa Invoice
+                barangItems: [],
+                dpValue: 0,
+                adminSignature: ""
+            };
+            
+            // Cek dan hapus data duplikat dengan nomor plat yang sama agar riwayat terbaru yang tersimpan
+            var existingIndex = historyInvoice.findIndex(function(x) { return x.vPlate === payloadInvoice.vPlate; });
+            if (existingIndex > -1) {
+                historyInvoice[existingIndex] = invoiceDataPayload;
+            } else {
+                historyInvoice.push(invoiceDataPayload);
+            }
+            
+            localStorage.setItem('faktur_service_db', JSON.stringify(historyInvoice));
+        }
     }
 
     function bukaHalamanInvoice() {

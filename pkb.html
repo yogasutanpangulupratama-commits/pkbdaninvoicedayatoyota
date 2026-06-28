@@ -2,91 +2,126 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem PKB - Daya Toyota</title>
+    <title>Sistem PKB Manual - Versi Cetak Laser Jet Premium</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
-        .container { max-width: 900px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); margin: auto; }
-        h2, h3 { text-align: center; color: #333; }
-        .form-group { margin-bottom: 15px; }
-        label { font-weight: bold; display: block; margin-bottom: 5px; }
-        input, select { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        button { width: 100%; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        button:hover { background-color: #218838; }
-        .btn-nav { background-color: #007bff; margin-bottom: 20px; }
-        .btn-nav:hover { background-color: #0069d9; }
-        .btn-danger { background-color: #dc3545; width: auto; padding: 5px 10px; font-size: 12px; }
-        .btn-danger:hover { background-color: #c82333; }
-        .btn-print { background-color: #17a2b8; margin-top: 5px; }
-        .btn-print:hover { background-color: #138496; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
-        th { background-color: #343a40; color: white; }
-        tr:nth-child(even) { background-color: #f2f2f2; }
-        .search-box { margin-bottom: 15px; padding: 8px; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        body { font-family: Arial, sans-serif; font-size: 11pt; margin: 10px; background-color: #fff; color: #000; }
+        .container { max-width: 820px; margin: 0 auto; background: #fff; padding: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+        th, td { border-bottom: 1px solid #ddd; border-top: 1px solid #ddd; border-left: none; border-right: none; padding: 6px; vertical-align: top; }
+        th { background-color: #f9f9f9; font-weight: bold; }
+        
+        input[type=\"text\"], textarea { text-transform: uppercase; }
+        input[type=\"text\"], input[type=\"number\"], input[type=\"date\"], input[type=\"time\"], textarea, select { width: 95%; border: 1px solid #ccc; padding: 4px; font-family: Arial, sans-serif; font-size: 11pt; box-sizing: border-box; }
+        .no-border, .no-border td { border: none !important; padding: 2px 6px; }
+        
+        .header-title { font-size: 14pt; font-weight: bold; text-align: center; margin-bottom: 5px; }
+        .header-sub { font-size: 10pt; text-align: center; margin-bottom: 15px; border-bottom: 2px solid #000; padding-bottom: 5px; }
+        
+        .section-title { font-weight: bold; background-color: #f2f2f2; padding: 4px 6px; margin-top: 10px; margin-bottom: 5px; font-size: 11pt; border: 1px solid #ddd; }
+        
+        .flex-container { display: table; width: 100%; }
+        .flex-col { display: table-cell; width: 50%; vertical-align: top; }
+        
+        .btn-container { margin: 20px 0; text-align: center; }
+        .btn { background-color: #4CAF50; color: white; padding: 10px 20px; border: none; font-size: 11pt; cursor: pointer; font-weight: bold; margin-right: 10px; border-radius: 4px; }
+        .btn:hover { background-color: #45a049; }
+        .btn-blue { background-color: #008CBA; }
+        .btn-blue:hover { background-color: #007bb5; }
+        .btn-red { background-color: #f44336; }
+        .btn-red:hover { background-color: #da190b; }
+        
+        .rekap-section { margin-top: 40px; border-top: 3px double #333; padding-top: 20px; }
+        
+        @media print {
+            .btn-container, .rekap-section, .btn-nav-box { display: none !important; }
+            body { margin: 0; padding: 0; }
+            .container { width: 100%; max-width: 100%; padding: 0; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <button class="btn-nav" onclick="window.location.href='invoice.html'">MENU INVOICE</button>
+    <div class="btn-container btn-nav-box">
+        <button class="btn btn-blue" onclick="bukaInvoice()">MENU INVOICE</button>
+    </div>
+
+    <div class="header-title">PERINTAH KERJA BENGKEL (PKB)</div>
+    <div class="header-sub">PT DAYA ADICIPTA SANDIKA (DAYA TOYOTA)</div>
     
-    <h2>Sistem Input PKB (Perintah Kerja Bengkel)</h2>
-    <h3>Daya Toyota</h3>
-    
-    <div class="form-group">
-        <label>No. Registrasi / No. Polisi:</label>
-        <input type="text" id="noPolisi" placeholder="Contoh: B 1234 ABC" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()">
-    </div>
-    <div class="form-group">
-        <label>Nama Pemilik / Pelanggan:</label>
-        <input type="text" id="namaPelanggan" placeholder="Nama Lengkap">
-    </div>
-    <div class="form-group">
-        <label>Tipe Kendaraan:</label>
-        <input type="text" id="tipeMobil" placeholder="Contoh: Avanza, Innova, Rush">
-    </div>
-    <div class="form-group">
-        <label>Jenis Pekerjaan:</label>
-        <select id="jenisPekerjaan">
-            <option value="Servis Berkala">Servis Berkala</option>
-            <option value="Perbaikan Ringan (General Repair)">Perbaikan Ringan (General Repair)</option>
-            <option value="Perbaikan Berat (Heavy Repair)">Perbaikan Berat (Heavy Repair)</option>
-            <option value="Keluhan AC / Elektrikal">Keluhan AC / Elektrikal</option>
-            <option value="Body & Paint">Body & Paint</option>
-        </select>
-    </div>
-    <div class="form-group">
-        <label>Nama Service Advisor (SA):</label>
-        <input type="text" id="namaSA" placeholder="Nama SA yang bertugas">
+    <div class="flex-container">
+        <div class="flex-col">
+            <table class="no-border">
+                <tr><td style="width:35%">No. PKB</td><td>: <input type="text" id="no_pkb" readonly></td></tr>
+                <tr><td>Tanggal / Jam</td><td>: <input type="date" id="tgl_pkb"> <input type="time" id="jam_pkb"></td></tr>
+                <tr><td>Service Advisor</td><td>: <input type="text" id="sa_name"></td></tr>
+            </table>
+        </div>
+        <div class="flex-col">
+            <table class="no-border">
+                <tr><td style="width:35%">No. Polisi</td><td>: <input type="text" id="no_polisi" oninput="this.value = this.value.toUpperCase()"></td></tr>
+                <tr><td>Nama Pelanggan</td><td>: <input type="text" id="nama_customer"></td></tr>
+                <tr><td>Tipe / KM</td><td>: <input type="text" id="tipe_mobil" style="width:55%"> / <input type="number" id="km_mobil" style="width:35%"></td></tr>
+                <tr><td>No. Rangka</td><td>: <input type="text" id="no_rangka"></td></tr>
+            </table>
+        </div>
     </div>
     
-    <button onclick="simpanPKB()">SIMPAN DATA PKB</button>
+    <div class="section-title">PERMINTAAN PEMILIK / KELUHAN KENDARAAN</div>
+    <textarea id="keluhan_utama" rows="4" style="width:100%; box-sizing:border-box; font-family:Arial; font-size:11pt; text-transform:uppercase;"></textarea>
     
-    <hr style="margin: 30px 0;">
-    
-    <h3>Riwayat Pendaftaran PKB</h3>
-    <input type="text" id="searchPKB" class="search-box" placeholder="Cari berdasarkan No. Polisi atau Nama..." onkeyup="cariData()">
-    
+    <div class="section-title">RINCIAN ESTIMASI PEKERJAAN & SUKU CADANG</div>
     <table>
         <thead>
             <tr>
-                <th>Tanggal/Jam</th>
-                <th>No. Polisi</th>
-                <th>Nama Pelanggan</th>
-                <th>Tipe Mobil</th>
-                <th>Jenis Pekerjaan</th>
-                <th>Service Advisor</th>
-                <th>Aksi</th>
+                <th style="width:5%; text-align:center;">NO</th>
+                <th style="width:65%">DESKRIPSI PEKERJAAN / SPARE PART</th>
+                <th style="width:10%; text-align:center;">QTY</th>
+                <th style="width:20%; text-align:right;">ESTIMASI BIAYA (RP)</th>
             </tr>
         </thead>
-        <tbody id="tabelRiwayat">
-            <!-- Data dari Firebase akan muncul di sini -->
-        </tbody>
+        <tbody id="item_rows">
+            </tbody>
     </table>
+    
+    <table class="no-border" style="float:right; width:40%;">
+        <tr>
+            <td style="text-align:right; font-weight:bold; width:50%;">TOTAL ESTIMASI:</td>
+            <td style="text-align:right; font-weight:bold; border-bottom:1px solid #000;" id="grand_total">RP 0</td>
+        </tr>
+    </table>
+    <div style="clear:both;"></div>
+    
+    <div class="btn-container">
+        <button class="btn" onclick="tambahBarisBaru()">+ Tambah Baris Pekerjaan</button>
+        <button class="btn btn-blue" onclick="cetakForm()">🖨️ Cetak PKB (Ctrl + P)</button>
+    </div>
+    
+    <div class="rekap-section">
+        <h3 style="margin-bottom:10px;">Rekapitulasi Tabel Laporan Harian (Database Online)</h3>
+        <button class="btn btn-red" onclick="hapusSemuaLaporan()" style="padding:5px 10px; font-size:10pt; margin-bottom:10px;">Hapus Semua Rekap</button>
+        <button class="btn btn-blue" onclick="eksporCSV()" style="padding:5px 10px; font-size:10pt; margin-bottom:10px;">Unduh File CSV Excel</button>
+        <table style="font-size:10pt;">
+            <thead>
+                <tr>
+                    <th>Waktu Input</th>
+                    <th>No. PKB</th>
+                    <th>No. Polisi</th>
+                    <th>Pelanggan</th>
+                    <th>SA</th>
+                    <th>Tipe Mobil</th>
+                    <th>KM</th>
+                    <th>No. Rangka</th>
+                    <th>Keluhan</th>
+                    <th style="text-align:right;">Total</th>
+                </tr>
+            </thead>
+            <tbody id="tabel_laporan_body">
+                </tbody>
+        </table>
+    </div>
 </div>
 
-<!-- Ambil modul Firebase SDK -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -104,122 +139,191 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // Fungsi Simpan ke Firebase Database Online
-    window.simpanPKB = function() {
-        const noPolisi = document.getElementById('noPolisi').value.trim().toUpperCase();
-        const namaPelanggan = document.getElementById('namaPelanggan').value.trim();
-        const tipeMobil = document.getElementById('tipeMobil').value.trim();
-        const jenisPekerjaan = document.getElementById('jenisPekerjaan').value;
-        const namaSA = document.getElementById('namaSA').value.trim();
+    let listLaporan = [];
+
+    window.onload = function() {
+        initDefaultValues();
+        loadFirebaseData();
+    };
+
+    function initDefaultValues() {
+        const tglInput = document.getElementById('tgl_pkb');
+        const jamInput = document.getElementById('jam_pkb');
+        const today = new Date();
+        tglInput.value = today.toISOString().slice(0, 10);
+        jamInput.value = today.toTimeString().slice(0, 5);
         
-        if(!noPolisi || !namaPelanggan || !tipeMobil || !namaSA) {
-            alert('Mohon isi semua kolom data terlebih dahulu!');
-            return;
+        const tbody = document.getElementById('item_rows');
+        tbody.innerHTML = '';
+        for(let i=1; i<=5; i++) {
+            tbody.appendChild(createRow(i));
         }
+        hitungTotalOtomatis();
+    }
 
-        const waktuSekarang = new Date().toLocaleString('id-ID');
-        const pkbRef = ref(db, 'riwayatPKB');
-        const dataBaruRef = push(pkbRef);
+    function createRow(no) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="text-align:center; vertical-align:middle;">${no}</td>
+            <td><input type="text" class="input-desc" style="width:100%"></td>
+            <td><input type="number" class="input-qty" value="" style="text-align:center;" oninput="hitungTotalOtomatis()"></td>
+            <td><input type="number" class="input-harga" value="" style="text-align:right;" oninput="hitungTotalOtomatis()"></td>
+        `;
+        return tr;
+    }
 
-        set(dataBaruRef, {
-            waktu: waktuSekarang,
-            noPolisi: noPolisi,
-            namaPelanggan: namaPelanggan,
-            tipeMobil: tipeMobil,
-            jenisPekerjaan: jenisPekerjaan,
-            namaSA: namaSA
-        }).then(() => {
-            alert('Data PKB Berhasil Tersimpan Online!');
-            // Reset Form
-            document.getElementById('noPolisi').value = '';
-            document.getElementById('namaPelanggan').value = '';
-            document.getElementById('tipeMobil').value = '';
-            document.getElementById('namaSA').value = '';
-        }).catch((error) => {
-            alert('Gagal menyimpan: ' + error.message);
+    window.tambahBarisBaru = function() {
+        const tbody = document.getElementById('item_rows');
+        const nextNo = tbody.getElementsByTagName('tr').length + 1;
+        tbody.appendChild(createRow(nextNo));
+    };
+
+    window.hitungTotalOtomatis = function() {
+        const rows = document.getElementById('item_rows').getElementsByTagName('tr');
+        let totalAll = 0;
+        for(let i=0; i<rows.length; i++) {
+            const qty = parseFloat(rows[i].querySelector('.input-qty').value) || 0;
+            const harga = parseFloat(rows[i].querySelector('.input-harga').value) || 0;
+            totalAll += (qty * harga);
+        }
+        document.getElementById('grand_total').innerText = "RP " + totalAll.toLocaleString('id-ID');
+    };
+
+    function loadFirebaseData() {
+        // Load No PKB Terakhir
+        onValue(ref(db, 'config/last_pkb_number'), (snapshot) => {
+            let lastNo = snapshot.val() || 0;
+            let nextNo = lastNo + 1;
+            document.getElementById('no_pkb').value = "PKB-" + String(nextNo).padStart(5, '0');
+        });
+
+        // Load Rekap Tabel Laporan Realtime
+        onValue(ref(db, 'laporan_pkb'), (snapshot) => {
+            const data = snapshot.val();
+            const tbody = document.getElementById('tabel_laporan_body');
+            tbody.innerHTML = '';
+            listLaporan = [];
+            
+            if(data) {
+                Object.keys(data).forEach((key) => {
+                    const item = data[key];
+                    listLaporan.push(item);
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${item.waktu_simpan || ''}</td>
+                        <td>${item.nopkb || ''}</td>
+                        <td><b>${item.nopolisi || ''}</b></td>
+                        <td>${item.customer || ''}</td>
+                        <td>${item.sa || ''}</td>
+                        <td>${item.tipe || ''}</td>
+                        <td>${item.km || ''}</td>
+                        <td>${item.norangka || ''}</td>
+                        <td style="font-size:9pt; max-width:150px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.keluhan || ''}</td>
+                        <td style="text-align:right; font-weight:bold;">Rp ${(item.total || 0).toLocaleString('id-ID')}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#999;">Belum ada rekap data.</td></tr>';
+            }
         });
     }
 
-    // Fungsi Otomatis Mengirim Data ke Riwayat Invoice saat tombol cetak ditekan
-    window.cetakDanKirimInvoice = function(noPolisi, namaPelanggan) {
-        const waktuSekarang = new Date().toLocaleString('id-ID');
-        const cleanNoPolisi = noPolisi.replace(/\s+/g, '');
-        const autoNoInvoice = `INV-${cleanNoPolisi}`;
-
-        // Cek dulu apakah draf invoice dengan nomor polisi ini sudah ada di Firebase
-        const invRef = ref(db, 'riwayatInvoice');
+    window.cetakForm = function() {
+        const nopol = document.getElementById('no_polisi').value.trim().toUpperCase();
+        const customer = document.getElementById('nama_customer').value.trim();
+        const nopkb = document.getElementById('no_pkb').value;
         
-        const drafInvoiceRef = push(invRef);
-        set(drafInvoiceRef, {
-            waktu: waktuSekarang,
+        if(!nopol || !customer) {
+            alert("Mohon lengkapi No. Polisi dan Nama Pelanggan sebelum melakukan cetak!");
+            return;
+        }
+
+        const rows = document.getElementById('item_rows').getElementsByTagName('tr');
+        let totalAll = 0;
+        for(let i=0; i<rows.length; i++) {
+            const qty = parseFloat(rows[i].querySelector('.input-qty').value) || 0;
+            const harga = parseFloat(rows[i].querySelector('.input-harga').value) || 0;
+            totalAll += (qty * harga);
+        }
+
+        const nowStr = new Date().toLocaleString('id-ID');
+        
+        // 1. Simpan Data Rekap PKB ke Firebase
+        const newPkbRef = push(ref(db, 'laporan_pkb'));
+        const rawLastNo = parseInt(nopkb.replace("PKB-", ""));
+        
+        set(newPkbRef, {
+            waktu_simpan: nowStr,
+            nopkb: nopkb,
+            nopolisi: nopol,
+            customer: customer,
+            sa: document.getElementById('sa_name').value,
+            tipe: document.getElementById('tipe_mobil').value,
+            km: document.getElementById('km_mobil').value,
+            norangka: document.getElementById('no_rangka').value,
+            keluhan: document.getElementById('keluhan_utama').value,
+            total: totalAll
+        });
+
+        // Update Counter No PKB
+        set(ref(db, 'config/last_pkb_number'), rawLastNo);
+
+        // 2. SINKRONISASI PRESISI: Kirim Otomatis Draf Riwayat ke Tim Invoice/Part
+        const autoNoInvoice = `INV-${nopol.replace(/\s+/g, '')}`;
+        const newInvRef = push(ref(db, 'riwayatInvoice'));
+        
+        set(newInvRef, {
+            waktu: nowStr,
             noInvoice: autoNoInvoice,
-            noPolisi: noPolisi.toUpperCase(),
+            noPolisi: nopol,
             biayaJasa: 0,
             biayaPart: 0,
             totalBayar: 0
         }).then(() => {
-            // Setelah data terkirim ke database tim part, picu fungsi print bawaan browser
             window.print();
-        }).catch((err) => {
-            console.error("Gagal sinkronisasi invoice: ", err);
-            window.print(); // Tetap print jika database sibuk
+        }).catch(() => {
+            window.print();
         });
-    }
+    };
 
-    // Tampilkan Riwayat dari Firebase Secara Real-time
-    const riwayatRef = ref(db, 'riwayatPKB');
-    onValue(riwayatRef, (snapshot) => {
-        const tbody = document.getElementById('tabelRiwayat');
-        tbody.innerHTML = '';
-        const data = snapshot.val();
-        
-        if (data) {
-            Object.keys(data).forEach((key) => {
-                const item = data[key];
-                const row = `<tr>
-                    <td>${item.waktu}</td>
-                    <td><b>${item.noPolisi}</b></td>
-                    <td>${item.namaPelanggan}</td>
-                    <td>${item.tipeMobil}</td>
-                    <td>${item.jenisPekerjaan}</td>
-                    <td>${item.namaSA}</td>
-                    <td>
-                        <button class="btn-danger" onclick="hapusPKB('${key}')">Hapus</button>
-                        <button class="btn-print" onclick="cetakDanKirimInvoice('${item.noPolisi}', '${item.namaPelanggan}')">🖨️ Cetak PKB</button>
-                    </td>
-                </tr>`;
-                tbody.innerHTML += row;
-            });
-        } else {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#999;">Belum ada riwayat pendaftaran.</td></tr>';
-        }
-    });
+    window.eksporCSV = function() {
+        if(listLaporan.length === 0) { alert("Tidak ada data untuk diekspor!"); return; }
+        let csvContent = "\uFEFFWaktu Input;No PKB;No Polisi;Pelanggan;Service Advisor;Tipe Mobil;KM;No Rangka;Keluhan;Total Estimasi\n";
+        listLaporan.forEach(function(item) {
+            let row = [
+                '"' + (item.waktu_simpan || '') + '"',
+                '"' + (item.nopkb || '') + '"',
+                '"' + (item.nopolisi || '') + '"',
+                '"' + (item.customer || '').replace(/"/g, '""') + '"',
+                '"' + (item.sa || '') + '"',
+                '"' + (item.tipe || '').replace(/"/g, '""') + '"',
+                '"' + (item.km || '') + '"',
+                '"' + (item.norangka || '') + '"',
+                '"' + (item.keluhan || '').replace(/"/g, '""').replace(/\r?\n/g, ' ') + '"',
+                item.total
+            ];
+            csvContent += row.join(";") + "\n";
+        });
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute("download", "Rekap_Laporan_PKB_" + new Date().toISOString().slice(0,10) + ".csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
-    // Fungsi Hapus Data Online
-    window.hapusPKB = function(id) {
-        if(confirm('Apakah Anda yakin ingin menghapus permanen data ini?')) {
-            remove(ref(db, 'riwayatPKB/' + id));
+    window.hapusSemuaLaporan = function() {
+        if(confirm("Hapus seluruh rekap tabel laporan bawah harian online ini?")) {
+            remove(ref(db, 'laporan_pkb'));
+            set(ref(db, 'config/last_pkb_number'), 0);
         }
-    }
+    };
 
-    // Fungsi Pencarian Lokal Tabel
-    window.cariData = function() {
-        const input = document.getElementById('searchPKB').value.toUpperCase();
-        const rows = document.getElementById('tabelRiwayat').getElementsByTagName('tr');
-        for (let i = 0; i < rows.length; i++) {
-            const tdPolisi = rows[i].getElementsByTagName('td')[1];
-            const tdNama = rows[i].getElementsByTagName('td')[2];
-            if (tdPolisi || tdNama) {
-                const txtPolisi = tdPolisi.textContent || tdPolisi.innerText;
-                const txtNama = tdNama.textContent || tdNama.innerText;
-                if (txtPolisi.toUpperCase().indexOf(input) > -1 || txtNama.toUpperCase().indexOf(input) > -1) {
-                    rows[i].style.display = "";
-                } else {
-                    rows[i].style.display = "none";
-                }
-            }
-        }
-    }
+    window.bukaInvoice = function() {
+        window.location.href = 'invoice.html';
+    };
 </script>
 </body>
 </html>

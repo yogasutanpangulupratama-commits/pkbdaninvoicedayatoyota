@@ -38,7 +38,8 @@
     </div>
     <div class="form-group">
         <label>No. Polisi Kendaraan:</label>
-        <input type="text" id="noPolisiInv" placeholder="Contoh: B 1234 ABC">
+        <!-- Memaksa teks input form menjadi huruf kapital semua -->
+        <input type="text" id="noPolisiInv" placeholder="Contoh: B 1234 ABC" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()">
     </div>
     <div class="form-group">
         <label>Total Biaya Jasa Servis (Rp):</label>
@@ -61,7 +62,7 @@
             <tr>
                 <th>Tanggal Pembuatan</th>
                 <th>No. Invoice</th>
-                <th>No. Polisi</th>
+                <th>No. Polisi (Pojok Atas)</th>
                 <th>Biaya Jasa</th>
                 <th>Biaya Part</th>
                 <th>Total Pembayaran</th>
@@ -95,7 +96,7 @@
     // Fungsi Simpan Invoice Online
     window.simpanInvoice = function() {
         const noInvoice = document.getElementById('noInvoice').value.trim();
-        const noPolisi = document.getElementById('noPolisiInv').value.trim();
+        const noPolisi = document.getElementById('noPolisiInv').value.trim().toUpperCase(); // Pastikan tersimpan huruf kapital
         const biayaJasa = parseFloat(document.getElementById('biayaJasa').value) || 0;
         const biayaPart = parseFloat(document.getElementById('biayaPart').value) || 0;
         
@@ -139,10 +140,12 @@
         if (data) {
             Object.keys(data).forEach((key) => {
                 const item = data[key];
+                // Memastikan No Polisi di pojok kanan atas baris/tabel tampil huruf kapital semua
+                const upperNoPolisi = item.noPolisi ? item.noPolisi.toUpperCase() : '';
                 const row = `<tr>
                     <td>${item.waktu}</td>
                     <td><b>${item.noInvoice}</b></td>
-                    <td>${item.noPolisi}</td>
+                    <td><span style="text-transform: uppercase; font-weight: bold;">${upperNoPolisi}</span></td>
                     <td>Rp ${item.biayaJasa.toLocaleString('id-ID')}</td>
                     <td>Rp ${item.biayaPart.toLocaleString('id-ID')}</td>
                     <td><b>Rp ${item.totalBayar.toLocaleString('id-ID')}</b></td>

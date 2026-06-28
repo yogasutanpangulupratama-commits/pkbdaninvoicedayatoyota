@@ -655,7 +655,6 @@
             var tipeDiskon = row.querySelector('.item-tipe-diskon').value;
             
             if(desc.trim() !== "") {
-                // Konversi potongan harga menjadi persen desimal jika tipe input adalah Rp agar kompatibel dengan sistem hitung Invoice
                 var potPercent = 0;
                 if (tipeDiskon === "Rp" && harga > 0) {
                     potPercent = (diskonVal / (harga * qty)) * 100;
@@ -673,7 +672,7 @@
         });
 
         var payloadInvoice = {
-            vPlate: document.getElementById('in_nopol').value.toUpperCase(),
+            vPlate: document.getElementById('in_nopol').value.toUpperCase().trim(),
             cName: document.getElementById('in_nama').value,
             cTaxId: document.getElementById('in_ktp').value,
             cPhone: document.getElementById('in_hp').value,
@@ -681,16 +680,21 @@
             vType: document.getElementById('in_tipe').value,
             vKM: document.getElementById('in_km').value,
             vSA: document.getElementById('in_sa').value,
-            pkbItems: itemsArr // Menyertakan array pekerjaan PKB ke Invoice
+            pkbItems: itemsArr
         };
         localStorage.setItem('shared_pkb_to_invoice', JSON.stringify(payloadInvoice));
         
-        // PERBAIKAN: Otomatis daftarkan langsung ke database Riwayat Faktur Invoice (faktur_service_db)
+        // PERBAIKAN PRESISI: Proteksi ganda agar tidak membuat record baru jika No Polisi sudah ada
         if (payloadInvoice.vPlate.trim() !== "") {
             var historyInvoice = JSON.parse(localStorage.getItem('faktur_service_db')) || [];
             
-            // Buat ID Unik baru untuk Invoice ini
-            var invId = "id_" + Date.now();
+            // Cek apakah No Polisi ini sudah terdaftar sebelumnya di riwayat Invoice
+            var existingIndex = historyInvoice.findIndex(function(x) { 
+                return x.vPlate.toUpperCase().trim() === payloadInvoice.vPlate; 
+            });
+            
+            // Pertahankan ID lama jika ketemu, atau buat ID baru jika benar-benar kendaraan baru
+            var invId = (existingIndex > -1) ? historyInvoice[existingIndex].id : "id_" + Date.now();
             
             var invoiceDataPayload = {
                 id: invId,
@@ -703,7 +707,7 @@
                 compTaxId: "0312862253006000",
                 vType: payloadInvoice.vType,
                 vBuildDate: new Date().toLocaleDateString('id-ID'),
-                vColor: "",
+                vColor: (existingIndex > -1) ? (historyInvoice[existingIndex].vColor || "") : "",
                 vSA: payloadInvoice.vSA,
                 vKM: payloadInvoice.vKM,
                 cName: payloadInvoice.cName || "Umum",
@@ -711,17 +715,17 @@
                 cTaxId: payloadInvoice.cTaxId,
                 cPhone: payloadInvoice.cPhone,
                 cWa: payloadInvoice.cPhone,
-                jasaItems: payloadInvoice.pkbItems, // Menyimpan rincian pekerjaan PKB langsung ke riwayat jasa Invoice
-                barangItems: [],
-                dpValue: 0,
-                adminSignature: ""
+                jasaItems: payloadInvoice.pkbItems,
+                barangItems: (existingIndex > -1) ? (historyInvoice[existingIndex].barangItems || []) : [],
+                dpValue: (existingIndex > -1) ? (historyInvoice[existingIndex].dpValue || 0) : 0,
+                adminSignature: (existingIndex > -1) ? (historyInvoice[existingIndex].adminSignature || "") : ""
             };
             
-            // Cek dan hapus data duplikat dengan nomor plat yang sama agar riwayat terbaru yang tersimpan
-            var existingIndex = historyInvoice.findIndex(function(x) { return x.vPlate === payloadInvoice.vPlate; });
             if (existingIndex > -1) {
+                // UPDATE (TINPA) jika No Polisi sama
                 historyInvoice[existingIndex] = invoiceDataPayload;
             } else {
+                // TAMBAH BARU jika No Polisi belum pernah ada
                 historyInvoice.push(invoiceDataPayload);
             }
             

@@ -676,7 +676,7 @@
         if (sharedData) {
             try {
                 const pkb = JSON.parse(sharedData);
-                if(pkb.vPlate) document.getElementById("v-plate").value = pkb.vPlate;
+                if(pkb.vPlate) document.getElementById("v-plate").value = pkb.vPlate.toUpperCase();
                 if(pkb.cName) document.getElementById("c-name").value = pkb.cName;
                 if(pkb.cTaxId) document.getElementById("c-tax-id").value = pkb.cTaxId;
                 if(pkb.cPhone) {
@@ -688,10 +688,30 @@
                 if(pkb.vKM) document.getElementById("v-km").value = pkb.vKM;
                 if(pkb.vSA) document.getElementById("v-sa").value = pkb.vSA;
                 
-                // Hapus data temporary setelah berhasil di-consume agar tidak overwriting di form baru berikutnya
+                // PERBAIKAN: Pecah data pekerjaan dari PKB dan petakan masuk ke dalam baris tabel Jasa Invoice
+                if(pkb.pkbItems && pkb.pkbItems.length > 0) {
+                    const tbodyJasa = document.querySelector("#table-jasa tbody");
+                    tbodyJasa.innerHTML = ""; // Bersihkan baris kosong template bawaan awal
+                    
+                    pkb.pkbItems.forEach(function(item) {
+                        var tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td class="center-col row-num"></td>
+                            <td><input type="text" class="input-field job-name" value="${item.name.toUpperCase()}" placeholder="Nama Pekerjaan / Jasa"></td>
+                            <td class="num-col"><input type="number" class="input-field input-num input-price" value="${item.price}" oninput="calculateAll()"></td>
+                            <td class="num-col"><input type="number" class="input-field input-num input-pot" value="${item.pot}" step="0.01" oninput="calculateAll()"></td>
+                            <td class="num-col"><input type="number" class="input-field input-num input-total" value="0" readonly style="background:#f9f9f9;"></td>
+                            <td class="center-col no-print"><button class="btn-delete" onclick="deleteRow(this)">×</button></td>
+                        `;
+                        tbodyJasa.appendChild(tr);
+                    });
+                    reindexRows("table-jasa");
+                }
+                
+                // Hapus data kiriman sementara dari localStorage agar tidak bentrok saat membuat form baru
                 localStorage.removeItem('shared_pkb_to_invoice');
             } catch (e) {
-                console.error("Gagal memetakan integrasi data PKB:", e);
+                console.error("Gagal memetakan integrasi rincian tabel pekerjaan PKB:", e);
             }
         }
     }

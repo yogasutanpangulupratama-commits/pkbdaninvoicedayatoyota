@@ -307,6 +307,7 @@
         hitungTotal();
     }
 
+    // Fungsi format untuk input diskon
     function formatDiskon(input) {
         var row = input.closest('tr');
         var tipe = row.querySelector('.item-tipe-diskon').value;
@@ -317,7 +318,7 @@
         } else {
             var num = parseFloat(value);
             if (tipe === "%") {
-                if (num > 100) num = 100;
+                if (num > 100) num = 100; // Proteksi persen tidak > 100
                 input.value = num;
             } else {
                 input.value = num.toLocaleString('id-ID');
@@ -385,6 +386,7 @@
         for (var i = 0; i < container.rows.length; i++) { container.rows[i].cells[0].innerText = i + 1; }
     }
 
+    // Perubahan logika hitung total akumulasi Qty dan Diskon (% atau Rp)
     function hitungTotal() {
         var rows = document.querySelectorAll('#work-rows-container tr');
         var total = 0;
@@ -405,7 +407,7 @@
             }
             
             var netRow = subTotal - potongan;
-            if(netRow < 0) netRow = 0;
+            if(netRow < 0) netRow = 0; // Proteksi agar tidak minus
             total += netRow;
         });
         
@@ -423,6 +425,7 @@
         hitungTotal();
     }
 
+    // Fungsi bantu menyimpan data pkb ter-update agar langsung terintegrasi dengan invoice
     function sinkronisasiKeInvoice() {
         var payloadInvoice = {
             vPlate: document.getElementById('in_nopol').value,
@@ -482,7 +485,9 @@
             dbSimpanDataCloud(nopkb, payload);
         }
         
+        // Integrasikan secara presisi ke Data Invoice saat disave/dicetak
         sinkronisasiKeInvoice();
+        
         tampilkanLaporan();
         return true;
     }
@@ -634,6 +639,7 @@
         } 
     }
     
+    // Fungsi untuk memicu lompat ke invoice.html dalam folder yang sama
     function bukaHalamanInvoice() {
         sinkronisasiKeInvoice();
         window.location.href = 'invoice.html';

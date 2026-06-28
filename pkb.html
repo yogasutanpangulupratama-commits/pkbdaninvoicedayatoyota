@@ -244,13 +244,12 @@
 </div>
 
 <!-- ========================================== -->
-<!-- 1. KODE UTAMA FIREBASE REALTIME DATABASE -->
+<!-- 1. KODE UTAMA SINKRONISASI & CADANGAN CLOUD -->
 <!-- ========================================== -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, refFromURL, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // Konfigurasi aplikasi web Firebase kamu
     const firebaseConfig = {
         apiKey: "AIzaSyBvgLFjfpyvHf3MCgrmJ_nPgkM4uyerXuQ",
         authDomain: "pkbmanualinvoice.firebaseapp.com",
@@ -259,122 +258,37 @@
         messagingSenderId: "612617167676",
         appId: "1:612617167676:web:083f0d87d0e172140f3439",
         measurementId: "G-P4846QRWEW",
-        databaseURL: "https://pkbmanualinvoice-default-rtdb.asia-southeast1.firebasedatabase.app" // Ditambahkan URL Asia-Southeast1 (Singapore)
+        databaseURL: "https://pkbmanualinvoice-default-rtdb.asia-southeast1.firebasedatabase.app"
     };
 
-    // Inisialisasi Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    // Array lokal sebagai penampung sinkronisasi database
-    let localLaporanArr = [];
-
-    // Mengambil data dari Firebase Realtime Database secara realtime
-    const laporanRef = ref(db, 'laporan_pkb');
-    onValue(laporanRef, (snapshot) => {
-        const data = snapshot.val();
-        localLaporanArr = [];
-        
-        if (data) {
-            // Ubah objek Firebase menjadi array urutan berdasarkan nomor PKB
-            Object.keys(data).forEach((key) => {
-                localLaporanArr.push(data[key]);
-            });
-            // Urutkan berdasarkan no pkb agar rapi
-            localLaporanArr.sort((a, b) => parseInt(a.nopkb) - parseInt(b.nopkb));
-        }
-        
-        // Simpan cadangan ke localStorage agar fungsi bawaan (seperti CSV) tidak bermasalah
-        localStorage.setItem('laporan_final_datetime', JSON.stringify(localLaporanArr));
-        
-        // Atur nomor PKB berikutnya secara otomatis berdasarkan data terakhir di database
-        let lastNo = 0;
-        if(localLaporanArr.length > 0) {
-            const maxNo = Math.max(...localLaporanArr.map(o => parseInt(o.nopkb) || 0));
-            lastNo = maxNo;
-        }
-        localStorage.setItem('last_pkb_number', lastNo);
-        document.getElementById('in_nopkb').value = String(lastNo + 1).padStart(4, '0');
-        
-        // Render tabel laporan komponen bawah harian
-        tampilkanLaporanHTML(localLaporanArr);
-    });
-
-    // Ekspos fungsi operasional ke global object (window) agar onclick HTML berfungsi
-    window.simpanKeLaporan = function() {
-        var nopol = document.getElementById('in_nopol').value; 
-        var nopkb = document.getElementById('in_nopkb').value; 
-        var nama = document.getElementById('in_nama').value; 
-        var tipe = document.getElementById('in_tipe').value; 
-        var keluhan = document.getElementById('in_keluhan').value;
-        var ktp = document.getElementById('in_ktp').value; 
-        var bengkel = document.getElementById('in_bengkel').value;
-        var hp = document.getElementById('in_hp').value; 
-        var alamat = document.getElementById('in_alamat').value; 
-        var sa = document.getElementById('in_sa').value; 
-        var km = document.getElementById('in_km').value; 
-        var norangka = document.getElementById('in_norangka').value; 
-        var tgl_terima = document.getElementById('in_tgl_terima').value; 
-        var jam_terima = document.getElementById('in_jam_terima').value; 
-        var tgl_serah = document.getElementById('in_tgl_serah').value; 
-        var jam_serah = document.getElementById('in_jam_serah').value; 
-        var stnk = document.getElementById('in_stnk').value; 
-        var buku = document.getElementById('in_buku').value; 
-        var partbekas = document.getElementById('in_partbekas').value;
-        
-        var rows = document.querySelectorAll('#work-rows-container tr');
-        var itemsArr = [];
-        var total = 0;
-        
-        rows.forEach(function(row) {
-            var desc = row.querySelector('.item-desc').value;
-            var qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-            var harga = window.getPureNumber(row.querySelector('.item-harga').value);
-            var diskonVal = window.getPureNumber(row.querySelector('.item-diskon').value);
-            var tipeDiskon = row.querySelector('.item-tipe-diskon').value;
-            
-            var subTotal = harga * qty;
-            var potongan = (tipeDiskon === "%") ? (subTotal * (diskonVal / 100)) : diskonVal;
-            var netRow = subTotal - potongan;
-            if(netRow < 0) netRow = 0;
-            total += netRow;
-            
-            itemsArr.push({ desc: desc, qty: qty, harga: harga, diskon: diskonVal, tipe_diskon: tipeDiskon });
-        });
-
-        if(!nopol || !nopkb || !nama) { 
-            alert("⚠️ Gagal! Mohon lengkapi No Polisi, No PKB, dan Nama Pelanggan."); 
-            return false; 
-        }
-        
-        var payload = { nopkb: nopkb, nopol: nopol, nama: nama, ktp: ktp, bengkel: bengkel, tipe: tipe, keluhan: keluhan, total: total, hp: hp, alamat: alamat, sa: sa, km: km, norangka: norangka, tgl_terima: tgl_terima, jam_terima: jam_terima, tgl_serah: tgl_serah, jam_serah: jam_serah, stnk: stnk, buku: buku, partbekas: partbekas, items: itemsArr };
-        
-        // Simpan langsung ke node spesifik berdasarkan ID 'nopkb' di Firebase cloud database
-        set(ref(db, 'laporan_pkb/' + nopkb), payload)
-            .then(() => {
-                window.sinkronisasiKeInvoice();
-                alert("💾 Data PKB M-" + nopkb + " Berhasil Disimpan ke Cloud Firebase & Sinkron!");
-            })
-            .catch((error) => {
-                alert("❌ Gagal menyimpan ke server: " + error.message);
-            });
-            
-        return true;
+    // Inisialisasi Firebase secara aman (jika project aktif)
+    let db = null;
+    try {
+        const app = initializeApp(firebaseConfig);
+        db = getDatabase(app);
+    } catch(e) {
+        console.log("Firebase Cloud Mode Cadangan Aktif.");
     }
 
-    window.hapusSemuaLaporan = function() {
-        if(confirm("Apakah Anda yakin ingin menghapus SELURUH data laporan dari Cloud Firebase?")) {
-            remove(ref(db, 'laporan_pkb'))
-                .then(() => {
-                    localStorage.removeItem('last_pkb_number');
-                    alert("🗑️ Semua data laporan di Firebase telah dibersihkan.");
-                });
-        }
+    // Ekspos fungsi simpan agar digabung secara presisi dengan sistem lokal asli
+    window.simpanKeFirebaseCloud = function(nopkb, payload) {
+        if (!db) return;
+        set(ref(db, 'laporan_pkb/' + nopkb), payload)
+            .then(() => console.log("Cloud Backup Sukses."))
+            .catch((err) => console.log("Cloud Error / Project Disabled. Menggunakan Penyimpanan Lokal Penuh."));
+    }
+
+    // Ekspos fungsi hapus cloud agar sinkron dengan tombol hapus bawah
+    window.hapusSemuaLaporanCloud = function() {
+        if (!db) return;
+        remove(ref(db, 'laporan_pkb'))
+            .then(() => console.log("Cloud Data Berhasil Dibersihkan."))
+            .catch((err) => console.log("Cloud Delete Error."));
     }
 </script>
 
 <!-- ========================================== -->
-<!-- 2. KODE INTERAKSI HALAMAN & LOGIKA FORM -->
+<!-- 2. KODE INTERAKSI HALAMAN & LOGIKA FORM ASLI -->
 <!-- ========================================== -->
 <script>
     function syncKeluhanPrint(val) {
@@ -442,6 +356,12 @@
         return parseFloat(pure) || 0;
     }
 
+    function aturNoPKBOtomatis() {
+        var currentNo = localStorage.getItem('last_pkb_number') || 0;
+        var nextNo = parseInt(currentNo) + 1;
+        document.getElementById('in_nopkb').value = String(nextNo).padStart(4, '0');
+    }
+
     function aturWaktuOtomatis() {
         var sekarang = new Date();
         var formatTanggal = sekarang.getFullYear() + '-' + String(sekarang.getMonth() + 1).padStart(2, '0') + '-' + String(sekarang.getDate()).padStart(2, '0');
@@ -493,38 +413,87 @@
         document.getElementById('txt_total').innerText = total.toLocaleString('id-ID');
     }
 
-    function resetForm() {
-        document.getElementById('in_nopol').value = ''; document.getElementById('in_nama').value = ''; document.getElementById('in_ktp').value = ''; document.getElementById('in_hp').value = ''; document.getElementById('in_alamat').value = ''; document.getElementById('in_bengkel').value = ''; document.getElementById('in_sa').innerHTML = '<option value="">-- PILIH SA --</option>'; document.getElementById('in_tipe').value = ''; document.getElementById('in_km').value = ''; document.getElementById('in_norangka').value = ''; document.getElementById('in_keluhan').value = ''; document.getElementById('in_stnk').selectedIndex = 0; document.getElementById('in_buku').selectedIndex = 0; document.getElementById('in_partbekas').selectedIndex = 0;
-        document.getElementById('in_tgl_serah').value = ''; document.getElementById('in_jam_serah').value = ''; 
-        document.getElementById('lbl_keluhan_print').innerHTML = '';
-        document.getElementById('lbl_sa_signature').innerText = '( NAMA SA )';
-        aturWaktuOtomatis();
+    function simpanKeLaporan() {
+        var nopol = document.getElementById('in_nopol').value; 
+        var nopkb = document.getElementById('in_nopkb').value; 
+        var nama = document.getElementById('in_nama').value; 
+        var tipe = document.getElementById('in_tipe').value; 
+        var keluhan = document.getElementById('in_keluhan').value;
+        var ktp = document.getElementById('in_ktp').value; 
+        var bengkel = document.getElementById('in_bengkel').value;
+        var hp = document.getElementById('in_hp').value; 
+        var alamat = document.getElementById('in_alamat').value; 
+        var sa = document.getElementById('in_sa').value; 
+        var km = document.getElementById('in_km').value; 
+        var norangka = document.getElementById('in_norangka').value; 
+        var tgl_terima = document.getElementById('in_tgl_terima').value; 
+        var jam_terima = document.getElementById('in_jam_terima').value; 
+        var tgl_serah = document.getElementById('in_tgl_serah').value; 
+        var jam_serah = document.getElementById('in_jam_serah').value; 
+        var stnk = document.getElementById('in_stnk').value; 
+        var buku = document.getElementById('in_buku').value; 
+        var partbekas = document.getElementById('in_partbekas').value;
         
-        // Membaca no urut PKB otomatis yang baru dari local cache database
-        var currentNo = localStorage.getItem('last_pkb_number') || 0;
-        document.getElementById('in_nopkb').value = String(parseInt(currentNo) + 1).padStart(4, '0');
+        var rows = document.querySelectorAll('#work-rows-container tr');
+        var itemsArr = [];
+        var total = 0;
         
-        document.getElementById('work-rows-container').innerHTML = '<tr><td style="text-align: center; vertical-align: middle;">1</td><td><input type="text" class="item-desc" placeholder="Ketik jasa atau part di sini..."></td><td><input type="number" class="item-qty" value="1" min="1" oninput="hitungTotal()" style="text-align: center; width: 100%;"></td><td><input type="text" class="item-harga" oninput="formatCurrency(this)" placeholder="Rp 0" style="text-align: right;"></td><td><div style="display: flex; gap: 2px; align-items: center;"><input type="text" class="item-diskon" oninput="formatDiskon(this)" placeholder="0" style="text-align: right; width: 65%;"><select class="item-tipe-diskon" onchange="hitungTotal()" style="width: 35%; padding: 4px 2px;"><option value="%">%</option><option value="Rp">Rp</option></select></div></td><td style="text-align: center; vertical-align: middle;" class="action-col"><button type="button" class="btn-del" onclick="hapusBarisTertentu(this)">❌</button></td></tr>';
-        hitungTotal();
-    }
+        rows.forEach(function(row) {
+            var desc = row.querySelector('.item-desc').value;
+            var qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+            var harga = getPureNumber(row.querySelector('.item-harga').value);
+            var diskonVal = getPureNumber(row.querySelector('.item-diskon').value);
+            var tipeDiskon = row.querySelector('.item-tipe-diskon').value;
+            
+            var subTotal = harga * qty;
+            var potongan = (tipeDiskon === "%") ? (subTotal * (diskonVal / 100)) : diskonVal;
+            var netRow = subTotal - potongan;
+            if(netRow < 0) netRow = 0;
+            total += netRow;
+            
+            itemsArr.push({ desc: desc, qty: qty, harga: harga, diskon: diskonVal, tipe_diskon: tipeDiskon });
+        });
 
-    function sinkronisasiKeInvoice() {
-        var payloadInvoice = {
-            vPlate: document.getElementById('in_nopol').value,
-            cName: document.getElementById('in_nama').value,
-            cTaxId: document.getElementById('in_ktp').value,
-            cPhone: document.getElementById('in_hp').value,
-            cAddress: document.getElementById('in_alamat').value,
-            vType: document.getElementById('in_tipe').value,
-            vKM: document.getElementById('in_km').value,
-            vSA: document.getElementById('in_sa').value
-        };
-        localStorage.setItem('shared_pkb_to_invoice', JSON.stringify(payloadInvoice));
+        if(!nopol || !nopkb || !nama) { 
+            alert("⚠️ Gagal! Mohon lengkapi No Polisi, No PKB, dan Nama Pelanggan."); 
+            return false; 
+        }
+        
+        var dataLaporan = JSON.parse(localStorage.getItem('laporan_final_datetime')) || [];
+        var existingIndex = dataLaporan.findIndex(function(x) { return x.nopkb === nopkb; });
+        var payload = { nopkb: nopkb, nopol: nopol, nama: nama, ktp: ktp, bengkel: bengkel, tipe: tipe, keluhan: keluhan, total: total, hp: hp, alamat: alamat, sa: sa, km: km, norangka: norangka, tgl_terima: tgl_terima, jam_terima: jam_terima, tgl_serah: tgl_serah, jam_serah: jam_serah, stnk: stnk, buku: buku, partbekas: partbekas, items: itemsArr };
+        
+        if(existingIndex > -1) {
+            dataLaporan[existingIndex] = payload;
+        } else {
+            dataLaporan.push(payload);
+            
+            // Simpan angka ID PKB tertinggi ke penampung local urut otomatis
+            var currentMax = parseInt(localStorage.getItem('last_pkb_number')) || 0;
+            if (parseInt(nopkb) > currentMax) {
+                localStorage.setItem('last_pkb_number', parseInt(nopkb));
+            }
+        }
+        
+        localStorage.setItem('laporan_final_datetime', JSON.stringify(dataLaporan));
+        
+        // Jalankan sinkronisasi cloud cadangan ke Firebase
+        if (window.simpanKeFirebaseCloud) {
+            window.simpanKeFirebaseCloud(nopkb, payload);
+        }
+        
+        sinkronisasiKeInvoice();
+        tampilkanLaporan();
+        
+        alert("💾 Data PKB M-" + nopkb + " Berhasil Disimpan!");
+        
+        // Update No urut input form berikutnya langsung secara otomatis setelah simpan sukses
+        aturNoPKBOtomatis();
+        return true;
     }
 
     function cetakDanSimpan() {
-        // Memicu submit Firebase, jika validasi lolos cetak jendela dimunculkan
-        var statusSimpan = window.simpanKeLaporan();
+        var statusSimpan = simpanKeLaporan();
         if(statusSimpan) { window.print(); }
     }
 
@@ -580,13 +549,14 @@
         }
         hitungTotal();
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        alert("📋 Data PKB M-" + nopkb + " berhasil dimuat ke formulir! Anda bisa mengubah atau menambahkan pekerjaan lalu klik simpan kembali.");
+        alert("📋 Data PKB M-" + nopkb + " berhasil dimuat!");
     }
 
-    function tampilkanLaporanHTML(dataLaporan) {
+    function tampilkanLaporan() {
+        var dataLaporan = JSON.parse(localStorage.getItem('laporan_final_datetime')) || []; 
         var rowsHtml = "";
-        if (!dataLaporan || dataLaporan.length === 0) { 
-            rowsHtml = "<tr><td colspan='8' style='text-align:center; color:#999;'>Belum ada data rekap penerimaan kendaraan di server cloud.</td></tr>"; 
+        if (dataLaporan.length === 0) { 
+            rowsHtml = "<tr><td colspan='8' style='text-align:center; color:#999;'>Belum ada data rekap penerimaan kendaraan.</td></tr>"; 
         } else { 
             for(var i = 0; i < dataLaporan.length; i++) { 
                 var cleanPhone = (dataLaporan[i].hp || '').replace(/[^0-9]/g, '');
@@ -646,17 +616,55 @@
         document.body.removeChild(link);
     }
 
+    function resetForm() {
+        document.getElementById('in_nopol').value = ''; document.getElementById('in_nama').value = ''; document.getElementById('in_ktp').value = ''; document.getElementById('in_hp').value = ''; document.getElementById('in_alamat').value = ''; document.getElementById('in_bengkel').value = ''; document.getElementById('in_sa').innerHTML = '<option value="">-- PILIH SA --</option>'; document.getElementById('in_tipe').value = ''; document.getElementById('in_km').value = ''; document.getElementById('in_norangka').value = ''; document.getElementById('in_keluhan').value = ''; document.getElementById('in_stnk').selectedIndex = 0; document.getElementById('in_buku').selectedIndex = 0; document.getElementById('in_partbekas').selectedIndex = 0;
+        document.getElementById('in_tgl_serah').value = ''; document.getElementById('in_jam_serah').value = ''; 
+        document.getElementById('lbl_keluhan_print').innerHTML = '';
+        document.getElementById('lbl_sa_signature').innerText = '( NAMA SA )';
+        aturWaktuOtomatis();
+        aturNoPKBOtomatis();
+        document.getElementById('work-rows-container').innerHTML = '<tr><td style="text-align: center; vertical-align: middle;">1</td><td><input type="text" class="item-desc" placeholder="Ketik jasa atau part di sini..."></td><td><input type="number" class="item-qty" value="1" min="1" oninput="hitungTotal()" style="text-align: center; width: 100%;"></td><td><input type="text" class="item-harga" oninput="formatCurrency(this)" placeholder="Rp 0" style="text-align: right;"></td><td><div style="display: flex; gap: 2px; align-items: center;"><input type="text" class="item-diskon" oninput="formatDiskon(this)" placeholder="0" style="text-align: right; width: 65%;"><select class="item-tipe-diskon" onchange="hitungTotal()" style="width: 35%; padding: 4px 2px;"><option value="%">%</option><option value="Rp">Rp</option></select></div></td><td style="text-align: center; vertical-align: middle;" class="action-col"><button type="button" class="btn-del" onclick="hapusBarisTertentu(this)">❌</button></td></tr>';
+        hitungTotal();
+    }
+
+    // Pemetaan nama fungsi baru agar sesuai dengan pemicu tag button di baris paling bawah tabel HTML
+    function hapusSemuaLaporan() {
+        if(confirm("Hapus seluruh rekap tabel laporan bawah harian ini?")) {
+            localStorage.removeItem('laporan_final_datetime');
+            localStorage.removeItem('last_pkb_number');
+            
+            if (window.hapusSemuaLaporanCloud) {
+                window.hapusSemuaLaporanCloud();
+            }
+            
+            tampilkanLaporan();
+            aturNoPKBOtomatis();
+        }
+    }
+
+    function sinkronisasiKeInvoice() {
+        var payloadInvoice = {
+            vPlate: document.getElementById('in_nopol').value,
+            cName: document.getElementById('in_nama').value,
+            cTaxId: document.getElementById('in_ktp').value,
+            cPhone: document.getElementById('in_hp').value,
+            cAddress: document.getElementById('in_alamat').value,
+            vType: document.getElementById('in_tipe').value,
+            vKM: document.getElementById('in_km').value,
+            vSA: document.getElementById('in_sa').value
+        };
+        localStorage.setItem('shared_pkb_to_invoice', JSON.stringify(payloadInvoice));
+    }
+
     function bukaHalamanInvoice() {
         sinkronisasiKeInvoice();
         window.location.href = 'invoice.html';
     }
 
-    // Set utility global helper agar dibaca script module Firebase
-    window.getPureNumber = getPureNumber;
-
     window.onload = function() { 
         aturWaktuOtomatis(); 
-        // Data laporan HTML & No PKB otomatis kini dikendalikan oleh pendengar onValue Firebase di atas.
+        aturNoPKBOtomatis(); 
+        tampilkanLaporan();
     };
 </script>
 </body>

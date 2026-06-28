@@ -242,7 +242,11 @@
         <button type="button" class="btn btn-red" style="font-size: 10px; padding: 3px 8px;" onclick="hapusSemuaLaporan()">🗑️ Kosongkan Semua Riwayat Laporan</button>
     </div>
 </div>
+
 <script>
+    // Penampung global fungsi Firebase yang diekspos dari type="module"
+    var dbSimpanDataCloud, dbHapusDataCloud;
+
     function syncKeluhanPrint(val) {
         var formatted = val.replace(/\n/g, '<br>');
         document.getElementById('lbl_keluhan_print').innerHTML = formatted || '-';
@@ -265,7 +269,7 @@
                 "I PUTU INDRA",
                 "RIDUANSYAH YUDHA",
                 "SLAMET",
-		"IMRON"
+                "IMRON"
             ];
         } else if (bengkel === "S002") {
             listSA = [
@@ -303,7 +307,6 @@
         hitungTotal();
     }
 
-    // Fungsi format untuk input diskon
     function formatDiskon(input) {
         var row = input.closest('tr');
         var tipe = row.querySelector('.item-tipe-diskon').value;
@@ -314,7 +317,7 @@
         } else {
             var num = parseFloat(value);
             if (tipe === "%") {
-                if (num > 100) num = 100; // Proteksi persen tidak > 100
+                if (num > 100) num = 100;
                 input.value = num;
             } else {
                 input.value = num.toLocaleString('id-ID');
@@ -335,7 +338,6 @@
         document.getElementById('in_nopkb').value = String(nextNo).padStart(4, '0');
     }
 
-    fn = aturWaktuOtomatis;
     function aturWaktuOtomatis() {
         var sekarang = new Date();
         var tahun = sekarang.getFullYear();
@@ -383,7 +385,6 @@
         for (var i = 0; i < container.rows.length; i++) { container.rows[i].cells[0].innerText = i + 1; }
     }
 
-    // Perubahan logika hitung total akumulasi Qty dan Diskon (% atau Rp)
     function hitungTotal() {
         var rows = document.querySelectorAll('#work-rows-container tr');
         var total = 0;
@@ -404,7 +405,7 @@
             }
             
             var netRow = subTotal - potongan;
-            if(netRow < 0) netRow = 0; // Proteksi agar tidak minus
+            if(netRow < 0) netRow = 0;
             total += netRow;
         });
         
@@ -422,7 +423,6 @@
         hitungTotal();
     }
 
-    // Fungsi bantu menyimpan data pkb ter-update agar langsung terintegrasi dengan invoice
     function sinkronisasiKeInvoice() {
         var payloadInvoice = {
             vPlate: document.getElementById('in_nopol').value,
@@ -477,9 +477,12 @@
         
         localStorage.setItem('laporan_final_datetime', JSON.stringify(dataLaporan));
         
-        // Integrasikan secara presisi ke Data Invoice saat disave/dicetak
-        sinkronisasiKeInvoice();
+        // Pemicu Simpan ke Cloud Firebase Database
+        if(typeof dbSimpanDataCloud === 'function') {
+            dbSimpanDataCloud(nopkb, payload);
+        }
         
+        sinkronisasiKeInvoice();
         tampilkanLaporan();
         return true;
     }
@@ -616,9 +619,21 @@
         document.body.removeChild(link);
     }
 
-    function hapusSemuaLaporan() { if(confirm("Hapus seluruh rekap tabel laporan bawah harian ini?")) { localStorage.removeItem('laporan_final_datetime'); localStorage.removeItem('last_pkb_number'); tampilkanLaporan(); aturNoPKBOtomatis(); } }
+    function hapusSemuaLaporan() { 
+        if(confirm("Hapus seluruh rekap tabel laporan bawah harian ini?")) { 
+            localStorage.removeItem('laporan_final_datetime'); 
+            localStorage.removeItem('last_pkb_number'); 
+            
+            // Pemicu hapus semua data di Cloud Firebase Database
+            if(typeof dbHapusDataCloud === 'function') {
+                dbHapusDataCloud();
+            }
+            
+            tampilkanLaporan(); 
+            aturNoPKBOtomatis(); 
+        } 
+    }
     
-    // Fungsi untuk memicu lompat ke invoice.html dalam folder yang sama
     function bukaHalamanInvoice() {
         sinkronisasiKeInvoice();
         window.location.href = 'invoice.html';
@@ -626,14 +641,14 @@
 
     window.onload = function() { aturWaktuOtomatis(); aturNoPKBOtomatis(); tampilkanLaporan(); };
 </script>
-	<!-- Tempatkan kode ini tepat di atas tag penutup </body> -->
 
+<!-- MODUL UTAMA INTEGRASI FIREBASE CLOUD REALTIME DATABASE -->
 <script type="module">
-  // 1. Import library Firebase core & analytics menggunakan URL CDN resmi
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+  // Import modul Realtime Database yang dibutuhkan untuk sinkronisasi data antar device
+  import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-  // 2. Konfigurasi proyek Firebase milikmu sendiri
   const firebaseConfig = {
     apiKey: "AIzaSyDhHmuJjcJn4weiMYSFTnsdetqkYut62Ys",
     authDomain: "pkbmanualdaninvoice.firebaseapp.com",
@@ -641,14 +656,64 @@
     storageBucket: "pkbmanualdaninvoice.firebasestorage.app",
     messagingSenderId: "812674696678",
     appId: "1:812674696678:web:19ef84fdeaa645bf6e4227",
-    measurementId: "G-1YCZQ9TNHZ"
+    measurementId: "G-1YCZQ9TNHZ",
+    databaseURL: "https://pkbmanualdaninvoice-default-rtdb.firebaseio.com"
   };
 
-  // 3. Inisialisasi Firebase agar terhubung ke aplikasi web
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app);
+  const db = getDatabase(app);
 
-  console.log("Firebase pkbmanualdaninvoice berhasil online!");
+  console.log("Firebase Cloud pkbmanualdaninvoice Berhasil Terhubung!");
+
+  // Fungsi Ekspos Global untuk Menyimpan Data Form ke Firebase Realtime Database
+  dbSimpanDataCloud = function(nopkb, payload) {
+    set(ref(db, 'laporan_pkb/' + nopkb), payload)
+      .then(() => {
+         console.log("Data Cloud M-" + nopkb + " Berhasil Disinkronkan!");
+      })
+      .catch((error) => {
+         console.error("Gagal sinkronisasi data cloud: ", error);
+      });
+  };
+
+  // Fungsi Ekspos Global untuk Menghapus Seluruh Riwayat Laporan di Firebase
+  dbHapusDataCloud = function() {
+    remove(ref(db, 'laporan_pkb'))
+      .then(() => {
+         console.log("Semua Riwayat Data Cloud Berhasil Dikosongkan!");
+      })
+      .catch((error) => {
+         console.error("Gagal mengosongkan data cloud: ", error);
+      });
+  };
+
+  // Sinkronisasi Dua Arah: Ambil otomatis data dari Firebase ke Tabel Rekap Lokal saat halaman dibuka/di-update device lain
+  const pkbRef = ref(db, 'laporan_pkb');
+  onValue(pkbRef, (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      // Konversi objek database Firebase kembali ke bentuk Array untuk dicocokkan dengan struktur bawaan sistem
+      const arrayLaporan = Object.keys(data).map(key => data[key]);
+      
+      // Simpan salinan terbaru ke localStorage agar fitur Cetak, CSV, dan Modifikasi Baris bawaan tetap berjalan mulus
+      localStorage.setItem('laporan_final_datetime', JSON.stringify(arrayLaporan));
+      
+      // Update nomor pkb terakhir otomatis berdasarkan data cloud paling update
+      const listNoPKB = arrayLaporan.map(x => parseInt(x.nopkb) || 0);
+      if(listNoPKB.length > 0) {
+         const maxNo = Math.max(...listNoPKB);
+         localStorage.setItem('last_pkb_number', maxNo);
+         // Sinkronkan input No PKB baru di form atas jika belum diisi data manual
+         const currentInputPKB = document.getElementById('in_nopkb').value;
+         if(!currentInputPKB || parseInt(currentInputPKB) <= maxNo) {
+            document.getElementById('in_nopkb').value = String(maxNo + 1).padStart(4, '0');
+         }
+      }
+      
+      tampilkanLaporan();
+    }
+  });
 </script>
 </body>
 </html>

@@ -31,6 +31,10 @@
         .clickable-row { cursor: pointer; }
         .clickable-row:hover { background-color: #f0f4f8; }
         
+        /* Gaya baru untuk filter pencarian & kotak teks ringkasan */
+        .search-filter-box { width: 100%; padding: 8px; margin-bottom: 12px; font-size: 11pt; border: 2px solid #1a365d; border-radius: 4px; box-sizing: border-box; }
+        .summary-sa-box { margin-bottom: 15px; padding: 10px; background: #f8fafc; border-left: 4px solid #1a365d; font-weight: bold; line-height: 1.6; font-size: 11pt; }
+        
         .legal-text { font-size: 8.5pt; border-bottom: 1px solid #000; border-top: 1px solid #000; padding: 5px; line-height: 1.25; margin-top: 5px; text-align: justify; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .legal-text ul { margin: 2px 0 2px 12px; padding: 0; }
         .note-footer { margin-top: 10px; border: 1px dashed #000; padding: 6px; background-color: #fff; font-size: 10pt; line-height: 1.3; text-align: center; }
@@ -41,7 +45,7 @@
         .wa-link:hover { color: #2f855a; }
 
         @media print {
-            .admin-panel, .btn, .btn-small, .report-section, .btn-red, #btn-tambah, .btn-del, td.action-col, th.action-col { display: none !important; }
+            .admin-panel, .btn, .btn-small, .report-section, .btn-red, #btn-tambah, .btn-del, td.action-col, th.action-col, .summary-sa-box, .search-filter-box { display: none !important; }
             body { margin: 0; padding: 0; }
             .container { max-width: 100%; }
             th, td { border-bottom: 1px solid #000 !important; border-top: 1px solid #000 !important; }
@@ -209,7 +213,7 @@
         </div>
         <div>
             Apabila dalam waktu 2 hari setelah perbaikan part-bekas tidak diambil maka kami berhak melakukan pemusnahan part-bekas tersebut.<br>
-            Apabila dalam 7(tujuh) hari kendaraan tidak diambil dari bengkel PT Daya Adicipta Sandika, maka kami akan kenakan biaya tambahan sebesar Rp. 10.000,- (sepuluh ribu rupiah) perhari dan kami tidak bertanggung jawab atas segala kondisi kehilangan, kerusakan atas kendaraan.<br>
+            Apabila dalam 7(tujuh) hari kendaraan tidak diambil dari bengkel PT Daya Adicipta Sandika, maka kami akan kenakan biaya tambahan sebesar Rp. 10.000,- (sepuluh ribu rupiah) perhari and kami tidak bertanggung jawab atas segala kondisi kehilangan, kerusakan atas kendaraan.<br>
             All estimasi yang dihasilkan berkenaan dengan waktu penyelesaian maupun biaya yang diperlukan hanya merupakan biaya taksiran dan tidak mengikat.<br>
             <i>Seluruh isian PKB dan ketentuannya sudah dijelaskan oleh advisor dan sudah dimengerti oleh pelanggan.</i>
         </div>
@@ -226,18 +230,28 @@
         <strong>📌 PENTING:</strong> Mohon disimpan, lembar ini dipakai untuk pengambilan kendaraan.<br>
         <strong style="color: #b91c1c;">⚠️ PERINGATAN:</strong> Mohon Untuk tidak meninggalkan barang-barang berharga di dalam kendaraan.
     </div>
+
+    <!-- Bagian Rekap Laporan & Ringkasan Teks SA Simpel -->
     <div class="report-section">
-        <h3 style="margin-top: 0; color: #1a365d; border-bottom: 2px solid #000; padding-bottom: 5px;">📊 REKAP DATA LAPORAN PENERIMAAN SERVICE HARI INI</h3>
+        <h3 style="margin-top: 0; color: #1a365d; border-bottom: 2px solid #000; padding-bottom: 5px;">📊 REKAP LAPORAN & PRODUKTIVITAS ADVISOR</h3>
+        
+        <!-- Wadah Teks Simpel Ringkasan Unit SA Harian -->
+        <div id="sa_text_summary" class="summary-sa-box">
+            📢 Memuat data produktivitas SA hari ini...
+        </div>
+
+        <!-- Pencarian Terpadu -->
+        <input type="text" id="search_laporan_input" class="search-filter-box" placeholder="🔍 Filter & Cari Data Berdasarkan: TANGGAL (YYYY-MM-DD) / NO POLISI / NO TELPON HP..." oninput="tampilkanLaporanBerdasarkanFilter()">
+        
         <button type="button" class="btn btn-blue" style="font-size: 11px; padding: 4px 10px; margin-bottom: 10px;" onclick="downloadLaporanCSV()">📥 Download Report Rekap (.CSV)</button>
         <table class="report-table">
             <thead>
                 <tr>
-                    <th style="width: 5%;">No</th><th>No PKB</th><th>No Polisi</th><th>Nama Pelanggan</th><th>No. HP (WA)</th><th>Model Tipe</th><th>Keluhan Utama</th><th>Total Biaya</th>
+                    <th style="width: 5%;">No</th><th>No PKB</th><th>No Polisi</th><th>Nama Pelanggan</th><th>No. HP (WA)</th><th>Model Tipe</th><th>Keluhan Utama</th><th>Total Biaya</th><th style="width: 5%; text-align: center;" class="action-col">Hapus</th>
                 </tr>
             </thead>
             <tbody id="report-rows"></tbody>
         </table>
-        <button type="button" class="btn btn-red" style="font-size: 10px; padding: 3px 8px;" onclick="hapusSemuaLaporan()">🗑️ Kosongkan Semua Riwayat Laporan</button>
     </div>
 </div>
 
@@ -262,7 +276,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // KUNCI UTAMA: Dengarkan perubahan database online secara real-time ke semua browser
     const laporanRef = ref(db, 'laporan_pkb');
     onValue(laporanRef, (snapshot) => {
         const data = snapshot.val();
@@ -275,10 +288,8 @@
             localLaporanArr.sort((a, b) => parseInt(a.nopkb) - parseInt(b.nopkb));
         }
         
-        // Simpan cadangan ter-update ke localStorage device masing-masing
         localStorage.setItem('laporan_final_datetime', JSON.stringify(localLaporanArr));
         
-        // Kalkulasi No PKB berikutnya secara otomatis berdasarkan record cloud tertinggi
         let lastNo = 0;
         if(localLaporanArr.length > 0) {
             const maxNo = Math.max(...localLaporanArr.map(o => parseInt(o.nopkb) || 0));
@@ -287,23 +298,20 @@
         localStorage.setItem('last_pkb_number', lastNo);
         document.getElementById('in_nopkb').value = String(lastNo + 1).padStart(4, '0');
         
-        // Render paksa tabel bawah di seluruh browser yang sedang terbuka
-        if (window.tampilkanLaporanHTML) {
-            window.tampilkanLaporanHTML(localLaporanArr);
+        if (window.tampilkanLaporanBerdasarkanFilter) {
+            window.tampilkanLaporanBerdasarkanFilter();
         }
     });
 
-    // Ekspos fungsi simpan online
     window.simpanKeFirebaseCloud = function(nopkb, payload) {
         set(ref(db, 'laporan_pkb/' + nopkb), payload)
             .then(() => console.log("Cloud Sinkronisasi Sukses."))
             .catch((err) => console.error("Cloud Error:", err));
     }
 
-    // Ekspos fungsi hapus online harian
-    window.hapusSemuaLaporanCloud = function() {
-        remove(ref(db, 'laporan_pkb'))
-            .then(() => console.log("Cloud Database Dibersihkan."))
+    window.hapusItemTertentuCloud = function(nopkb) {
+        remove(ref(db, 'laporan_pkb/' + nopkb))
+            .then(() => console.log("Cloud item " + nopkb + " berhasil dihapus."))
             .catch((err) => console.error(err));
     }
 </script>
@@ -484,7 +492,6 @@
         
         var payload = { nopkb: nopkb, nopol: nopol, nama: nama, ktp: ktp, bengkel: bengkel, tipe: tipe, keluhan: keluhan, total: total, hp: hp, alamat: alamat, sa: sa, km: km, norangka: norangka, tgl_terima: tgl_terima, jam_terima: jam_terima, tgl_serah: tgl_serah, jam_serah: jam_serah, stnk: stnk, buku: buku, partbekas: partbekas, items: itemsArr };
         
-        // Kirim ke database Firebase
         if (window.simpanKeFirebaseCloud) {
             window.simpanKeFirebaseCloud(nopkb, payload);
         }
@@ -554,30 +561,103 @@
         alert("📋 Data PKB M-" + nopkb + " berhasil dimuat!");
     }
 
-    // Fungsi Render Tabel HTML yang diikat global agar dibaca modul Firebase
-    window.tampilkanLaporanHTML = function(dataLaporan) {
+    // PERBAIKAN PRESISI: Logika Filter Hari Ini, Pencarian Bebas, & Rekap Ringkasan SA Simpel
+    window.tampilkanLaporanBerdasarkanFilter = function() {
+        var dataLaporan = JSON.parse(localStorage.getItem('laporan_final_datetime')) || [];
+        var searchKeyword = document.getElementById('search_laporan_input').value.toLowerCase().trim();
+        
+        var sekarang = new Date();
+        var tglHariIni = sekarang.getFullYear() + '-' + String(sekarang.getMonth() + 1).padStart(2, '0') + '-' + String(sekarang.getDate()).padStart(2, '0');
+        
         var rowsHtml = "";
-        if (!dataLaporan || dataLaporan.length === 0) { 
-            rowsHtml = "<tr><td colspan='8' style='text-align:center; color:#999;'>Belum ada data rekap penerimaan kendaraan.</td></tr>"; 
-        } else { 
-            for(var i = 0; i < dataLaporan.length; i++) { 
-                var cleanPhone = (dataLaporan[i].hp || '').replace(/[^0-9]/g, '');
+        var counter = 1;
+        var saCounts = {}; // Menampung hitungan unit harian SA
+
+        for(var i = 0; i < dataLaporan.length; i++) {
+            var item = dataLaporan[i];
+            var tglTerima = item.tgl_terima || "";
+            var nopol = (item.nopol || "").toLowerCase();
+            var hp = (item.hp || "").toLowerCase();
+            var saNama = (item.sa || "TANPA ADVISOR").toUpperCase();
+
+            // Hitung unit harian khusus berkas masuk hari ini
+            if (tglTerima === tglHariIni) {
+                saCounts[saNama] = (saCounts[saNama] || 0) + 1;
+            }
+
+            var lolosFilter = false;
+            if (searchKeyword === "") {
+                if (tglTerima === tglHariIni) lolosFilter = true;
+            } else {
+                if (tglTerima.includes(searchKeyword) || nopol.includes(searchKeyword) || hp.includes(searchKeyword)) {
+                    lolosFilter = true;
+                }
+            }
+
+            if (lolosFilter) {
+                var cleanPhone = (item.hp || '').replace(/[^0-9]/g, '');
                 if(cleanPhone.startsWith('0')) { cleanPhone = '62' + cleanPhone.slice(1); }
-                var waLinkHtml = dataLaporan[i].hp ? "<a href='https://wa.me/" + cleanPhone + "' target='_blank' class='wa-link' onclick='event.stopPropagation();'>💬 " + dataLaporan[i].hp + "</a>" : "-";
+                var waLinkHtml = item.hp ? "<a href='https://wa.me/" + cleanPhone + "' target='_blank' class='wa-link' onclick='event.stopPropagation();'>💬 " + item.hp + "</a>" : "-";
                 
-                rowsHtml += "<tr class='clickable-row' onclick='editLaporan(\""+dataLaporan[i].nopkb+"\")'>" +
-                            "<td style='text-align:center;'>" + (i+1) + "</td>" +
-                            "<td>" + dataLaporan[i].nopkb + "</td>" +
-                            "<td><strong>" + dataLaporan[i].nopol.toUpperCase() + "</strong></td>" +
-                            "<td>" + dataLaporan[i].nama + "</td>" +
+                rowsHtml += "<tr class='clickable-row' onclick='editLaporan(\""+item.nopkb+"\")'>" +
+                            "<td style='text-align:center;'>" + counter + "</td>" +
+                            "<td>" + item.nopkb + "</td>" +
+                            "<td><strong>" + item.nopol.toUpperCase() + "</strong></td>" +
+                            "<td>" + item.nama + "</td>" +
                             "<td>" + waLinkHtml + "</td>" +
-                            "<td>" + dataLaporan[i].tipe + "</td>" +
-                            "<td>" + dataLaporan[i].keluhan + "</td>" +
-                            "<td style='text-align:right; font-weight:bold;'>Rp " + dataLaporan[i].total.toLocaleString('id-ID') + "</td>" +
-                            "</tr>"; 
-            } 
+                            "<td>" + item.tipe + "</td>" +
+                            "<td>" + item.keluhan + "</td>" +
+                            "<td style='text-align:right; font-weight:bold;'>Rp " + item.total.toLocaleString('id-ID') + "</td>" +
+                            "<td style='text-align:center;' class='action-col'>" +
+                            "<button type='button' class='btn-del' onclick='hapusSatuItem(\""+item.nopkb+"\", event)'>×</button>" +
+                            "</td>" +
+                            "</tr>";
+                counter++;
+            }
+        }
+
+        if (rowsHtml === "") {
+            rowsHtml = "<tr><td colspan='9' style='text-align:center; color:#999;'>Tidak ditemukan riwayat penerimaan service yang cocok.</td></tr>";
         }
         document.getElementById('report-rows').innerHTML = rowsHtml;
+        
+        // Render ringkasan teks simpel
+        renderSATextSummary(saCounts);
+    }
+
+    // Fungsi Baru: Merender rekap harian SA dalam bentuk teks list yang simpel
+    function renderSATextSummary(saCounts) {
+        var container = document.getElementById("sa_text_summary");
+        var keys = Object.keys(saCounts);
+        
+        if (keys.length === 0) {
+            container.innerHTML = "📢 BELUM ADA UNIT SERVICE YANG MASUK HARI INI.";
+            return;
+        }
+        
+        var htmlContent = "<div style='color: #1a365d; margin-bottom: 5px; text-decoration: underline;'>PRODUKTIVITAS SERVICE ADVISOR HARI INI:</div>";
+        keys.forEach(function(sa) {
+            htmlContent += "📝 " + sa + " : <span style='color: #2f855a; font-size: 13pt;'>" + saCounts[sa] + "</span> UNIT<br>";
+        });
+        
+        container.innerHTML = htmlContent;
+    }
+
+    // Fungsi Baru: Menghapus data spesifik per baris nopol (Lokal + Cloud Firebase)
+    function hapusSatuItem(nopkb, event) {
+        if (event) event.stopPropagation(); // Mencegah bentrokan pembukaan form edit
+        
+        if (confirm("Apakah Anda yakin ingin menghapus permanen riwayat PKB M-" + nopkb + " ini?")) {
+            if (window.hapusItemTertentuCloud) {
+                window.hapusItemTertentuCloud(nopkb);
+            } else {
+                var dataLaporan = JSON.parse(localStorage.getItem('laporan_final_datetime')) || [];
+                var filtered = dataLaporan.filter(function(x) { return x.nopkb !== nopkb; });
+                localStorage.setItem('laporan_final_datetime', JSON.stringify(filtered));
+                tampilkanLaporanBerdasarkanFilter();
+            }
+            alert("🗑️ Data PKB M-" + nopkb + " Berhasil Dihapus!");
+        }
     }
     
     function downloadLaporanCSV() {
@@ -625,25 +705,11 @@
         document.getElementById('lbl_sa_signature').innerText = '( NAMA SA )';
         aturWaktuOtomatis();
         aturNoPKBOtomatis();
-        document.getElementById('work-rows-container').innerHTML = '<tr><td style="text-align: center; vertical-align: middle;">1</td><td><input type="text" class="item-desc" placeholder="Ketik jasa atau part di sini..."></td><td><input type="number" class="item-qty" value="1" min="1" oninput="hitungTotal()" style="text-align: center; width: 100%;"></td><td><input type="text" class="item-harga" oninput="formatCurrency(this)" placeholder="Rp 0" style="text-align: right;"></td><td><div style="display: flex; gap: 2px; align-items: center;"><input type="text" class="item-diskon" oninput="formatDiskon(this)" placeholder="0" style="text-align: right; width: 65%;"><select class="item-tipe-diskon" onchange="hitungTotal()" style="width: 35%; padding: 4px 2px;"><option value="%">%</option><option value="Rp">Rp</option></select></div></td><td style="text-align: center; vertical-align: middle;" class="action-col"><button type="button" class="btn-del" onclick="hapusBarisTertentu(this)">❌</button></td></tr>';
+        document.getElementById('work-rows-container').innerHTML = '<tr><td style="text-align: center; vertical-align: middle;">1</td><td><input type="text" class="item-desc" placeholder="Ketik jasa atau part di sini..."></td><td><input type="number" class="item-qty" value="1" min="1" oninput="hitungTotal()" style="text-align: center; width: 100%;"></td><td><input type="text" class="item-harga" oninput="formatCurrency(this)" placeholder="Rp 0" style="text-align: right;"></td><td><div style="display: flex; gap: 2px; align-items: center;"><input type="text" class="item-diskon" oninput="formatDiskon(this)" placeholder="0" style="text-align: right; width: 65%;"><select class="item-tipe-diskon" onchange="hitungTotal()" style="width: 35%; padding: 4px 2px;"><option value="%">%</option><option value="Rp">Rp</option></select></div></td><td style="text-align: center; vertical-align: middle;" class="action-col"><button type="button" class="btn-del" onclick="hapusBarisTententu(this)">❌</button></td></tr>';
         hitungTotal();
     }
 
-    function hapusSemuaLaporan() {
-        if(confirm("Hapus seluruh data laporan dari server Cloud Firebase dan Lokal?")) {
-            localStorage.removeItem('laporan_final_datetime');
-            localStorage.removeItem('last_pkb_number');
-            if (window.hapusSemuaLaporanCloud) {
-                window.hapusSemuaLaporanCloud();
-            }
-            // Kosongkan tampilan tabel rekap instan
-            document.getElementById('report-rows').innerHTML = "<tr><td colspan='8' style='text-align:center; color:#999;'>Belum ada data rekap penerimaan kendaraan.</td></tr>";
-            aturNoPKBOtomatis();
-        }
-    }
-
     function sinkronisasiKeInvoice() {
-        // Ambil rincian data pekerjaan dari tabel PKB saat ini
         var rows = document.querySelectorAll('#work-rows-container tr');
         var itemsArr = [];
         
@@ -661,13 +727,7 @@
                 } else {
                     potPercent = diskonVal;
                 }
-                
-                itemsArr.push({ 
-                    name: desc, 
-                    price: harga, 
-                    qty: qty, 
-                    pot: potPercent 
-                });
+                itemsArr.push({ name: desc, price: harga, qty: qty, pot: potPercent });
             }
         });
 
@@ -683,54 +743,6 @@
             pkbItems: itemsArr
         };
         localStorage.setItem('shared_pkb_to_invoice', JSON.stringify(payloadInvoice));
-        
-        // PERBAIKAN PRESISI: Proteksi ganda agar tidak membuat record baru jika No Polisi sudah ada
-        if (payloadInvoice.vPlate.trim() !== "") {
-            var historyInvoice = JSON.parse(localStorage.getItem('faktur_service_db')) || [];
-            
-            // Cek apakah No Polisi ini sudah terdaftar sebelumnya di riwayat Invoice
-            var existingIndex = historyInvoice.findIndex(function(x) { 
-                return x.vPlate.toUpperCase().trim() === payloadInvoice.vPlate; 
-            });
-            
-            // Pertahankan ID lama jika ketemu, atau buat ID baru jika benar-benar kendaraan baru
-            var invId = (existingIndex > -1) ? historyInvoice[existingIndex].id : "id_" + Date.now();
-            
-            var invoiceDataPayload = {
-                id: invId,
-                compName: "DAYA ADICIPTA SANDIKA",
-                compBranch: "Daya Toyota Cakung",
-                compAddress: "Cabang Cakung - Jl. Raya Bekasi KM 26.5",
-                compPhone: "Telp. (021) 8896 8800   Fax. -",
-                vPlate: payloadInvoice.vPlate,
-                tanggalCetak: new Date().toLocaleDateString('id-ID') + " " + new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}),
-                compTaxId: "0312862253006000",
-                vType: payloadInvoice.vType,
-                vBuildDate: new Date().toLocaleDateString('id-ID'),
-                vColor: (existingIndex > -1) ? (historyInvoice[existingIndex].vColor || "") : "",
-                vSA: payloadInvoice.vSA,
-                vKM: payloadInvoice.vKM,
-                cName: payloadInvoice.cName || "Umum",
-                cAddress: payloadInvoice.cAddress,
-                cTaxId: payloadInvoice.cTaxId,
-                cPhone: payloadInvoice.cPhone,
-                cWa: payloadInvoice.cPhone,
-                jasaItems: payloadInvoice.pkbItems,
-                barangItems: (existingIndex > -1) ? (historyInvoice[existingIndex].barangItems || []) : [],
-                dpValue: (existingIndex > -1) ? (historyInvoice[existingIndex].dpValue || 0) : 0,
-                adminSignature: (existingIndex > -1) ? (historyInvoice[existingIndex].adminSignature || "") : ""
-            };
-            
-            if (existingIndex > -1) {
-                // UPDATE (TINPA) jika No Polisi sama
-                historyInvoice[existingIndex] = invoiceDataPayload;
-            } else {
-                // TAMBAH BARU jika No Polisi belum pernah ada
-                historyInvoice.push(invoiceDataPayload);
-            }
-            
-            localStorage.setItem('faktur_service_db', JSON.stringify(historyInvoice));
-        }
     }
 
     function bukaHalamanInvoice() {
@@ -740,7 +752,7 @@
 
     window.onload = function() { 
         aturWaktuOtomatis(); 
-        // Render awal dilakukan otomatis oleh pemantau (onValue) Firebase begitu koneksi terhubung.
+        tampilkanLaporanBerdasarkanFilter();
     };
 </script>
 </body>

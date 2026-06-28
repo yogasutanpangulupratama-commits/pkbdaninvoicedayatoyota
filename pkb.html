@@ -356,6 +356,9 @@
         return parseFloat(pure) || 0;
     }
 
+    // ====== MEMASTIKAN FUNGSI INI TERSEDIA SEBAGAI WINDOW GLOBAL SEBELUM DIPANGGIL DI ATAS ======
+    window.getPureNumber = getPureNumber;
+
     function aturNoPKBOtomatis() {
         var currentNo = localStorage.getItem('last_pkb_number') || 0;
         var nextNo = parseInt(currentNo) + 1;
@@ -627,7 +630,6 @@
         hitungTotal();
     }
 
-    // Pemetaan nama fungsi baru agar sesuai dengan pemicu tag button di baris paling bawah tabel HTML
     function hapusSemuaLaporan() {
         if(confirm("Hapus seluruh rekap tabel laporan bawah harian ini?")) {
             localStorage.removeItem('laporan_final_datetime');

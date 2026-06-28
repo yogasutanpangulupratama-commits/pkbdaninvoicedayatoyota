@@ -10,7 +10,6 @@
         th, td { border-bottom: 1px solid #ddd; border-top: 1px solid #ddd; border-left: none; border-right: none; padding: 6px; vertical-align: top; }
         th { background-color: #f9f9f9; font-weight: bold; }
         
-        /* Poin 2: Otomatis huruf besar pada semua input teks and textarea */
         input[type="text"], textarea { text-transform: uppercase; }
         
         input[type="text"], input[type="number"], input[type="date"], input[type="time"], textarea, select { width: 95%; border: 1px solid #ccc; padding: 4px; font-family: Arial, sans-serif; font-size: 11pt; box-sizing: border-box; }
@@ -23,7 +22,7 @@
         .btn-green { background: #2f855a; color: white; }
         .btn-blue { background: #1a365d; color: white; }
         .btn-red { background: #9b2c2c; color: white; }
-        .btn-orange { background: #dd6b20; color: white; } /* Tombol baru */
+        .btn-orange { background: #dd6b20; color: white; }
         .btn-small { padding: 3px 8px; font-size: 10pt; background: #4a5568; color: white; margin-top: 5px; border: none; border-radius: 4px; cursor: pointer; }
         .btn-del { background: #e53e3e; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-weight: bold; font-size: 9pt; }
         .fuel-bar-print { font-family: "Courier New", Courier, monospace; font-size: 10pt; font-weight: bold; letter-spacing: 1px; display: inline-block; }
@@ -67,7 +66,6 @@
         <button type="button" class="btn btn-green" onclick="simpanKeLaporan()">💾 Simpan ke Laporan</button>
         <button type="button" class="btn btn-blue" onclick="cetakDanSimpan()">🖨️ Cetak PKB (Ctrl + P)</button>
         <button type="button" class="btn btn-red" onclick="resetForm()">🔄 Reset Form PKB Baru</button>
-        <!-- Tombol baru untuk navigasi ke Invoice -->
         <button type="button" class="btn btn-orange" onclick="bukaHalamanInvoice()">📄 MENU INVOICE</button>
     </div>
     <table class="no-border" style="margin-bottom: 5px;">
@@ -244,11 +242,11 @@
 </div>
 
 <!-- ========================================== -->
-<!-- 1. KODE UTAMA SINKRONISASI & CADANGAN CLOUD -->
+<!-- 1. KODE FIREBASE REALTIME DATABASE UTAMA -->
 <!-- ========================================== -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBvgLFjfpyvHf3MCgrmJ_nPgkM4uyerXuQ",
@@ -261,29 +259,52 @@
         databaseURL: "https://pkbmanualinvoice-default-rtdb.asia-southeast1.firebasedatabase.app"
     };
 
-    // Inisialisasi Firebase secara aman (jika project aktif)
-    let db = null;
-    try {
-        const app = initializeApp(firebaseConfig);
-        db = getDatabase(app);
-    } catch(e) {
-        console.log("Firebase Cloud Mode Cadangan Aktif.");
-    }
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-    // Ekspos fungsi simpan agar digabung secara presisi dengan sistem lokal asli
+    // KUNCI UTAMA: Dengarkan perubahan database online secara real-time ke semua browser
+    const laporanRef = ref(db, 'laporan_pkb');
+    onValue(laporanRef, (snapshot) => {
+        const data = snapshot.val();
+        let localLaporanArr = [];
+        
+        if (data) {
+            Object.keys(data).forEach((key) => {
+                localLaporanArr.push(data[key]);
+            });
+            localLaporanArr.sort((a, b) => parseInt(a.nopkb) - parseInt(b.nopkb));
+        }
+        
+        // Simpan cadangan ter-update ke localStorage device masing-masing
+        localStorage.setItem('laporan_final_datetime', JSON.stringify(localLaporanArr));
+        
+        // Kalkulasi No PKB berikutnya secara otomatis berdasarkan record cloud tertinggi
+        let lastNo = 0;
+        if(localLaporanArr.length > 0) {
+            const maxNo = Math.max(...localLaporanArr.map(o => parseInt(o.nopkb) || 0));
+            lastNo = maxNo;
+        }
+        localStorage.setItem('last_pkb_number', lastNo);
+        document.getElementById('in_nopkb').value = String(lastNo + 1).padStart(4, '0');
+        
+        // Render paksa tabel bawah di seluruh browser yang sedang terbuka
+        if (window.tampilkanLaporanHTML) {
+            window.tampilkanLaporanHTML(localLaporanArr);
+        }
+    });
+
+    // Ekspos fungsi simpan online
     window.simpanKeFirebaseCloud = function(nopkb, payload) {
-        if (!db) return;
         set(ref(db, 'laporan_pkb/' + nopkb), payload)
-            .then(() => console.log("Cloud Backup Sukses."))
-            .catch((err) => console.log("Cloud Error / Project Disabled. Menggunakan Penyimpanan Lokal Penuh."));
+            .then(() => console.log("Cloud Sinkronisasi Sukses."))
+            .catch((err) => console.error("Cloud Error:", err));
     }
 
-    // Ekspos fungsi hapus cloud agar sinkron dengan tombol hapus bawah
+    // Ekspos fungsi hapus online harian
     window.hapusSemuaLaporanCloud = function() {
-        if (!db) return;
         remove(ref(db, 'laporan_pkb'))
-            .then(() => console.log("Cloud Data Berhasil Dibersihkan."))
-            .catch((err) => console.log("Cloud Delete Error."));
+            .then(() => console.log("Cloud Database Dibersihkan."))
+            .catch((err) => console.error(err));
     }
 </script>
 
@@ -356,7 +377,6 @@
         return parseFloat(pure) || 0;
     }
 
-    // ====== MEMASTIKAN FUNGSI INI TERSEDIA SEBAGAI WINDOW GLOBAL SEBELUM DIPANGGIL DI ATAS ======
     window.getPureNumber = getPureNumber;
 
     function aturNoPKBOtomatis() {
@@ -462,36 +482,15 @@
             return false; 
         }
         
-        var dataLaporan = JSON.parse(localStorage.getItem('laporan_final_datetime')) || [];
-        var existingIndex = dataLaporan.findIndex(function(x) { return x.nopkb === nopkb; });
         var payload = { nopkb: nopkb, nopol: nopol, nama: nama, ktp: ktp, bengkel: bengkel, tipe: tipe, keluhan: keluhan, total: total, hp: hp, alamat: alamat, sa: sa, km: km, norangka: norangka, tgl_terima: tgl_terima, jam_terima: jam_terima, tgl_serah: tgl_serah, jam_serah: jam_serah, stnk: stnk, buku: buku, partbekas: partbekas, items: itemsArr };
         
-        if(existingIndex > -1) {
-            dataLaporan[existingIndex] = payload;
-        } else {
-            dataLaporan.push(payload);
-            
-            // Simpan angka ID PKB tertinggi ke penampung local urut otomatis
-            var currentMax = parseInt(localStorage.getItem('last_pkb_number')) || 0;
-            if (parseInt(nopkb) > currentMax) {
-                localStorage.setItem('last_pkb_number', parseInt(nopkb));
-            }
-        }
-        
-        localStorage.setItem('laporan_final_datetime', JSON.stringify(dataLaporan));
-        
-        // Jalankan sinkronisasi cloud cadangan ke Firebase
+        // Kirim ke database Firebase
         if (window.simpanKeFirebaseCloud) {
             window.simpanKeFirebaseCloud(nopkb, payload);
         }
         
         sinkronisasiKeInvoice();
-        tampilkanLaporan();
-        
-        alert("💾 Data PKB M-" + nopkb + " Berhasil Disimpan!");
-        
-        // Update No urut input form berikutnya langsung secara otomatis setelah simpan sukses
-        aturNoPKBOtomatis();
+        alert("💾 Data PKB M-" + nopkb + " Berhasil Disimpan ke Cloud!");
         return true;
     }
 
@@ -555,10 +554,10 @@
         alert("📋 Data PKB M-" + nopkb + " berhasil dimuat!");
     }
 
-    function tampilkanLaporan() {
-        var dataLaporan = JSON.parse(localStorage.getItem('laporan_final_datetime')) || []; 
+    // Fungsi Render Tabel HTML yang diikat global agar dibaca modul Firebase
+    window.tampilkanLaporanHTML = function(dataLaporan) {
         var rowsHtml = "";
-        if (dataLaporan.length === 0) { 
+        if (!dataLaporan || dataLaporan.length === 0) { 
             rowsHtml = "<tr><td colspan='8' style='text-align:center; color:#999;'>Belum ada data rekap penerimaan kendaraan.</td></tr>"; 
         } else { 
             for(var i = 0; i < dataLaporan.length; i++) { 
@@ -631,15 +630,14 @@
     }
 
     function hapusSemuaLaporan() {
-        if(confirm("Hapus seluruh rekap tabel laporan bawah harian ini?")) {
+        if(confirm("Hapus seluruh data laporan dari server Cloud Firebase dan Lokal?")) {
             localStorage.removeItem('laporan_final_datetime');
             localStorage.removeItem('last_pkb_number');
-            
             if (window.hapusSemuaLaporanCloud) {
                 window.hapusSemuaLaporanCloud();
             }
-            
-            tampilkanLaporan();
+            // Kosongkan tampilan tabel rekap instan
+            document.getElementById('report-rows').innerHTML = "<tr><td colspan='8' style='text-align:center; color:#999;'>Belum ada data rekap penerimaan kendaraan.</td></tr>";
             aturNoPKBOtomatis();
         }
     }
@@ -665,8 +663,7 @@
 
     window.onload = function() { 
         aturWaktuOtomatis(); 
-        aturNoPKBOtomatis(); 
-        tampilkanLaporan();
+        // Render awal dilakukan otomatis oleh pemantau (onValue) Firebase begitu koneksi terhubung.
     };
 </script>
 </body>

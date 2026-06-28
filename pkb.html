@@ -17,6 +17,8 @@
         .btn-nav:hover { background-color: #0069d9; }
         .btn-danger { background-color: #dc3545; width: auto; padding: 5px 10px; font-size: 12px; }
         .btn-danger:hover { background-color: #c82333; }
+        .btn-print { background-color: #17a2b8; margin-top: 5px; }
+        .btn-print:hover { background-color: #138496; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
         th { background-color: #343a40; color: white; }
@@ -34,7 +36,7 @@
     
     <div class="form-group">
         <label>No. Registrasi / No. Polisi:</label>
-        <input type="text" id="noPolisi" placeholder="Contoh: B 1234 ABC">
+        <input type="text" id="noPolisi" placeholder="Contoh: B 1234 ABC" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()">
     </div>
     <div class="form-group">
         <label>Nama Pemilik / Pelanggan:</label>
@@ -104,10 +106,10 @@
 
     // Fungsi Simpan ke Firebase Database Online
     window.simpanPKB = function() {
-        const noPolisi = document.getElementById('noPolisi').value.trim();
+        const noPolisi = document.getElementById('noPolisi').value.trim().toUpperCase();
         const namaPelanggan = document.getElementById('namaPelanggan').value.trim();
         const tipeMobil = document.getElementById('tipeMobil').value.trim();
-        const jenisPekerjaan = document.getElementById('jenisPekerjaan').value.type || document.getElementById('jenisPekerjaan').value;
+        const jenisPekerjaan = document.getElementById('jenisPekerjaan').value;
         const namaSA = document.getElementById('namaSA').value.trim();
         
         if(!noPolisi || !namaPelanggan || !tipeMobil || !namaSA) {
@@ -138,6 +140,32 @@
         });
     }
 
+    // Fungsi Otomatis Mengirim Data ke Riwayat Invoice saat tombol cetak ditekan
+    window.cetakDanKirimInvoice = function(noPolisi, namaPelanggan) {
+        const waktuSekarang = new Date().toLocaleString('id-ID');
+        const cleanNoPolisi = noPolisi.replace(/\s+/g, '');
+        const autoNoInvoice = `INV-${cleanNoPolisi}`;
+
+        // Cek dulu apakah draf invoice dengan nomor polisi ini sudah ada di Firebase
+        const invRef = ref(db, 'riwayatInvoice');
+        
+        const drafInvoiceRef = push(invRef);
+        set(drafInvoiceRef, {
+            waktu: waktuSekarang,
+            noInvoice: autoNoInvoice,
+            noPolisi: noPolisi.toUpperCase(),
+            biayaJasa: 0,
+            biayaPart: 0,
+            totalBayar: 0
+        }).then(() => {
+            // Setelah data terkirim ke database tim part, picu fungsi print bawaan browser
+            window.print();
+        }).catch((err) => {
+            console.error("Gagal sinkronisasi invoice: ", err);
+            window.print(); // Tetap print jika database sibuk
+        });
+    }
+
     // Tampilkan Riwayat dari Firebase Secara Real-time
     const riwayatRef = ref(db, 'riwayatPKB');
     onValue(riwayatRef, (snapshot) => {
@@ -155,7 +183,10 @@
                     <td>${item.tipeMobil}</td>
                     <td>${item.jenisPekerjaan}</td>
                     <td>${item.namaSA}</td>
-                    <td><button class="btn-danger" onclick="hapusPKB('${key}')">Hapus</button></td>
+                    <td>
+                        <button class="btn-danger" onclick="hapusPKB('${key}')">Hapus</button>
+                        <button class="btn-print" onclick="cetakDanKirimInvoice('${item.noPolisi}', '${item.namaPelanggan}')">🖨️ Cetak PKB</button>
+                    </td>
                 </tr>`;
                 tbody.innerHTML += row;
             });

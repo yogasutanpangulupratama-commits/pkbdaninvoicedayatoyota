@@ -949,6 +949,9 @@
     // ====== MEMASTIKAN EXPOSE KE WINDOW GLOBAL UNTUK EDIT RIWAYAT SIDEBAR ======
     window.loadInvoice = loadInvoice;
 
+    // =======================================================================
+    // PERBAIKAN PRESISI: MENAMBAHKAN TOMBOL X UNTUK MENGHAPUS RIWAYAT INVOICE
+    // =======================================================================
     function renderHistory() {
         const container = document.getElementById("history-list-container");
         const searchVal = document.getElementById("search-input").value.toLowerCase();
@@ -960,14 +963,47 @@
             if (inv.vPlate.toLowerCase().includes(searchVal) || inv.cName.toLowerCase().includes(searchVal)) {
                 let li = document.createElement("li");
                 li.className = "history-item";
+                // Ditambahkan flex layout agar nama plat dan tombol X presisi sejajar kanan-kiri
+                li.style.display = "flex";
+                li.style.justifyContent = "space-between";
+                li.style.alignItems = "center";
                 li.setAttribute("onclick", `loadInvoice('${inv.id}')`);
+                
                 li.innerHTML = `
-                    <div class="item-main"><span>${inv.vPlate}</span></div>
-                    <div class="item-sub">${inv.cName} | Cetak: ${inv.tanggalCetak}</div>
+                    <div style="flex-grow: 1;">
+                        <div class="item-main"><span>${inv.vPlate}</span></div>
+                        <div class="item-sub">${inv.cName} | Cetak: ${inv.tanggalCetak}</div>
+                    </div>
+                    <!-- Tombol X Hapus Riwayat dengan StopPropagation agar tidak memicu muat ulang form saat diklik -->
+                    <button class="no-print" onclick="deleteInvoiceHistory('${inv.id}', event)" style="background: none; border: none; color: #de3545; cursor: pointer; font-size: 13px; font-weight: bold; padding: 0 5px; margin-left: 10px;">×</button>
                 `;
                 container.appendChild(li);
             }
         });
+    }
+
+    // Fungsi baru untuk mengeksekusi penghapusan item tertentu di dalam database riwayat invoice
+    function deleteInvoiceHistory(id, event) {
+        // Mencegah klik tombol X memicu fungsi loadInvoice() pada baris list
+        if (event) event.stopPropagation();
+        
+        if (confirm("Apakah Anda yakin ingin menghapus faktur ini dari riwayat?")) {
+            let invoices = getInvoicesFromStorage();
+            let index = invoices.findIndex(inv => inv.id === id);
+            
+            if (index !== -1) {
+                invoices.splice(index, 1);
+                localStorage.setItem("faktur_service_db", JSON.stringify(invoices));
+                
+                // Jika faktur yang sedang diedit saat ini dihancurkan, langsung bersihkan layar inputan
+                let currentActiveId = document.getElementById("current-invoice-id").value;
+                if (currentActiveId === id) {
+                    createNewInvoice();
+                } else {
+                    renderHistory();
+                }
+            }
+        }
     }
 
     function loadInvoice(id) {

@@ -933,11 +933,21 @@
         let currentId = document.getElementById("current-invoice-id").value;
         let invoiceData = generateCurrentObject();
 
+        // PERBAIKAN PRESISI: Cari berdasarkan ID aktif, atau jika ID kosong cari berdasarkan No Polisi yang sama
+        let index = -1;
         if (currentId) {
-            let index = invoices.findIndex(inv => inv.id === currentId);
-            if (index !== -1) invoices[index] = invoiceData;
-            else invoices.push(invoiceData);
+            index = invoices.findIndex(inv => inv.id === currentId);
         } else {
+            index = invoices.findIndex(inv => inv.vPlate.toUpperCase().trim() === invoiceData.vPlate.toUpperCase().trim());
+        }
+
+        if (index !== -1) {
+            // Jika ditemukan kecocokan ID atau No Polisi, gunakan ID lama dan update datanya (jangan di-double)
+            invoiceData.id = invoices[index].id;
+            invoices[index] = invoiceData;
+            document.getElementById("current-invoice-id").value = invoiceData.id;
+        } else {
+            // Benar-benar baru, masukkan transaksi baru
             invoices.push(invoiceData);
             document.getElementById("current-invoice-id").value = invoiceData.id;
         }

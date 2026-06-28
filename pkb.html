@@ -2,629 +2,193 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Sistem PKB Manual - Versi Cetak Laser Jet Premium</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem PKB - Daya Toyota</title>
     <style>
-        body { font-family: Arial, sans-serif; font-size: 11pt; margin: 10px; background-color: #fff; color: #000; }
-        .container { max-width: 820px; margin: 0 auto; background: #fff; padding: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
-        th, td { border-bottom: 1px solid #ddd; border-top: 1px solid #ddd; border-left: none; border-right: none; padding: 6px; vertical-align: top; }
-        th { background-color: #f9f9f9; font-weight: bold; }
-        
-        /* Poin 2: Otomatis huruf besar pada semua input teks and textarea */
-        input[type="text"], textarea { text-transform: uppercase; }
-        
-        input[type="text"], input[type="number"], input[type="date"], input[type="time"], textarea, select { width: 95%; border: 1px solid #ccc; padding: 4px; font-family: Arial, sans-serif; font-size: 11pt; box-sizing: border-box; }
-        .no-border, .no-border td { border: none !important; padding: 3px 0; }
-        .title { font-size: 16pt; font-weight: bold; letter-spacing: 1px; }
-        .nopol-container { text-align: right; width: 250px; float: right; }
-        .nopol-container input { font-size: 24pt; font-weight: bold; text-align: right; border: none; text-transform: uppercase; width: 100%; padding: 0; background: transparent; }
-        .admin-panel { background: #f0f4f8; padding: 12px; border-radius: 4px; margin-bottom: 15px; border: 1px solid #cbd5e0; }
-        .btn { padding: 6px 12px; font-weight: bold; border-radius: 4px; cursor: pointer; border: none; margin-right: 5px; font-size: 11pt; }
-        .btn-green { background: #2f855a; color: white; }
-        .btn-blue { background: #1a365d; color: white; }
-        .btn-red { background: #9b2c2c; color: white; }
-        .btn-orange { background: #dd6b20; color: white; } /* Tombol baru */
-        .btn-small { padding: 3px 8px; font-size: 10pt; background: #4a5568; color: white; margin-top: 5px; border: none; border-radius: 4px; cursor: pointer; }
-        .btn-del { background: #e53e3e; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-weight: bold; font-size: 9pt; }
-        .fuel-bar-print { font-family: "Courier New", Courier, monospace; font-size: 10pt; font-weight: bold; letter-spacing: 1px; display: inline-block; }
-        .report-section { margin-top: 30px; background: white; padding: 15px; border-top: 2px dashed #ccc; }
-        .report-table th, .report-table td { border: 1px solid #ddd; padding: 6px; font-size: 10pt; }
-        .clickable-row { cursor: pointer; }
-        .clickable-row:hover { background-color: #f0f4f8; }
-        
-        .legal-text { font-size: 8.5pt; border-bottom: 1px solid #000; border-top: 1px solid #000; padding: 5px; line-height: 1.25; margin-top: 5px; text-align: justify; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .legal-text ul { margin: 2px 0 2px 12px; padding: 0; }
-        .note-footer { margin-top: 10px; border: 1px dashed #000; padding: 6px; background-color: #fff; font-size: 10pt; line-height: 1.3; text-align: center; }
-        
-        .print-keluhan-mirror { display: none; white-space: pre-wrap; word-wrap: break-word; font-family: Arial, sans-serif; font-size: 11pt; padding: 4px 0; text-transform: uppercase; }
-        
-        .wa-link { color: #1a365d; text-decoration: underline; font-weight: bold; }
-        .wa-link:hover { color: #2f855a; }
-
-        @media print {
-            .admin-panel, .btn, .btn-small, .report-section, .btn-red, #btn-tambah, .btn-del, td.action-col, th.action-col { display: none !important; }
-            body { margin: 0; padding: 0; }
-            .container { max-width: 100%; }
-            th, td { border-bottom: 1px solid #000 !important; border-top: 1px solid #000 !important; }
-            input, textarea, select { border: none !important; background: transparent !important; padding: 0 !important; }
-            select { appearance: none; -webkit-appearance: none; }
-            .nopol-container input { font-size: 26pt !important; text-align: right !important; }
-            input[type="date"]::-webkit-calendar-picker-indicator, input[type="time"]::-webkit-calendar-picker-indicator { display: none; }
-            
-            #in_keluhan { display: none !important; }
-            .print-keluhan-mirror { display: block !important; }
-            
-            .legal-text { font-size: 7.5pt !important; gap: 10px !important; line-height: 1.15 !important; padding: 4px !important; }
-            .legal-text ul { margin-left: 10px !important; }
-            .note-footer { margin-top: 5px !important; padding: 4px !important; font-size: 9pt !important; }
-        }
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+        .container { max-width: 900px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); margin: auto; }
+        h2, h3 { text-align: center; color: #333; }
+        .form-group { margin-bottom: 15px; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { width: 100%; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        button:hover { background-color: #218838; }
+        .btn-nav { background-color: #007bff; margin-bottom: 20px; }
+        .btn-nav:hover { background-color: #0069d9; }
+        .btn-danger { background-color: #dc3545; width: auto; padding: 5px 10px; font-size: 12px; }
+        .btn-danger:hover { background-color: #c82333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
+        th { background-color: #343a40; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        .search-box { margin-bottom: 15px; padding: 8px; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
     </style>
 </head>
 <body>
+
 <div class="container">
-    <div class="admin-panel">
-        <strong>🛠️ PANEL KONTROL OPERASIONAL:</strong> &nbsp;
-        <button type="button" class="btn btn-green" onclick="simpanKeLaporan()">💾 Simpan ke Laporan</button>
-        <button type="button" class="btn btn-blue" onclick="cetakDanSimpan()">🖨️ Cetak PKB (Ctrl + P)</button>
-        <button type="button" class="btn btn-red" onclick="resetForm()">🔄 Reset Form PKB Baru</button>
-        <!-- Tombol baru untuk navigasi ke Invoice -->
-        <button type="button" class="btn btn-orange" onclick="bukaHalamanInvoice()">📄 MENU INVOICE</button>
+    <button class="btn-nav" onclick="window.location.href='invoice.html'">MENU INVOICE</button>
+    
+    <h2>Sistem Input PKB (Perintah Kerja Bengkel)</h2>
+    <h3>Daya Toyota</h3>
+    
+    <div class="form-group">
+        <label>No. Registrasi / No. Polisi:</label>
+        <input type="text" id="noPolisi" placeholder="Contoh: B 1234 ABC">
     </div>
-    <table class="no-border" style="margin-bottom: 5px;">
-        <tr>
-            <td style="vertical-align: middle;">
-                <span class="title">PERINTAH KERJA BENGKEL (PKB)</span><br>
-                <span style="color: #444; font-size: 10pt;">PT Daya Adicipta Sandika</span>
-            </td>
-            <td>
-                <div class="nopol-container">
-                    <input type="text" id="in_nopol" placeholder="B 2577 KRL">
-                    <div style="margin-top: 5px; font-weight: bold; font-size: 11pt;">
-                        No. PKB: M- <input type="text" id="in_nopkb" placeholder="0001" style="width: 90px; border: none; border-bottom: 1px solid #000; font-weight: bold; text-align: center; font-size: 11pt;">
-                    </div>
-                </div>
-            </td>
-        </tr>
-    </table>
+    <div class="form-group">
+        <label>Nama Pemilik / Pelanggan:</label>
+        <input type="text" id="namaPelanggan" placeholder="Nama Lengkap">
+    </div>
+    <div class="form-group">
+        <label>Tipe Kendaraan:</label>
+        <input type="text" id="tipeMobil" placeholder="Contoh: Avanza, Innova, Rush">
+    </div>
+    <div class="form-group">
+        <label>Jenis Pekerjaan:</label>
+        <select id="jenisPekerjaan">
+            <option value="Servis Berkala">Servis Berkala</option>
+            <option value="Perbaikan Ringan (General Repair)">Perbaikan Ringan (General Repair)</option>
+            <option value="Perbaikan Berat (Heavy Repair)">Perbaikan Berat (Heavy Repair)</option>
+            <option value="Keluhan AC / Elektrikal">Keluhan AC / Elektrikal</option>
+            <option value="Body & Paint">Body & Paint</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>Nama Service Advisor (SA):</label>
+        <input type="text" id="namaSA" placeholder="Nama SA yang bertugas">
+    </div>
     
-    <table style="margin-bottom: 5px;">
-        <tr>
-            <td style="width: 50%; padding: 2px 6px;">
-                <strong style="display:block; margin-bottom: 2px; background: #f9f9f9; padding: 2px;">DATA PELANGGAN</strong>
-                <table class="no-border">
-                    <tr><td style="width: 30%;">Nama</td><td>: <input type="text" id="in_nama" placeholder="Nama Pelanggan"></td></tr>
-                    <tr><td>No. KTP</td><td>: <input type="text" id="in_ktp" placeholder="Nomor KTP"></td></tr>
-                    <tr><td>No. HP</td><td>: <input type="text" id="in_hp" placeholder="No. HP"></td></tr>
-                    <tr><td>Alamat</td><td>: <input type="text" id="in_alamat" placeholder="Alamat"></td></tr>
-                    <tr><td>Bengkel</td><td>: 
-                        <select id="in_bengkel" onchange="updateSAOptions(this.value)">
-                            <option value="">-- PILIH BENGKEL --</option>
-                            <option value="S001">S001</option>
-                            <option value="S002">S002</option>
-                        </select>
-                    </td></tr>
-                    <tr><td>Nama SA</td><td>: 
-                        <select id="in_sa" onchange="syncNamaSA(this.value)">
-                            <option value="">-- PILIH SA --</option>
-                        </select>
-                    </td></tr>
-                </table>
-            </td>
-            <td style="width: 50%; padding: 2px 6px;">
-                <strong style="display:block; margin-bottom: 2px; background: #f9f9f9; padding: 2px;">DATA KENDARAAN</strong>
-                <table class="no-border">
-                    <tr><td style="width: 38%;">Model / Tipe</td><td>: <input type="text" id="in_tipe" placeholder="RAIZE 1.0 S CVT"></td></tr>
-                    <tr><td>KM Saat Ini</td><td>: <input type="text" id="in_km" placeholder="KM"></td></tr>
-                    <tr><td>No. Rangka</td><td>: <input type="text" id="in_norangka" placeholder="No. Rangka"></td></tr>
-                    <tr><td>Tgl Penerimaan</td><td>: <input type="date" id="in_tgl_terima"></td></tr>
-                    <tr><td>Jam Penerimaan</td><td>: <input type="time" id="in_jam_terima"></td></tr>
-                    <tr><td>Tgl Penyerahan</td><td>: <input type="date" id="in_tgl_serah"></td></tr>
-                    <tr><td>Jam Penyerahan</td><td>: <input type="time" id="in_jam_serah"></td></tr>
-                </table>
-            </td>
-        </tr>
-    </table>
+    <button onclick="simpanPKB()">SIMPAN DATA PKB</button>
     
-    <table style="margin-top: 0px; margin-bottom: 5px;">
-        <tr>
-            <td style="width: 50%; padding: 2px 6px;">
-                <strong style="display:block; margin-bottom: 2px; background: #f9f9f9; padding: 2px;">PERMINTAAN / KELUHAN</strong>
-                <textarea id="in_keluhan" rows="4" placeholder="Tulis keluhan pelanggan di sini..." oninput="syncKeluhanPrint(this.value)"></textarea>
-                <div id="lbl_keluhan_print" class="print-keluhan-mirror"></div>
-            </td>
-            <td style="width: 50%; padding: 2px 6px;">
-                <strong style="display:block; margin-bottom: 2px; background: #f9f9f9; padding: 2px;">CHECKLIST FISIK & LAYANAN</strong>
-                <table class="no-border">
-                    <tr><td style="width: 35%;">STNK</td><td>: <select id="in_stnk"><option value="Ada">Ada</option><option value="Tidak">Tidak</option></select></td></tr>
-                    <tr><td>Buku Service</td><td>: <select id="in_buku"><option value="Ada">Ada</option><option value="Tidak">Tidak</option></select></td></tr>
-                    <tr><td>Part Bekas</td><td>: <select id="in_partbekas"><option value="Bawa Pulang">Bawa Pulang</option><option value="Buang">Buang / Hancurkan</option></select></td></tr>
-                    <tr>
-                        <td>Bahan Bakar</td>
-                        <td style="white-space: nowrap;">: <span class="fuel-bar-print">E [---|---|---|---|] F</span> <span style="font-size: 8pt; color: #555;">(Coret di Pulpen)</span>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-    <strong style="display:block; margin: 3px 0;">URAIAN PEKERJAAN & ESTIMASI BIAYA</strong>
+    <hr style="margin: 30px 0;">
     
-    <table id="work-table-main" style="margin-bottom: 5px;">
+    <h3>Riwayat Pendaftaran PKB</h3>
+    <input type="text" id="searchPKB" class="search-box" placeholder="Cari berdasarkan No. Polisi atau Nama..." onkeyup="cariData()">
+    
+    <table>
         <thead>
             <tr>
-                <th style="width: 5%; text-align: center;">No</th>
-                <th style="width: 40%;">Deskripsi Pekerjaan / Sparepart / Material</th>
-                <th style="width: 8%; text-align: center;">Qty</th>
-                <th style="width: 20%; text-align: right;">Harga Satuan (Rp)</th>
-                <th style="width: 17%; text-align: center;">Discount</th>
-                <th style="width: 10%; text-align: center;" class="action-col">Aksi</th>
+                <th>Tanggal/Jam</th>
+                <th>No. Polisi</th>
+                <th>Nama Pelanggan</th>
+                <th>Tipe Mobil</th>
+                <th>Jenis Pekerjaan</th>
+                <th>Service Advisor</th>
+                <th>Aksi</th>
             </tr>
         </thead>
-        <tbody id="work-rows-container">
-            <tr>
-                <td style="text-align: center; vertical-align: middle;">1</td>
-                <td><input type="text" class="item-desc" placeholder="Ketik jasa atau part di sini..."></td>
-                <td><input type="number" class="item-qty" value="1" min="1" oninput="hitungTotal()" style="text-align: center; width: 100%;"></td>
-                <td><input type="text" class="item-harga" oninput="formatCurrency(this)" placeholder="Rp 0" style="text-align: right;"></td>
-                <td>
-                    <div style="display: flex; gap: 2px; align-items: center;">
-                        <input type="text" class="item-diskon" oninput="formatDiskon(this)" placeholder="0" style="text-align: right; width: 65%;">
-                        <select class="item-tipe-diskon" onchange="hitungTotal()" style="width: 35%; padding: 4px 2px;">
-                            <option value="%">%</option>
-                            <option value="Rp">Rp</option>
-                        </select>
-                    </div>
-                </td>
-                <td style="text-align: center; vertical-align: middle;" class="action-col"><button type="button" class="btn-del" onclick="hapusBarisTertentu(this)">❌</button></td>
-            </tr>
+        <tbody id="tabelRiwayat">
+            <!-- Data dari Firebase akan muncul di sini -->
         </tbody>
     </table>
-    <button type="button" id="btn-tambah" class="btn btn-small" onclick="tambahBarisPekerjaan()" style="margin-top: 0px;">➕ Tambah Baris Uraian Pekerjaan</button>
-    <table class="no-border" style="margin-top: 4px; margin-bottom: 5px;">
-        <tr>
-            <td style="width: 50%;"></td>
-            <td style="width: 50%;">
-                <table style="border: none;">
-                    <tr style="border: none;">
-                        <td style="width: 50%; background:#f9f9f9; font-weight:bold; border: none; padding: 6px;">TOTAL ESTIMASI BIAYA:</td>
-                        <td style="background:#f2f2f2; text-align: right; font-weight: bold; font-size: 13px; border: none; padding: 6px;">Rp <span id="txt_total">0</span></td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-    
-    <div class="legal-text">
-        <div>
-            <strong>Ketentuan:</strong><br>
-            PKB ini merupakan SURAT KUASA dari pelanggan kepada PT Daya Adicipta Sandika untuk:
-            <ul>
-                <li>Mengerjakan Pekerjaan Seperti yang tertulis pada PKB ini.</li>
-                <li>Izin Mencoba Kendaraan diluar bengkel PT Daya Adicipta Sandika.</li>
-            </ul>
-            <strong>Jaminan Pekerjaan berlaku:</strong>
-            <ul>
-                <li>General Repair, 15 hari atau 1.000 km mana yang tercapai lebih dulu.</li>
-                <li>Engine overhaul, 1 bulan atau 1.000 km mana yang tercapai lebih dulu.</li>
-                <li>Pengecatan 3 bulan.</li>
-            </ul>
-        </div>
-        <div>
-            Apabila dalam waktu 2 hari setelah perbaikan part-bekas tidak diambil maka kami berhak melakukan pemusnahan part-bekas tersebut.<br>
-            Apabila dalam 7(tujuh) hari kendaraan tidak diambil dari bengkel PT Daya Adicipta Sandika, maka kami akan kenakan biaya tambahan sebesar Rp. 10.000,- (sepuluh ribu rupiah) perhari dan kami tidak bertanggung jawab atas segala kondisi kehilangan, kerusakan atas kendaraan.<br>
-            Semua estimasi yang dihasilkan berkenaan dengan waktu penyelesaian maupun biaya yang diperlukan hanya merupakan biaya taksiran dan tidak mengikat.<br>
-            <i>Seluruh isian PKB dan ketentuannya sudah dijelaskan oleh advisor dan sudah dimengerti oleh pelanggan.</i>
-        </div>
-    </div>
-
-    <table class="no-border" style="margin-top: 20px; text-align: center;">
-        <tr>
-            <td style="width: 45%; border-top: 1px solid #000 !important; padding-top: 4px;"><br><br><br><strong id="lbl_sa_signature">( NAMA SA )</strong><br><span>Service Advisor (SA)</span></td>
-            <td style="width: 10%;"></td>
-            <td style="width: 45%; border-top: 1px solid #000 !important; padding-top: 4px;"><br><br><br><strong>Pelanggan / Pembawa</strong></td>
-        </tr>
-    </table>
-    <div class="note-footer">
-        <strong>📌 PENTING:</strong> Mohon disimpan, lembar ini dipakai untuk pengambilan kendaraan.<br>
-        <strong style="color: #b91c1c;">⚠️ PERINGATAN:</strong> Mohon Untuk tidak meninggalkan barang-barang berharga di dalam kendaraan.
-    </div>
-    <div class="report-section">
-        <h3 style="margin-top: 0; color: #1a365d; border-bottom: 2px solid #000; padding-bottom: 5px;">📊 REKAP DATA LAPORAN PENERIMAAN SERVICE HARI INI</h3>
-        <button type="button" class="btn btn-blue" style="font-size: 11px; padding: 4px 10px; margin-bottom: 10px;" onclick="downloadLaporanCSV()">📥 Download Report Rekap (.CSV)</button>
-        <table class="report-table">
-            <thead>
-                <tr>
-                    <th style="width: 5%;">No</th><th>No PKB</th><th>No Polisi</th><th>Nama Pelanggan</th><th>No. HP (WA)</th><th>Model Tipe</th><th>Keluhan Utama</th><th>Total Biaya</th>
-                </tr>
-            </thead>
-            <tbody id="report-rows"></tbody>
-        </table>
-        <button type="button" class="btn btn-red" style="font-size: 10px; padding: 3px 8px;" onclick="hapusSemuaLaporan()">🗑️ Kosongkan Semua Riwayat Laporan</button>
-    </div>
 </div>
-<script>
-    function syncKeluhanPrint(val) {
-        var formatted = val.replace(/\n/g, '<br>');
-        document.getElementById('lbl_keluhan_print').innerHTML = formatted || '-';
-    }
 
-    function syncNamaSA(val) {
-        document.getElementById('lbl_sa_signature').innerText = val ? val.toUpperCase() : "( NAMA SA )";
-    }
+<!-- Ambil modul Firebase SDK -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    function updateSAOptions(bengkel, selectedSA = "") {
-        var saSelect = document.getElementById('in_sa');
-        saSelect.innerHTML = '<option value="">-- PILIH SA --</option>';
+    const firebaseConfig = {
+        apiKey: "AIzaSyDhHmuJjcJn4weiMYSFTnsdetqkYut62Ys",
+        authDomain: "pkbmanualdaninvoice.firebaseapp.com",
+        databaseURL: "https://pkbmanualdaninvoice-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "pkbmanualdaninvoice",
+        storageBucket: "pkbmanualdaninvoice.firebasestorage.app",
+        messagingSenderId: "812674696678",
+        appId: "1:812674696678:web:19ef84fdeaa645bf6e4227"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Fungsi Simpan ke Firebase Database Online
+    window.simpanPKB = function() {
+        const noPolisi = document.getElementById('noPolisi').value.trim();
+        const namaPelanggan = document.getElementById('namaPelanggan').value.trim();
+        const tipeMobil = document.getElementById('tipeMobil').value.trim();
+        const jenisPekerjaan = document.getElementById('jenisPekerjaan').value.type || document.getElementById('jenisPekerjaan').value;
+        const namaSA = document.getElementById('namaSA').value.trim();
         
-        var listSA = [];
-        if (bengkel === "S001") {
-            listSA = [
-                "YOGA PRATAMA ELIN",
-                "SARIPUDIN",
-                "DODY RIYAGUS",
-                "I PUTU INDRA",
-                "RIDUANSYAH YUDHA",
-                "SLAMET",
-		"IMRON"
-            ];
-        } else if (bengkel === "S002") {
-            listSA = [
-                "GURUH TRI HANDOKO",
-                "DANI RAHMAN ISKANDAR",
-                "APRIANTO"
-            ];
+        if(!noPolisi || !namaPelanggan || !tipeMobil || !namaSA) {
+            alert('Mohon isi semua kolom data terlebih dahulu!');
+            return;
         }
 
-        listSA.forEach(function(sa) {
-            var option = document.createElement('option');
-            option.value = sa;
-            option.text = sa;
-            if (sa === selectedSA) {
-                option.selected = true;
-            }
-            saSelect.appendChild(option);
+        const waktuSekarang = new Date().toLocaleString('id-ID');
+        const pkbRef = ref(db, 'riwayatPKB');
+        const dataBaruRef = push(pkbRef);
+
+        set(dataBaruRef, {
+            waktu: waktuSekarang,
+            noPolisi: noPolisi,
+            namaPelanggan: namaPelanggan,
+            tipeMobil: tipeMobil,
+            jenisPekerjaan: jenisPekerjaan,
+            namaSA: namaSA
+        }).then(() => {
+            alert('Data PKB Berhasil Tersimpan Online!');
+            // Reset Form
+            document.getElementById('noPolisi').value = '';
+            document.getElementById('namaPelanggan').value = '';
+            document.getElementById('tipeMobil').value = '';
+            document.getElementById('namaSA').value = '';
+        }).catch((error) => {
+            alert('Gagal menyimpan: ' + error.message);
         });
-
-        if (selectedSA) {
-            syncNamaSA(selectedSA);
-        } else {
-            syncNamaSA("");
-        }
     }
 
-    function formatCurrency(input) {
-        var value = input.value.replace(/[^0-9]/g, '');
-        if (value === "") {
-            input.value = "";
-        } else {
-            var numberValue = parseFloat(value);
-            input.value = "Rp " + numberValue.toLocaleString('id-ID');
-        }
-        hitungTotal();
-    }
-
-    // Fungsi format untuk input diskon
-    function formatDiskon(input) {
-        var row = input.closest('tr');
-        var tipe = row.querySelector('.item-tipe-diskon').value;
-        var value = input.value.replace(/[^0-9]/g, '');
+    // Tampilkan Riwayat dari Firebase Secara Real-time
+    const riwayatRef = ref(db, 'riwayatPKB');
+    onValue(riwayatRef, (snapshot) => {
+        const tbody = document.getElementById('tabelRiwayat');
+        tbody.innerHTML = '';
+        const data = snapshot.val();
         
-        if (value === "") {
-            input.value = "";
-        } else {
-            var num = parseFloat(value);
-            if (tipe === "%") {
-                if (num > 100) num = 100; // Proteksi persen tidak > 100
-                input.value = num;
-            } else {
-                input.value = num.toLocaleString('id-ID');
-            }
-        }
-        hitungTotal();
-    }
-
-    function getPureNumber(valStr) {
-        if (!valStr) return 0;
-        var pure = valStr.replace(/[^0-9]/g, '');
-        return parseFloat(pure) || 0;
-    }
-
-    function aturNoPKBOtomatis() {
-        var currentNo = localStorage.getItem('last_pkb_number') || 0;
-        var nextNo = parseInt(currentNo) + 1;
-        document.getElementById('in_nopkb').value = String(nextNo).padStart(4, '0');
-    }
-
-    fn = aturWaktuOtomatis;
-    function aturWaktuOtomatis() {
-        var sekarang = new Date();
-        var tahun = sekarang.getFullYear();
-        var bulan = String(sekarang.getMonth() + 1).padStart(2, '0');
-        var tanggal = String(sekarang.getDate()).padStart(2, '0');
-        var formatTanggal = tahun + '-' + bulan + '-' + tanggal;
-        var jam = String(sekarang.getHours()).padStart(2, '0');
-        var menit = String(sekarang.getMinutes()).padStart(2, '0');
-        var formatJam = jam + ':' + menit;
-        document.getElementById('in_tgl_terima').value = formatTanggal;
-        document.getElementById('in_jam_terima').value = formatJam;
-    }
-
-    function tambahBarisPekerjaan() {
-        var container = document.getElementById('work-rows-container');
-        var tr = document.createElement('tr');
-        tr.innerHTML = '<td style="text-align: center; vertical-align: middle;" class="row-num"></td>' +
-                       '<td><input type="text" class="item-desc" placeholder="Ketik jasa atau part baru..."></td>' +
-                       '<td><input type="number" class="item-qty" value="1" min="1" oninput="hitungTotal()" style="text-align: center; width: 100%;"></td>' +
-                       '<td><input type="text" class="item-harga" oninput="formatCurrency(this)" placeholder="Rp 0" style="text-align: right;"></td>' +
-                       '<td>' +
-                       '    <div style="display: flex; gap: 2px; align-items: center;">' +
-                       '        <input type="text" class="item-diskon" oninput="formatDiskon(this)" placeholder="0" style="text-align: right; width: 65%;">' +
-                       '        <select class="item-tipe-diskon" onchange="hitungTotal()" style="width: 35%; padding: 4px 2px;">' +
-                       '            <option value="%">%</option>' +
-                       '            <option value="Rp">Rp</option>' +
-                       '        </select>' +
-                       '    </div>' +
-                       '</td>' +
-                       '<td style="text-align: center; vertical-align: middle;" class="action-col"><button type="button" class="btn-del" onclick="hapusBarisTertentu(this)">❌</button></td>';
-        container.appendChild(tr); 
-        urutkanNomorTabel();
-    }
-
-    function hapusBarisTertentu(btn) {
-        var container = document.getElementById('work-rows-container');
-        if(container.rows.length > 1) {
-            var row = btn.parentNode.parentNode; row.parentNode.removeChild(row);
-            urutkanNomorTabel(); hitungTotal();
-        } else { alert("Minimal harus menyisakan 1 baris urian pekerjaan!"); }
-    }
-
-    function urutkanNomorTabel() {
-        var container = document.getElementById('work-rows-container');
-        for (var i = 0; i < container.rows.length; i++) { container.rows[i].cells[0].innerText = i + 1; }
-    }
-
-    // Perubahan logika hitung total akumulasi Qty dan Diskon (% atau Rp)
-    function hitungTotal() {
-        var rows = document.querySelectorAll('#work-rows-container tr');
-        var total = 0;
-        
-        rows.forEach(function(row) {
-            var qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-            var harga = getPureNumber(row.querySelector('.item-harga').value);
-            var diskonVal = getPureNumber(row.querySelector('.item-diskon').value);
-            var tipeDiskon = row.querySelector('.item-tipe-diskon').value;
-            
-            var subTotal = harga * qty;
-            var potongan = 0;
-            
-            if (tipeDiskon === "%") {
-                potongan = subTotal * (diskonVal / 100);
-            } else {
-                potongan = diskonVal;
-            }
-            
-            var netRow = subTotal - potongan;
-            if(netRow < 0) netRow = 0; // Proteksi agar tidak minus
-            total += netRow;
-        });
-        
-        document.getElementById('txt_total').innerText = total.toLocaleString('id-ID');
-    }
-
-    function resetForm() {
-        document.getElementById('in_nopol').value = ''; document.getElementById('in_nama').value = ''; document.getElementById('in_ktp').value = ''; document.getElementById('in_hp').value = ''; document.getElementById('in_alamat').value = ''; document.getElementById('in_bengkel').value = ''; document.getElementById('in_sa').innerHTML = '<option value="">-- PILIH SA --</option>'; document.getElementById('in_tipe').value = ''; document.getElementById('in_km').value = ''; document.getElementById('in_norangka').value = ''; document.getElementById('in_keluhan').value = ''; document.getElementById('in_stnk').selectedIndex = 0; document.getElementById('in_buku').selectedIndex = 0; document.getElementById('in_partbekas').selectedIndex = 0;
-        document.getElementById('in_tgl_serah').value = ''; document.getElementById('in_jam_serah').value = ''; 
-        document.getElementById('lbl_keluhan_print').innerHTML = '';
-        document.getElementById('lbl_sa_signature').innerText = '( NAMA SA )';
-        aturWaktuOtomatis();
-        aturNoPKBOtomatis();
-        document.getElementById('work-rows-container').innerHTML = '<tr><td style="text-align: center; vertical-align: middle;">1</td><td><input type="text" class="item-desc" placeholder="Ketik jasa atau part di sini..."></td><td><input type="number" class="item-qty" value="1" min="1" oninput="hitungTotal()" style="text-align: center; width: 100%;"></td><td><input type="text" class="item-harga" oninput="formatCurrency(this)" placeholder="Rp 0" style="text-align: right;"></td><td><div style="display: flex; gap: 2px; align-items: center;"><input type="text" class="item-diskon" oninput="formatDiskon(this)" placeholder="0" style="text-align: right; width: 65%;"><select class="item-tipe-diskon" onchange="hitungTotal()" style="width: 35%; padding: 4px 2px;"><option value="%">%</option><option value="Rp">Rp</option></select></div></td><td style="text-align: center; vertical-align: middle;" class="action-col"><button type="button" class="btn-del" onclick="hapusBarisTertentu(this)">❌</button></td></tr>';
-        hitungTotal();
-    }
-
-    // Fungsi bantu menyimpan data pkb ter-update agar langsung terintegrasi dengan invoice
-    function sinkronisasiKeInvoice() {
-        var payloadInvoice = {
-            vPlate: document.getElementById('in_nopol').value,
-            cName: document.getElementById('in_nama').value,
-            cTaxId: document.getElementById('in_ktp').value,
-            cPhone: document.getElementById('in_hp').value,
-            cAddress: document.getElementById('in_alamat').value,
-            vType: document.getElementById('in_tipe').value,
-            vKM: document.getElementById('in_km').value,
-            vSA: document.getElementById('in_sa').value
-        };
-        localStorage.setItem('shared_pkb_to_invoice', JSON.stringify(payloadInvoice));
-    }
-
-    function simpanKeLaporan() {
-        var nopol = document.getElementById('in_nopol').value; var nopkb = document.getElementById('in_nopkb').value; var nama = document.getElementById('in_nama').value; var tipe = document.getElementById('in_tipe').value; var keluhan = document.getElementById('in_keluhan').value;
-        var ktp = document.getElementById('in_ktp').value; var bengkel = document.getElementById('in_bengkel').value;
-        var hp = document.getElementById('in_hp').value; var alamat = document.getElementById('in_alamat').value; var sa = document.getElementById('in_sa').value; var km = document.getElementById('in_km').value; var norangka = document.getElementById('in_norangka').value; var tgl_terima = document.getElementById('in_tgl_terima').value; var jam_terima = document.getElementById('in_jam_terima').value; var tgl_serah = document.getElementById('in_tgl_serah').value; var jam_serah = document.getElementById('in_jam_serah').value; var stnk = document.getElementById('in_stnk').value; var buku = document.getElementById('in_buku').value; var partbekas = document.getElementById('in_partbekas').value;
-        
-        var rows = document.querySelectorAll('#work-rows-container tr');
-        var itemsArr = [];
-        var total = 0;
-        
-        rows.forEach(function(row) {
-            var desc = row.querySelector('.item-desc').value;
-            var qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-            var harga = getPureNumber(row.querySelector('.item-harga').value);
-            var diskonVal = getPureNumber(row.querySelector('.item-diskon').value);
-            var tipeDiskon = row.querySelector('.item-tipe-diskon').value;
-            
-            var subTotal = harga * qty;
-            var potongan = (tipeDiskon === "%") ? (subTotal * (diskonVal / 100)) : diskonVal;
-            var netRow = subTotal - potongan;
-            if(netRow < 0) netRow = 0;
-            total += netRow;
-            
-            itemsArr.push({ desc: desc, qty: qty, harga: harga, diskon: diskonVal, tipe_diskon: tipeDiskon });
-        });
-
-        if(!nopol || !nopkb || !nama) { alert("⚠️ Gagal! Mohon lengkapi No Polisi, No PKB, dan Nama Pelanggan."); return false; }
-        
-        var dataLaporan = JSON.parse(localStorage.getItem('laporan_final_datetime')) || [];
-        var existingIndex = dataLaporan.findIndex(function(x) { return x.nopkb === nopkb; });
-        var payload = { nopkb: nopkb, nopol: nopol, nama: nama, ktp: ktp, bengkel: bengkel, tipe: tipe, keluhan: keluhan, total: total, hp: hp, alamat: alamat, sa: sa, km: km, norangka: norangka, tgl_terima: tgl_terima, jam_terima: jam_terima, tgl_serah: tgl_serah, jam_serah: jam_serah, stnk: stnk, buku: buku, partbekas: partbekas, items: itemsArr };
-        
-        if(existingIndex > -1) {
-            dataLaporan[existingIndex] = payload;
-        } else {
-            dataLaporan.push(payload);
-            localStorage.setItem('last_pkb_number', parseInt(nopkb) || 0);
-        }
-        
-        localStorage.setItem('laporan_final_datetime', JSON.stringify(dataLaporan));
-        
-        // Integrasikan secara presisi ke Data Invoice saat disave/dicetak
-        sinkronisasiKeInvoice();
-        
-        tampilkanLaporan();
-        return true;
-    }
-
-    function cetakDanSimpan() {
-        var statusSimpan = simpanKeLaporan();
-        if(statusSimpan) {
-            window.print();
-        }
-    }
-
-    function editLaporan(nopkb) {
-        var dataLaporan = JSON.parse(localStorage.getItem('laporan_final_datetime')) || [];
-        var item = dataLaporan.find(function(x) { return x.nopkb === nopkb; });
-        if(!item) return;
-        
-        document.getElementById('in_nopol').value = item.nopol || '';
-        document.getElementById('in_nopkb').value = item.nopkb || '';
-        document.getElementById('in_nama').value = item.nama || '';
-        document.getElementById('in_ktp').value = item.ktp || '';
-        document.getElementById('in_hp').value = item.hp || '';
-        document.getElementById('in_alamat').value = item.alamat || '';
-        document.getElementById('in_bengkel').value = item.bengkel || '';
-        
-        updateSAOptions(item.bengkel || '', item.sa || '');
-        
-        document.getElementById('in_tipe').value = item.tipe || '';
-        document.getElementById('in_km').value = item.km || '';
-        document.getElementById('in_norangka').value = item.norangka || '';
-        document.getElementById('in_tgl_terima').value = item.tgl_terima || '';
-        document.getElementById('in_jam_terima').value = item.jam_terima || '';
-        document.getElementById('in_tgl_serah').value = item.tgl_serah || '';
-        document.getElementById('in_jam_serah').value = item.jam_serah || '';
-        document.getElementById('in_keluhan').value = item.keluhan || '';
-        document.getElementById('in_stnk').value = item.stnk || 'Ada';
-        document.getElementById('in_buku').value = item.buku || 'Ada';
-        document.getElementById('in_partbekas').value = item.partbekas || 'Bawa Pulang';
-        
-        syncKeluhanPrint(item.keluhan || '');
-        
-        var container = document.getElementById('work-rows-container');
-        container.innerHTML = '';
-        if(item.items && item.items.length > 0) {
-            item.items.forEach(function(subItem, index) {
-                var tr = document.createElement('tr');
-                var formattedHarga = subItem.harga ? "Rp " + parseFloat(subItem.harga).toLocaleString('id-ID') : "";
-                var formattedDiskon = subItem.diskon ? (subItem.tipe_diskon === "Rp" ? parseFloat(subItem.diskon).toLocaleString('id-ID') : subItem.diskon) : "";
-                var selPct = subItem.tipe_diskon === "%" ? "selected" : "";
-                var selRp = subItem.tipe_diskon === "Rp" ? "selected" : "";
-
-                tr.innerHTML = '<td style="text-align: center; vertical-align: middle;">' + (index + 1) + '</td>' +
-                               '<td><input type="text" class="item-desc" value="' + (subItem.desc || '') + '" placeholder="Ketik jasa atau part di sini..."></td>' +
-                               '<td><input type="number" class="item-qty" value="' + (subItem.qty || 1) + '" min="1" oninput="hitungTotal()" style="text-align: center; width: 100%;"></td>' +
-                               '<td><input type="text" class="item-harga" oninput="formatCurrency(this)" value="' + formattedHarga + '" placeholder="Rp 0" style="text-align: right;"></td>' +
-                               '<td>' +
-                               '    <div style="display: flex; gap: 2px; align-items: center;">' +
-                               '        <input type="text" class="item-diskon" oninput="formatDiskon(this)" value="' + formattedDiskon + '" placeholder="0" style="text-align: right; width: 65%;">' +
-                               '        <select class="item-tipe-diskon" onchange="hitungTotal()" style="width: 35%; padding: 4px 2px;">' +
-                               '            <option value="%" ' + selPct + '>%</option>' +
-                               '            <option value="Rp" ' + selRp + '>Rp</option>' +
-                               '        </select>' +
-                               '    </div>' +
-                               '</td>' +
-                               '<td style="text-align: center; vertical-align: middle;" class="action-col"><button type="button" class="btn-del" onclick="hapusBarisTertentu(this)">❌</button></td>';
-                container.appendChild(tr);
+        if (data) {
+            Object.keys(data).forEach((key) => {
+                const item = data[key];
+                const row = `<tr>
+                    <td>${item.waktu}</td>
+                    <td><b>${item.noPolisi}</b></td>
+                    <td>${item.namaPelanggan}</td>
+                    <td>${item.tipeMobil}</td>
+                    <td>${item.jenisPekerjaan}</td>
+                    <td>${item.namaSA}</td>
+                    <td><button class="btn-danger" onclick="hapusPKB('${key}')">Hapus</button></td>
+                </tr>`;
+                tbody.innerHTML += row;
             });
         } else {
-            container.innerHTML = '<tr><td style="text-align: center; vertical-align: middle;">1</td><td><input type="text" class="item-desc" placeholder="Ketik jasa atau part di sini..."></td><td><input type="number" class="item-qty" value="1" min="1" oninput="hitungTotal()" style="text-align: center; width: 100%;"></td><td><input type="text" class="item-harga" oninput="formatCurrency(this)" placeholder="Rp 0" style="text-align: right;"></td><td><div style="display: flex; gap: 2px; align-items: center;"><input type="text" class="item-diskon" oninput="formatDiskon(this)" placeholder="0" style="text-align: right; width: 65%;"><select class="item-tipe-diskon" onchange="hitungTotal()" style="width: 35%; padding: 4px 2px;"><option value="%">%</option><option value="Rp">Rp</option></select></div></td><td style="text-align: center; vertical-align: middle;" class="action-col"><button type="button" class="btn-del" onclick="hapusBarisTertentu(this)">❌</button></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#999;">Belum ada riwayat pendaftaran.</td></tr>';
         }
-        hitungTotal();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        alert("📋 Data PKB M-" + nopkb + " berhasil dimuat ke formulir! Anda bisa mengubah atau menambahkan pekerjaan lalu klik simpan kembali.");
-    }
+    });
 
-    function tampilkanLaporan() {
-        var dataLaporan = JSON.parse(localStorage.getItem('laporan_final_datetime')) || []; var rowsHtml = "";
-        if (dataLaporan.length === 0) { rowsHtml = "<tr><td colspan='8' style='text-align:center; color:#999;'>Belum ada data rekap penerimaan kendaraan.</td></tr>"; } 
-        else { 
-            for(var i = 0; i < dataLaporan.length; i++) { 
-                var cleanPhone = (dataLaporan[i].hp || '').replace(/[^0-9]/g, '');
-                if(cleanPhone.startsWith('0')) { cleanPhone = '62' + cleanPhone.slice(1); }
-                var waLinkHtml = dataLaporan[i].hp ? "<a href='https://wa.me/" + cleanPhone + "' target='_blank' class='wa-link' onclick='event.stopPropagation();'>💬 " + dataLaporan[i].hp + "</a>" : "-";
-                
-                rowsHtml += "<tr class='clickable-row' onclick='editLaporan(\""+dataLaporan[i].nopkb+"\")'>" +
-                            "<td style='text-align:center;'>" + (i+1) + "</td>" +
-                            "<td>" + dataLaporan[i].nopkb + "</td>" +
-                            "<td><strong>" + dataLaporan[i].nopol.toUpperCase() + "</strong></td>" +
-                            "<td>" + dataLaporan[i].nama + "</td>" +
-                            "<td>" + waLinkHtml + "</td>" +
-                            "<td>" + dataLaporan[i].tipe + "</td>" +
-                            "<td>" + dataLaporan[i].keluhan + "</td>" +
-                            "<td style='text-align:right; font-weight:bold;'>Rp " + dataLaporan[i].total.toLocaleString('id-ID') + "</td>" +
-                            "</tr>"; 
-            } 
+    // Fungsi Hapus Data Online
+    window.hapusPKB = function(id) {
+        if(confirm('Apakah Anda yakin ingin menghapus permanen data ini?')) {
+            remove(ref(db, 'riwayatPKB/' + id));
         }
-        document.getElementById('report-rows').innerHTML = rowsHtml;
-    }
-    
-    function downloadLaporanCSV() {
-        var dataLaporan = JSON.parse(localStorage.getItem('laporan_final_datetime')) || [];
-        if(dataLaporan.length === 0) { alert("Tidak ada data laporan untuk di-download."); return; }
-        
-        var csvContent = "\uFEFFsep=;\n"; 
-        csvContent += "No;No PKB;No Polisi;Nama Pelanggan;No KTP;No HP;Alamat;Kode Bengkel;Nama SA;Model Tipe;KM;No Rangka;Keluhan Utama;Total Biaya\n";
-        
-        dataLaporan.forEach(function(item, idx) {
-            var row = [
-                idx + 1,
-                "M-" + item.nopkb,
-                item.nopol.toUpperCase(),
-                '"' + (item.nama || '').replace(/"/g, '""') + '"',
-                '"' + (item.ktp || '') + '"',
-                '"' + (item.hp || '') + '"',
-                '"' + (item.alamat || '').replace(/"/g, '""') + '"',
-                '"' + (item.bengkel || '') + '"',
-                '"' + (item.sa || '') + '"',
-                '"' + (item.tipe || '').replace(/"/g, '""') + '"',
-                '"' + (item.km || '') + '"',
-                '"' + (item.norangka || '') + '"',
-                '"' + (item.keluhan || '').replace(/"/g, '""').replace(/\r?\n/g, ' ') + '"',
-                item.total
-            ];
-            csvContent += row.join(";") + "\n";
-        });
-        
-        var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        var link = document.createElement("a");
-        var url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", "Rekap_Laporan_PKB_" + new Date().toISOString().slice(0,10) + ".csv");
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
     }
 
-    function hapusSemuaLaporan() { if(confirm("Hapus seluruh rekap tabel laporan bawah harian ini?")) { localStorage.removeItem('laporan_final_datetime'); localStorage.removeItem('last_pkb_number'); tampilkanLaporan(); aturNoPKBOtomatis(); } }
-    
-    // Fungsi untuk memicu lompat ke invoice.html dalam folder yang sama
-    function bukaHalamanInvoice() {
-        sinkronisasiKeInvoice();
-        window.location.href = 'invoice.html';
+    // Fungsi Pencarian Lokal Tabel
+    window.cariData = function() {
+        const input = document.getElementById('searchPKB').value.toUpperCase();
+        const rows = document.getElementById('tabelRiwayat').getElementsByTagName('tr');
+        for (let i = 0; i < rows.length; i++) {
+            const tdPolisi = rows[i].getElementsByTagName('td')[1];
+            const tdNama = rows[i].getElementsByTagName('td')[2];
+            if (tdPolisi || tdNama) {
+                const txtPolisi = tdPolisi.textContent || tdPolisi.innerText;
+                const txtNama = tdNama.textContent || tdNama.innerText;
+                if (txtPolisi.toUpperCase().indexOf(input) > -1 || txtNama.toUpperCase().indexOf(input) > -1) {
+                    rows[i].style.display = "";
+                } else {
+                    rows[i].style.display = "none";
+                }
+            }
+        }
     }
-
-    window.onload = function() { aturWaktuOtomatis(); aturNoPKBOtomatis(); tampilkanLaporan(); };
 </script>
 </body>
 </html>

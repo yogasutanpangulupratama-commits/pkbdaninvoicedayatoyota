@@ -551,7 +551,9 @@
         alert("📋 Data PKB M-" + nopkb + " berhasil dimuat!");
     }
 
-    // PERBAIKAN PRESISI UTAMA: Pencocokan format tanggal global (Lolos Filter Hari Ini)
+    // =======================================================================
+    // PERBAIKAN PRESISI: MENAMBAHKAN KATEGORI NAMA SA KEDALAM FILTER PENCARIAN
+    // =======================================================================
     window.tampilkanLaporanBerdasarkanFilter = function() {
         var dataLaporan = JSON.parse(localStorage.getItem('laporan_final_datetime')) || [];
         var searchKeyword = document.getElementById('search_laporan_input').value.toLowerCase().trim();
@@ -570,7 +572,6 @@
             var hp = (item.hp || "").toLowerCase();
             var saNama = (item.sa || "TANPA ADVISOR").toUpperCase();
 
-            // SINKRONISASI TANGGAL: Normalisasi jika ada format "/" dari database riwayat
             var tglTerimaNormal = tglTerima;
             if (tglTerima.includes("/")) {
                 var parts = tglTerima.split("/");
@@ -587,7 +588,8 @@
             if (searchKeyword === "") {
                 if (tglTerimaNormal === tglHariIni) lolosFilter = true;
             } else {
-                if (tglTerimaNormal.includes(searchKeyword) || tglTerima.includes(searchKeyword) || nopol.includes(searchKeyword) || hp.includes(searchKeyword)) {
+                // PENYESUAIAN DI SINI: Ditambahkan pengecekan saNama.toLowerCase().includes(searchKeyword)
+                if (tglTerimaNormal.includes(searchKeyword) || tglTerima.includes(searchKeyword) || nopol.includes(searchKeyword) || hp.includes(searchKeyword) || saNama.toLowerCase().includes(searchKeyword)) {
                     lolosFilter = true;
                 }
             }
@@ -621,7 +623,6 @@
         
         renderSATextSummary(saCounts);
     }
-
     function renderSATextSummary(saCounts) {
         var container = document.getElementById("sa_text_summary");
         var keys = Object.keys(saCounts);

@@ -237,7 +237,7 @@
             📢 Memuat data produktivitas SA hari ini...
         </div>
 
-        <input type="text" id="search_laporan_input" class="search-filter-box" placeholder="🔍 Filter & Cari Data Berdasarkan: TANGGAL (YYYY-MM-DD) / NO POLISI / NO TELPON HP..." oninput="tampilkanLaporanBerdasarkanFilter()">
+        <input type="text" id="search_laporan_input" class="search-filter-box" placeholder="🔍 Filter & Cari Data Berdasarkan: TANGGAL (YYYY-MM-DD) / NO POLISI / NO TELPON HP / ADVISOR..." oninput="tampilkanLaporanBerdasarkanFilter()">
         
         <button type="button" class="btn btn-blue" style="font-size: 11px; padding: 4px 10px; margin-bottom: 10px;" onclick="downloadLaporanCSV()">📥 Download Report Rekap (.CSV)</button>
         <table class="report-table">
@@ -289,7 +289,12 @@
             lastNo = maxNo;
         }
         localStorage.setItem('last_pkb_number', lastNo);
-        document.getElementById('in_nopkb').value = String(lastNo + 1).padStart(4, '0');
+        
+        var inputNoPkb = document.getElementById('in_nopkb');
+        // Kunci proteksi agar form pengisian tidak terganti nomor PKB-nya saat SA sedang mengetik
+        if (!inputNoPkb.value) {
+            inputNoPkb.value = String(lastNo + 1).padStart(4, '0');
+        }
         
         if (window.tampilkanLaporanBerdasarkanFilter) {
             window.tampilkanLaporanBerdasarkanFilter();
@@ -434,9 +439,9 @@
         document.getElementById('txt_total').innerText = total.toLocaleString('id-ID');
     }
 
+    // PERBAIKAN PRESISI MUTLAK: Deteksi Duplikat Berbasis Pemindaian Baris Tabel HTML di Layar Browser
     function simpanKeLaporan() {
-        var nopol = document.getElementById('in_nopol').value; 
-        var nopkb = document.getElementById('in_nopkb').value; 
+        var nopol = document.getElementById('in_nopol').value.toUpperCase().trim(); 
         var nama = document.getElementById('in_nama').value; 
         var tipe = document.getElementById('in_tipe').value; 
         var keluhan = document.getElementById('in_keluhan').value;
@@ -454,6 +459,31 @@
         var stnk = document.getElementById('in_stnk').value; 
         var buku = document.getElementById('in_buku').value; 
         var partbekas = document.getElementById('in_partbekas').value;
+
+        if(!nopol || !nama) { 
+            alert("⚠️ Gagal! Mohon lengkapi No Polisi dan Nama Pelanggan."); 
+            return false; 
+        }
+
+        // PEMINDAIAN BARIS TABEL SEKETIKA: Mencari kecocokan nomor polisi langsung di elemen visual HTML tabel bawah
+        var barisTabel = document.querySelectorAll('#report-rows tr');
+        var nomorPkbLama = "";
+        
+        for (var i = 0; i < barisTabel.length; i++) {
+            var kolomNopol = barisTabel[i].querySelector('td:nth-child(3)');
+            if (kolomNopol) {
+                var teksNopolTabel = kolomNopol.innerText.toUpperCase().trim();
+                if (teksNopolTabel === nopol) {
+                    // Jika nopol cocok, ambil Nomor PKB lama dari kolom ke-2
+                    nomorPkbLama = barisTabel[i].querySelector('td:nth-child(2)').innerText.trim();
+                    break;
+                }
+            }
+        }
+
+        // Kunci nomor PKB: gunakan nomor pkb lama jika terdeteksi duplikat, atau biarkan nomor pkb baru dari form
+        var nopkb = (nomorPkbLama !== "") ? nomorPkbLama : document.getElementById('in_nopkb').value;
+        document.getElementById('in_nopkb').value = nopkb;
         
         var rows = document.querySelectorAll('#work-rows-container tr');
         var itemsArr = [];
@@ -474,11 +504,6 @@
             
             itemsArr.push({ desc: desc, qty: qty, harga: harga, diskon: diskonVal, tipe_diskon: tipeDiskon });
         });
-
-        if(!nopol || !nopkb || !nama) { 
-            alert("⚠️ Gagal! Mohon lengkapi No Polisi, No PKB, dan Nama Pelanggan."); 
-            return false; 
-        }
         
         var payload = { nopkb: nopkb, nopol: nopol, nama: nama, ktp: ktp, bengkel: bengkel, tipe: tipe, keluhan: keluhan, total: total, hp: hp, alamat: alamat, sa: sa, km: km, norangka: norangka, tgl_terima: tgl_terima, jam_terima: jam_terima, tgl_serah: tgl_serah, jam_serah: jam_serah, stnk: stnk, buku: buku, partbekas: partbekas, items: itemsArr };
         
@@ -487,7 +512,7 @@
         }
         
         sinkronisasiKeInvoice();
-        alert("💾 Data PKB M-" + nopkb + " Berhasil Disimpan ke Cloud!");
+        alert("💾 Data PKB M-" + nopkb + " Berhasil Di-Update ke Cloud!");
         return true;
     }
 
@@ -551,9 +576,6 @@
         alert("📋 Data PKB M-" + nopkb + " berhasil dimuat!");
     }
 
-    // =======================================================================
-    // PERBAIKAN PRESISI: MENAMBAHKAN KATEGORI NAMA SA KEDALAM FILTER PENCARIAN
-    // =======================================================================
     window.tampilkanLaporanBerdasarkanFilter = function() {
         var dataLaporan = JSON.parse(localStorage.getItem('laporan_final_datetime')) || [];
         var searchKeyword = document.getElementById('search_laporan_input').value.toLowerCase().trim();
@@ -588,7 +610,6 @@
             if (searchKeyword === "") {
                 if (tglTerimaNormal === tglHariIni) lolosFilter = true;
             } else {
-                // PENYESUAIAN DI SINI: Ditambahkan pengecekan saNama.toLowerCase().includes(searchKeyword)
                 if (tglTerimaNormal.includes(searchKeyword) || tglTerima.includes(searchKeyword) || nopol.includes(searchKeyword) || hp.includes(searchKeyword) || saNama.toLowerCase().includes(searchKeyword)) {
                     lolosFilter = true;
                 }
@@ -623,6 +644,7 @@
         
         renderSATextSummary(saCounts);
     }
+
     function renderSATextSummary(saCounts) {
         var container = document.getElementById("sa_text_summary");
         var keys = Object.keys(saCounts);
@@ -705,7 +727,6 @@
         hitungTotal();
     }
 
-    // PERBAIKAN: Format Tanggal Disamakan (Mengunci Mode Update Tanpa Duplikat)
     function sinkronisasiKeInvoice() {
         var rows = document.querySelectorAll('#work-rows-container tr');
         var itemsArr = [];
@@ -749,8 +770,6 @@
             });
             
             var invId = (existingIndex > -1) ? historyInvoice[existingIndex].id : "id_" + Date.now();
-            
-            // Gunakan format YYYY-MM-DD agar sama rata dengan filter harian sistem
             var tglInput = document.getElementById('in_tgl_terima').value || new Date().toISOString().slice(0,10);
             
             var invoiceDataPayload = {
@@ -760,7 +779,7 @@
                 compAddress: "Cabang Cakung - Jl. Raya Bekasi KM 26.5",
                 compPhone: "Telp. (021) 8896 8800   Fax. -",
                 vPlate: payloadInvoice.vPlate,
-                tanggalCetak: tglInput, // Mengunci tanggal murni untuk dibaca pencarian lokal & harian
+                tanggalCetak: tglInput, 
                 compTaxId: "0312862253006000",
                 vType: payloadInvoice.vType,
                 vBuildDate: tglInput,

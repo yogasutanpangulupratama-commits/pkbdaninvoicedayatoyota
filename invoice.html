@@ -375,7 +375,6 @@
 </head>
 <body>
 
-<!-- Action Bar (Top Control) -->
 <div class="action-bar no-print">
     <div class="wa-panel-container">
         <label for="c-wa">KIRIM WA KE :</label>
@@ -383,18 +382,15 @@
         <button class="btn-action btn-wa" onclick="sendWhatsApp()">💬 Kirim Estimasi & Link Edit</button>
     </div>
     
-    <!-- Tombol navigasi kembali ke PKB -->
     <button class="btn-action btn-back-pkb" onclick="window.location.href='pkb.html'">⬅️ Kembali ke PKB</button>
     <button class="btn-action btn-new" onclick="createNewInvoice()">+ Buat Baru</button>
     <button class="btn-action btn-print" onclick="saveAndPrint()">🖨️ Simpan & Cetak Faktur</button>
 </div>
 
 <div class="main-layout">
-    <!-- Invoice Template Data Container -->
     <div class="invoice-container">
         <input type="hidden" id="current-invoice-id" value="">
         
-        <!-- Top Header -->
         <table class="header-table">
             <tr>
                 <td style="width: 50%;">
@@ -406,7 +402,6 @@
                     </div>
                 </td>
                 <td style="width: 50%;">
-                    <!-- PERBAIKAN PRESISI: Menambahkan text-transform: uppercase langsung di baris style -->
                     <div class="plate-number"><input type="text" id="v-plate" class="input-field input-num" placeholder="[NO POLISI]" style="font-size:20px; font-weight:bold; text-transform: uppercase;"></div>
                     <div class="meta-details">
                         <table>
@@ -423,7 +418,6 @@
 
         <div class="title-section">FAKTUR SERVICE</div>
 
-        <!-- Tax Information -->
         <table class="tax-info" style="width: 350px;">
             <tr>
                 <td style="width: 35%;">NO KTP / NPWP Perusahaan</td>
@@ -432,7 +426,6 @@
             </tr>
         </table>
 
-        <!-- Vehicle Details Grid -->
         <table class="info-grid">
             <tr>
                 <td style="width: 15%;">Tipe/Tahun</td>
@@ -462,7 +455,6 @@
 
         <div class="divider"></div>
 
-        <!-- Customer Details -->
         <table class="info-grid">
             <tr>
                 <td style="width: 15%; font-weight: bold;">NAMA CUSTOMER</td>
@@ -492,7 +484,6 @@
 
         <div class="divider"></div>
 
-        <!-- Rincian Pekerjaan -->
         <div class="section-header-container">
             <div class="section-title">Rincian Pekerjaan</div>
             <button class="btn-add no-print" onclick="addJasaRow()">+ Tambah Jasa</button>
@@ -520,7 +511,6 @@
             </tbody>
         </table>
 
-        <!-- Rincian Barang -->
         <div class="section-header-container">
             <div class="section-title">Rincian Barang</div>
             <button class="btn-add no-print" onclick="addBarangRow()">+ Tambah Part / Bahan</button>
@@ -553,7 +543,6 @@
             </tbody>
         </table>
 
-        <!-- Summary Financial Matrix -->
         <table class="financial-matrix">
             <thead>
                 <tr>
@@ -585,7 +574,6 @@
             </tbody>
         </table>
 
-        <!-- Grand Totals -->
         <table class="grand-total-table">
             <tr>
                 <td class="label">TOTAL</td>
@@ -603,7 +591,6 @@
 
         <div class="clear"></div>
 
-        <!-- Footer Notes & Signature -->
         <div class="footer-section">
             <table class="footer-table">
                 <tr>
@@ -628,34 +615,66 @@
         </div>
     </div>
 
-    <!-- Sidebar Riwayat Penyimpanan -->
     <div class="sidebar no-print">
         <div class="sidebar-title">Riwayat Faktur</div>
         <input type="text" class="search-box" id="search-input" placeholder="Cari No Polisi / Nama..." oninput="renderHistory()">
-        <ul class="history-list" id="history-list-container">
-            <!-- Data Terpanggil Lewat JS -->
-        </ul>
+        <ul class="history-list" id="history-list-container"></ul>
     </div>
 </div>
 
+<!-- SDK CLOUD FIREBASE REALTIME FOR INVOICE SINKRONISASI -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBvgLFjfpyvHf3MCgrmJ_nPgkM4uyerXuQ",
+        authDomain: "pkbmanualinvoice.firebaseapp.com",
+        projectId: "pkbmanualinvoice",
+        storageBucket: "pkbmanualinvoice.firebasestorage.app",
+        messagingSenderId: "612617167676",
+        appId: "1:612617167676:web:083f0d87d0e172140f3439",
+        measurementId: "G-P4846QRWEW",
+        databaseURL: "https://pkbmanualinvoice-default-rtdb.asia-southeast1.firebasedatabase.app"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // KUNCI SINKRONISASI ONLINE: Dengarkan data transaksi Invoice harian global di Cloud
+    const invoiceRef = ref(db, 'riwayat_invoice');
+    onValue(invoiceRef, (snapshot) => {
+        const data = snapshot.val();
+        let listFakturArr = [];
+        if (data) {
+            Object.keys(data).forEach((key) => {
+                listFakturArr.push(data[key]);
+            });
+        }
+        localStorage.setItem("faktur_service_db", JSON.stringify(listFakturArr));
+        if (window.renderHistory) { window.renderHistory(); }
+    });
+
+    window.simpanFakturKeCloud = function(id, payload) {
+        set(ref(db, 'riwayat_invoice/' + id), payload);
+    }
+
+    window.hapusFakturDariCloud = function(id) {
+        remove(ref(db, 'riwayat_invoice/' + id));
+    }
+</script>
+
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // Cek intergrasi data real-time dari PKB manual
         checkSharedPkbData();
-        // Fungsi membaca kode data otomatis dari link WA
         checkUrlForSharedData();
         refreshTimestamp();
-        renderHistory();
         calculateAll();
         
-        // =======================================================================
-        // PERBAIKAN PRESISI: PENYELIPAN AUTO-SAVE REALTIME SAAT PRINT (CTRL+P / SISTEM)
-        // =======================================================================
         if (window.matchMedia) {
             var mediaQueryList = window.matchMedia('print');
             mediaQueryList.addListener(function(mql) {
                 if (mql.matches) {
-                    console.log("Sistem mendeteksi jendela print aktif, menyimpan data otomatis...");
                     refreshTimestamp();
                     saveInvoiceData();
                 }
@@ -664,7 +683,6 @@
         
         document.addEventListener('keydown', function(e) {
             if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
-                console.log("Shortcut Ctrl+P terdeteksi, menyimpan data otomatis...");
                 refreshTimestamp();
                 saveInvoiceData();
             }
@@ -688,11 +706,9 @@
                 if(pkb.vKM) document.getElementById("v-km").value = pkb.vKM;
                 if(pkb.vSA) document.getElementById("v-sa").value = pkb.vSA;
                 
-                // PERBAIKAN: Pecah data pekerjaan dari PKB dan petakan masuk ke dalam baris tabel Jasa Invoice
                 if(pkb.pkbItems && pkb.pkbItems.length > 0) {
                     const tbodyJasa = document.querySelector("#table-jasa tbody");
-                    tbodyJasa.innerHTML = ""; // Bersihkan baris kosong template bawaan awal
-                    
+                    tbodyJasa.innerHTML = "";
                     pkb.pkbItems.forEach(function(item) {
                         var tr = document.createElement('tr');
                         tr.innerHTML = `
@@ -707,11 +723,9 @@
                     });
                     reindexRows("table-jasa");
                 }
-                
-                // Hapus data kiriman sementara dari localStorage agar tidak bentrok saat membuat form baru
                 localStorage.removeItem('shared_pkb_to_invoice');
             } catch (e) {
-                console.error("Gagal memetakan integrasi rincian tabel pekerjaan PKB:", e);
+                console.error(e);
             }
         }
     }
@@ -723,11 +737,10 @@
             try {
                 const decodedData = JSON.parse(atob(encodedData));
                 loadInvoiceDirectly(decodedData);
-                // Bersihkan URL parameter tanpa reload agar rapi
                 window.history.replaceState({}, document.title, window.location.pathname);
                 alert("Data Estimasi dari WhatsApp berhasil dimuat!");
             } catch (e) {
-                console.error("Gagal membaca payload data share:", e);
+                console.error(e);
             }
         }
     }
@@ -740,27 +753,20 @@
         const hh = String(today.getHours()).padStart(2, '0');
         const min = String(today.getMinutes()).padStart(2, '0');
         const formattedDate = dd + '/' + mm + '/' + yyyy + ' ' + hh + ':' + min;
-        
         document.getElementById("tanggal-cetak").value = formattedDate;
-        
         const buildField = document.getElementById("v-build-date");
-        if(!buildField.value) {
-            buildField.value = formattedDate;
-        }
+        if(!buildField.value) { buildField.value = formattedDate; }
     }
 
     function reindexRows(tableId) {
         const rows = document.querySelectorAll(`#${tableId} tbody tr`);
-        rows.forEach((row, index) => {
-            row.querySelector('.row-num').innerText = index + 1;
-        });
+        rows.forEach((row, index) => { row.querySelector('.row-num').innerText = index + 1; });
     }
 
     function deleteRow(btn) {
         const row = btn.closest('tr');
         const tbody = row.parentNode;
         const tableId = tbody.parentNode.id;
-        
         if (tbody.querySelectorAll('tr').length > 1) {
             row.remove();
             reindexRows(tableId);
@@ -811,65 +817,38 @@
     }
 
     function calculateAll() {
-        let jasaGross = 0;
-        let totalPotJasa = 0;
-        
+        let jasaGross = 0; let totalPotJasa = 0;
         document.querySelectorAll("#table-jasa tbody tr").forEach(row => {
             const price = parseFloat(row.querySelector(".input-price").value) || 0;
             const potPercent = parseFloat(row.querySelector(".input-pot").value) || 0;
-            
-            const itemGross = price;
-            const itemPot = itemGross * (potPercent / 100);
-            const itemTotal = itemGross - itemPot;
-            
+            const itemGross = price; const itemPot = itemGross * (potPercent / 100); const itemTotal = itemGross - itemPot;
             row.querySelector(".input-total").value = Math.round(itemTotal);
-            
-            jasaGross += itemGross;
-            totalPotJasa += itemPot;
+            jasaGross += itemGross; totalPotJasa += itemPot;
         });
-
-        let jasaNet = jasaGross - totalPotJasa;
-        let jasaDpp = jasaNet / 1.11;
-        let jasaPpn = jasaDpp * 0.11;
-
+        let jasaNet = jasaGross - totalPotJasa; let jasaDpp = jasaNet / 1.11; let jasaPpn = jasaDpp * 0.11;
         document.getElementById("jasa-gross").innerText = formatIDR(jasaGross);
         document.getElementById("jasa-pot").innerText = formatIDR(totalPotJasa);
         document.getElementById("jasa-dpp").innerText = formatIDR(jasaDpp);
         document.getElementById("jasa-ppn").innerText = formatIDR(jasaPpn);
         document.getElementById("jasa-net").innerText = formatIDR(jasaNet);
 
-        let barangGross = 0;
-        let totalPotBarang = 0;
-        
+        let barangGross = 0; let totalPotBarang = 0;
         document.querySelectorAll("#table-barang tbody tr").forEach(row => {
             const price = parseFloat(row.querySelector(".input-price").value) || 0;
             const qty = parseFloat(row.querySelector(".input-qty").value) || 0;
             const potPercent = parseFloat(row.querySelector(".input-pot").value) || 0;
-            
-            const itemGross = price * qty;
-            const itemPot = itemGross * (potPercent / 100);
-            const itemTotal = itemGross - itemPot;
-            
+            const itemGross = price * qty; const itemPot = itemGross * (potPercent / 100); const itemTotal = itemGross - itemPot;
             row.querySelector(".input-total").value = Math.round(itemTotal);
-            
-            barangGross += itemGross;
-            totalPotBarang += itemPot;
+            barangGross += itemGross; totalPotBarang += itemPot;
         });
-
-        let barangNet = barangGross - totalPotBarang;
-        let barangDpp = barangNet / 1.11;
-        let barangPpn = barangDpp * 0.11;
-
+        let barangNet = barangGross - totalPotBarang; let barangDpp = barangNet / 1.11; let barangPpn = barangDpp * 0.11;
         document.getElementById("barang-gross").innerText = formatIDR(barangGross);
         document.getElementById("barang-pot").innerText = formatIDR(totalPotBarang);
         document.getElementById("barang-dpp").innerText = formatIDR(barangDpp);
         document.getElementById("barang-ppn").innerText = formatIDR(barangPpn);
         document.getElementById("barang-net").innerText = formatIDR(barangNet);
 
-        let grandTotal = jasaNet + barangNet;
-        let dp = parseFloat(document.getElementById("input-dp").value) || 0;
-        let totalAfterDp = grandTotal - dp;
-
+        let grandTotal = jasaNet + barangNet; let dp = parseFloat(document.getElementById("input-dp").value) || 0; let totalAfterDp = grandTotal - dp;
         document.getElementById("grand-total").innerText = formatIDR(grandTotal);
         document.getElementById("grand-total-after-dp").innerText = formatIDR(totalAfterDp);
     }
@@ -881,7 +860,6 @@
     function generateCurrentObject() {
         let plate = document.getElementById("v-plate").value.trim().toUpperCase() || "TANPA-PLAT";
         let customerName = document.getElementById("c-name").value.trim() || "Umum";
-
         let listJasa = [];
         document.querySelectorAll("#table-jasa tbody tr").forEach(row => {
             listJasa.push({
@@ -890,7 +868,6 @@
                 pot: row.querySelector(".input-pot").value
             });
         });
-
         let listBarang = [];
         document.querySelectorAll("#table-barang tbody tr").forEach(row => {
             listBarang.push({
@@ -932,9 +909,8 @@
         let invoices = getInvoicesFromStorage();
         let currentId = document.getElementById("current-invoice-id").value;
         let invoiceData = generateCurrentObject();
-
-        // PERBAIKAN PRESISI: Cari berdasarkan ID aktif, atau jika ID kosong cari berdasarkan No Polisi yang sama
         let index = -1;
+
         if (currentId) {
             index = invoices.findIndex(inv => inv.id === currentId);
         } else {
@@ -942,77 +918,60 @@
         }
 
         if (index !== -1) {
-            // Jika ditemukan kecocokan ID atau No Polisi, gunakan ID lama dan update datanya (jangan di-double)
             invoiceData.id = invoices[index].id;
             invoices[index] = invoiceData;
-            document.getElementById("current-invoice-id").value = invoiceData.id;
         } else {
-            // Benar-benar baru, masukkan transaksi baru
             invoices.push(invoiceData);
-            document.getElementById("current-invoice-id").value = invoiceData.id;
         }
-
+        
+        document.getElementById("current-invoice-id").value = invoiceData.id;
         localStorage.setItem("faktur_service_db", JSON.stringify(invoices));
-        renderHistory();
+        
+        // Push Ke Cloud Firebase Sinkronisasi
+        if (window.simpanFakturKeCloud) {
+            window.simpanFakturKeCloud(invoiceData.id, invoiceData);
+        }
+        window.renderHistory();
     }
 
-    // ====== MEMASTIKAN EXPOSE KE WINDOW GLOBAL UNTUK EDIT RIWAYAT SIDEBAR ======
     window.loadInvoice = loadInvoice;
 
-    // =======================================================================
-    // PERBAIKAN PRESISI: MENAMBAHKAN TOMBOL X UNTUK MENGHAPUS RIWAYAT INVOICE
-    // =======================================================================
-    function renderHistory() {
+    window.renderHistory = function() {
         const container = document.getElementById("history-list-container");
         const searchVal = document.getElementById("search-input").value.toLowerCase();
         const invoices = getInvoicesFromStorage();
-        
         container.innerHTML = "";
         
         [...invoices].reverse().forEach(inv => {
             if (inv.vPlate.toLowerCase().includes(searchVal) || inv.cName.toLowerCase().includes(searchVal)) {
                 let li = document.createElement("li");
                 li.className = "history-item";
-                // Ditambahkan flex layout agar nama plat dan tombol X presisi sejajar kanan-kiri
-                li.style.display = "flex";
-                li.style.justifyContent = "space-between";
-                li.style.alignItems = "center";
+                li.style.display = "flex"; li.style.justifyContent = "space-between"; li.style.alignItems = "center";
                 li.setAttribute("onclick", `loadInvoice('${inv.id}')`);
-                
                 li.innerHTML = `
                     <div style="flex-grow: 1;">
                         <div class="item-main"><span>${inv.vPlate}</span></div>
                         <div class="item-sub">${inv.cName} | Cetak: ${inv.tanggalCetak}</div>
                     </div>
-                    <!-- Tombol X Hapus Riwayat dengan StopPropagation agar tidak memicu muat ulang form saat diklik -->
-                    <button class="no-print" onclick="deleteInvoiceHistory('${inv.id}', event)" style="background: none; border: none; color: #de3545; cursor: pointer; font-size: 13px; font-weight: bold; padding: 0 5px; margin-left: 10px;">×</button>
+                    <button class="no-print" onclick="deleteInvoiceHistory('${inv.id}', event)" style="background: none; border: none; color: #de3545; cursor: pointer; font-size: 14px; font-weight: bold; padding: 0 8px; margin-left: 10px;">×</button>
                 `;
                 container.appendChild(li);
             }
         });
     }
 
-    // Fungsi baru untuk mengeksekusi penghapusan item tertentu di dalam database riwayat invoice
     function deleteInvoiceHistory(id, event) {
-        // Mencegah klik tombol X memicu fungsi loadInvoice() pada baris list
         if (event) event.stopPropagation();
-        
-        if (confirm("Apakah Anda yakin ingin menghapus faktur ini dari riwayat?")) {
+        if (confirm("Apakah Anda yakin ingin menghapus faktur ini dari riwayat Cloud & Lokal?")) {
+            if (window.hapusFakturDariCloud) { window.hapusFakturDariCloud(id); }
             let invoices = getInvoicesFromStorage();
             let index = invoices.findIndex(inv => inv.id === id);
-            
             if (index !== -1) {
                 invoices.splice(index, 1);
                 localStorage.setItem("faktur_service_db", JSON.stringify(invoices));
-                
-                // Jika faktur yang sedang diedit saat ini dihancurkan, langsung bersihkan layar inputan
-                let currentActiveId = document.getElementById("current-invoice-id").value;
-                if (currentActiveId === id) {
-                    createNewInvoice();
-                } else {
-                    renderHistory();
-                }
             }
+            if (document.getElementById("current-invoice-id").value === id) { createNewInvoice(); }
+            else { window.renderHistory(); }
         }
     }
 
@@ -1049,21 +1008,15 @@
         tbodyJasa.innerHTML = "";
         if (inv.jasaItems && inv.jasaItems.length > 0) {
             inv.jasaItems.forEach(item => addJasaRow(item.name, item.price, item.pot));
-        } else {
-            addJasaRow();
-        }
+        } else { addJasaRow(); }
 
         const tbodyBarang = document.querySelector("#table-barang tbody");
         tbodyBarang.innerHTML = "";
         if (inv.barangItems && inv.barangItems.length > 0) {
             inv.barangItems.forEach(item => addBarangRow(item.name, item.code, item.price, item.qty, item.pot));
-        } else {
-            addBarangRow();
-        }
+        } else { addBarangRow(); }
 
-        reindexRows("table-jasa");
-        reindexRows("table-barang");
-        calculateAll();
+        reindexRows("table-jasa"); reindexRows("table-barang"); calculateAll();
     }
 
     function createNewInvoice() {
@@ -1080,14 +1033,9 @@
         document.getElementById("c-phone").value = "";
         document.getElementById("c-wa").value = "";
         document.getElementById("input-dp").value = "0";
-
         document.querySelector("#table-jasa tbody").innerHTML = "";
         document.querySelector("#table-barang tbody").innerHTML = "";
-        addJasaRow();
-        addBarangRow();
-        
-        refreshTimestamp();
-        calculateAll();
+        addJasaRow(); addBarangRow(); refreshTimestamp(); calculateAll();
     }
 
     function saveAndPrint() {
@@ -1101,31 +1049,16 @@
         let customerName = document.getElementById("c-name").value.trim() || "Pelanggan";
         let plate = document.getElementById("v-plate").value.trim() || "-";
         let totalBill = document.getElementById("grand-total-after-dp").innerText;
-
-        if (!waNumber) {
-            alert("Silakan isi Nomor WA Terlebih Dahulu!");
-            return;
-        }
-
+        if (!waNumber) { alert("Silakan isi Nomor WA Terlebih Dahulu!"); return; }
         waNumber = waNumber.replace(/[^0-9]/g, '');
-        if (waNumber.startsWith('0')) {
-            waNumber = '62' + waNumber.slice(1);
-        }
-
-        // Simpan data terkini ke localStorage sebelum kirim WA
+        if (waNumber.startsWith('0')) { waNumber = '62' + waNumber.slice(1); }
         saveInvoiceData();
-
-        // GENERATE KODE DATA OTOMATIS (Payload Base64)
         const currentData = generateCurrentObject();
         const base64Data = btoa(JSON.stringify(currentData));
-        
-        // Membuat path link file HTML ini yang sedang aktif berjalan di browser Anda
         const currentLogPath = window.location.href.split('?')[0];
         const directEditableLink = `${currentLogPath}?data=${base64Data}`;
-
         const message = `Halo Bpk/Ibu ${customerName},\n\nBerikut kami lampirkan rincian tagihan Faktur Service kendaraan Anda dengan No. Polisi: *${plate}*.\n\n*Total Tagihan:* Rp ${totalBill}\n\nUntuk melihat lembar asli, mencetak PDF, atau mengedit kembali data estimasi ini, silakan klik tautan berikut:\n👉 ${directEditableLink}\n\nTerima kasih telah mempercayakan kendaraan Anda kepada kami.`;
         const encodedMessage = encodeURIComponent(message);
-        
         const waUrl = `https://api.whatsapp.com/send?phone=${waNumber}&text=${encodedMessage}`;
         window.open(waUrl, '_blank');
     }

@@ -662,19 +662,39 @@
         container.innerHTML = htmlContent;
     }
 
+    // =======================================================================
+    // PERBAIKAN PRESISI: MENAMBAHKAN VERIFIKASI PIN UNTUK MENGHAPUS DATA PKB
+    // =======================================================================
     function hapusSatuItem(nopkb, event) {
-        if (event) event.stopPropagation();
+        if (event) event.stopPropagation(); // Mencegah bentrokan pembukaan form edit
         
+        // 1. Konfirmasi tahap pertama
         if (confirm("Apakah Anda yakin ingin menghapus permanen riwayat PKB M-" + nopkb + " ini?")) {
-            if (window.hapusItemTertentuCloud) {
-                window.hapusItemTertentuCloud(nopkb);
+            
+            // 2. Meminta PIN / Kode Persetujuan (Contoh di bawah menggunakan PIN: 1234)
+            var pinInput = prompt("🔒 Masukkan PIN / Kode Persetujuan untuk menghapus data:");
+            
+            // Anda bisa mengganti "qwerty" di bawah ini dengan PIN rahasia sesuai kebutuhan Anda
+            if (pinInput === "qwerty") {
+                
+                // Jika PIN benar, eksekusi penghapusan (Cloud & Lokal)
+                if (window.hapusItemTertentuCloud) {
+                    window.hapusItemTertentuCloud(nopkb);
+                } else {
+                    var dataLaporan = JSON.parse(localStorage.getItem('laporan_final_datetime')) || [];
+                    var filtered = dataLaporan.filter(function(x) { return x.nopkb !== nopkb; });
+                    localStorage.setItem('laporan_final_datetime', JSON.stringify(filtered));
+                    tampilkanLaporanBerdasarkanFilter();
+                }
+                alert("🗑️ Data PKB M-" + nopkb + " Berhasil Dihapus!");
+                
+            } else if (pinInput === null) {
+                // Jika user menekan tombol Batal (Cancel)
+                alert("❌ Penghapusan dibatalkan.");
             } else {
-                var dataLaporan = JSON.parse(localStorage.getItem('laporan_final_datetime')) || [];
-                var filtered = dataLaporan.filter(function(x) { return x.nopkb !== nopkb; });
-                localStorage.setItem('laporan_final_datetime', JSON.stringify(filtered));
-                tampilkanLaporanBerdasarkanFilter();
+                // Jika PIN salah
+                alert("⚠️ PIN Salah! Anda tidak memiliki otoritas untuk menghapus data ini.");
             }
-            alert("🗑️ Data PKB M-" + nopkb + " Berhasil Dihapus!");
         }
     }
     

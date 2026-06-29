@@ -645,6 +645,9 @@
         renderSATextSummary(saCounts);
     }
 
+    // =======================================================================
+    // PERBAIKAN PRESISI: MENAMPILKAN TOTAL AKUMULASI UNIT SERVICE HARI INI
+    // =======================================================================
     function renderSATextSummary(saCounts) {
         var container = document.getElementById("sa_text_summary");
         var keys = Object.keys(saCounts);
@@ -654,9 +657,21 @@
             return;
         }
         
-        var htmlContent = "<div style='color: #1a365d; margin-bottom: 5px; text-decoration: underline;'>PRODUKTIVITAS SERVICE ADVISOR HARI INI:</div>";
+        // Hitung total akumulasi unit dari semua SA hari ini
+        var totalUnitHariIni = 0;
         keys.forEach(function(sa) {
-            htmlContent += "📝 " + sa + " : <span style='color: #2f855a; font-size: 13pt;'>" + saCounts[sa] + "</span> UNIT<br>";
+            totalUnitHariIni += saCounts[sa];
+        });
+        
+        // Render Teks Simpel (Menampilkan Total Akumulasi di Baris Paling Atas)
+        var htmlContent = "<div style='color: #1a365d; margin-bottom: 8px; font-size: 12pt; border-bottom: 1px dashed #cbd5e0; padding-bottom: 5px;'>" +
+                            "📈 TOTAL PENERIMAAN SERVICE HARI INI: <span style='color: #b91c1c; font-size: 14pt; font-weight: dashed;'>" + totalUnitHariIni + "</span> UNIT" +
+                          "</div>";
+                          
+        htmlContent += "<div style='color: #4a5568; margin-bottom: 5px; font-size: 10pt; font-weight: normal;'>RINCIAN PER SERVICE ADVISOR:</div>";
+        
+        keys.forEach(function(sa) {
+            htmlContent += "📝 " + sa + " : <span style='color: #2f855a; font-size: 12pt;'> " + saCounts[sa] + "</span> UNIT<br>";
         });
         
         container.innerHTML = htmlContent;

@@ -747,6 +747,49 @@
         };
         localStorage.setItem('shared_pkb_to_invoice', JSON.stringify(payloadInvoice));
 
+        if (payloadInvoice.vPlate.trim() !== "") {
+            var historyInvoice = JSON.parse(localStorage.getItem('faktur_service_db')) || [];
+            
+            // PERBAIKAN: Kunci deteksi agar hanya meng-update baris data lama jika nopol sama
+            var existingIndex = historyInvoice.findIndex(function(x) { 
+                return x.vPlate.toUpperCase().trim() === payloadInvoice.vPlate; 
+            });
+            
+            var invId = (existingIndex > -1) ? historyInvoice[existingIndex].id : "id_" + Date.now();
+            
+            var invoiceDataPayload = {
+                id: invId,
+                compName: "DAYA ADICIPTA SANDIKA",
+                compBranch: "Daya Toyota Cakung",
+                compAddress: "Cabang Cakung - Jl. Raya Bekasi KM 26.5",
+                compPhone: "Telp. (021) 8896 8800   Fax. -",
+                vPlate: payloadInvoice.vPlate,
+                tanggalCetak: new Date().toLocaleDateString('id-ID') + " " + new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}),
+                compTaxId: "0312862253006000",
+                vType: payloadInvoice.vType,
+                vBuildDate: new Date().toLocaleDateString('id-ID'),
+                vColor: (existingIndex > -1) ? (historyInvoice[existingIndex].vColor || "") : "",
+                vSA: payloadInvoice.vSA,
+                vKM: payloadInvoice.vKM,
+                cName: payloadInvoice.cName || "Umum",
+                cAddress: payloadInvoice.cAddress,
+                cTaxId: payloadInvoice.cTaxId,
+                cPhone: payloadInvoice.cPhone,
+                cWa: payloadInvoice.cPhone,
+                jasaItems: payloadInvoice.pkbItems, 
+                barangItems: (existingIndex > -1) ? (historyInvoice[existingIndex].barangItems || []) : [],
+                dpValue: (existingIndex > -1) ? (historyInvoice[existingIndex].dpValue || 0) : 0,
+                adminSignature: (existingIndex > -1) ? (historyInvoice[existingIndex].adminSignature || "") : ""
+            };
+            
+            if (existingIndex > -1) {
+                historyInvoice[existingIndex] = invoiceDataPayload;
+            } else {
+                historyInvoice.push(invoiceDataPayload);
+            }
+            localStorage.setItem('faktur_service_db', JSON.stringify(historyInvoice));
+        }
+    }
         // UTAMA: Suntikkan data langsung ke database Riwayat Faktur Invoice (faktur_service_db)
         if (payloadInvoice.vPlate.trim() !== "") {
             var historyInvoice = JSON.parse(localStorage.getItem('faktur_service_db')) || [];

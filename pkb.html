@@ -31,7 +31,6 @@
         .clickable-row { cursor: pointer; }
         .clickable-row:hover { background-color: #f0f4f8; }
         
-        /* Gaya baru untuk filter pencarian & kotak teks ringkasan */
         .search-filter-box { width: 100%; padding: 8px; margin-bottom: 12px; font-size: 11pt; border: 2px solid #1a365d; border-radius: 4px; box-sizing: border-box; }
         .summary-sa-box { margin-bottom: 15px; padding: 10px; background: #f8fafc; border-left: 4px solid #1a365d; font-weight: bold; line-height: 1.6; font-size: 11pt; }
         
@@ -213,7 +212,7 @@
         </div>
         <div>
             Apabila dalam waktu 2 hari setelah perbaikan part-bekas tidak diambil maka kami berhak melakukan pemusnahan part-bekas tersebut.<br>
-            Apabila dalam 7(tujuh) hari kendaraan tidak diambil dari bengkel PT Daya Adicipta Sandika, maka kami akan kenakan biaya tambahan sebesar Rp. 10.000,- (sepuluh ribu rupiah) perhari and kami tidak bertanggung jawab atas segala kondisi kehilangan, kerusakan atas kendaraan.<br>
+            Apabila dalam 7(tujuh) hari kendaraan tidak diambil dari bengkel PT Daya Adicipta Sandika, maka kami akan kenakan biaya tambahan sebesar Rp. 10.000,- (sepuluh ribu rupiah) perhari dan kami tidak bertanggung jawab atas segala kondisi kehilangan, kerusakan atas kendaraan.<br>
             All estimasi yang dihasilkan berkenaan dengan waktu penyelesaian maupun biaya yang diperlukan hanya merupakan biaya taksiran dan tidak mengikat.<br>
             <i>Seluruh isian PKB dan ketentuannya sudah dijelaskan oleh advisor dan sudah dimengerti oleh pelanggan.</i>
         </div>
@@ -231,16 +230,13 @@
         <strong style="color: #b91c1c;">⚠️ PERINGATAN:</strong> Mohon Untuk tidak meninggalkan barang-barang berharga di dalam kendaraan.
     </div>
 
-    <!-- Bagian Rekap Laporan & Ringkasan Teks SA Simpel -->
     <div class="report-section">
         <h3 style="margin-top: 0; color: #1a365d; border-bottom: 2px solid #000; padding-bottom: 5px;">📊 REKAP LAPORAN & PRODUKTIVITAS ADVISOR</h3>
         
-        <!-- Wadah Teks Simpel Ringkasan Unit SA Harian -->
         <div id="sa_text_summary" class="summary-sa-box">
             📢 Memuat data produktivitas SA hari ini...
         </div>
 
-        <!-- Pencarian Terpadu -->
         <input type="text" id="search_laporan_input" class="search-filter-box" placeholder="🔍 Filter & Cari Data Berdasarkan: TANGGAL (YYYY-MM-DD) / NO POLISI / NO TELPON HP..." oninput="tampilkanLaporanBerdasarkanFilter()">
         
         <button type="button" class="btn btn-blue" style="font-size: 11px; padding: 4px 10px; margin-bottom: 10px;" onclick="downloadLaporanCSV()">📥 Download Report Rekap (.CSV)</button>
@@ -255,9 +251,6 @@
     </div>
 </div>
 
-<!-- ========================================== -->
-<!-- 1. KODE FIREBASE REALTIME DATABASE UTAMA -->
-<!-- ========================================== -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -316,9 +309,6 @@
     }
 </script>
 
-<!-- ========================================== -->
-<!-- 2. KODE INTERAKSI HALAMAN & LOGIKA FORM ASLI -->
-<!-- ========================================== -->
 <script>
     function syncKeluhanPrint(val) {
         var formatted = val.replace(/\n/g, '<br>');
@@ -561,7 +551,7 @@
         alert("📋 Data PKB M-" + nopkb + " berhasil dimuat!");
     }
 
-    // PERBAIKAN PRESISI: Logika Filter Hari Ini, Pencarian Bebas, & Rekap Ringkasan SA Simpel
+    // PERBAIKAN PRESISI UTAMA: Pencocokan format tanggal global (Lolos Filter Hari Ini)
     window.tampilkanLaporanBerdasarkanFilter = function() {
         var dataLaporan = JSON.parse(localStorage.getItem('laporan_final_datetime')) || [];
         var searchKeyword = document.getElementById('search_laporan_input').value.toLowerCase().trim();
@@ -571,7 +561,7 @@
         
         var rowsHtml = "";
         var counter = 1;
-        var saCounts = {}; // Menampung hitungan unit harian SA
+        var saCounts = {};
 
         for(var i = 0; i < dataLaporan.length; i++) {
             var item = dataLaporan[i];
@@ -580,16 +570,24 @@
             var hp = (item.hp || "").toLowerCase();
             var saNama = (item.sa || "TANPA ADVISOR").toUpperCase();
 
-            // Hitung unit harian khusus berkas masuk hari ini
-            if (tglTerima === tglHariIni) {
+            // SINKRONISASI TANGGAL: Normalisasi jika ada format "/" dari database riwayat
+            var tglTerimaNormal = tglTerima;
+            if (tglTerima.includes("/")) {
+                var parts = tglTerima.split("/");
+                if (parts[2] && parts[2].length === 4) {
+                    tglTerimaNormal = parts[2] + "-" + String(parts[1]).padStart(2, '0') + "-" + String(parts[0]).padStart(2, '0');
+                }
+            }
+
+            if (tglTerimaNormal === tglHariIni) {
                 saCounts[saNama] = (saCounts[saNama] || 0) + 1;
             }
 
             var lolosFilter = false;
             if (searchKeyword === "") {
-                if (tglTerima === tglHariIni) lolosFilter = true;
+                if (tglTerimaNormal === tglHariIni) lolosFilter = true;
             } else {
-                if (tglTerima.includes(searchKeyword) || nopol.includes(searchKeyword) || hp.includes(searchKeyword)) {
+                if (tglTerimaNormal.includes(searchKeyword) || tglTerima.includes(searchKeyword) || nopol.includes(searchKeyword) || hp.includes(searchKeyword)) {
                     lolosFilter = true;
                 }
             }
@@ -621,11 +619,9 @@
         }
         document.getElementById('report-rows').innerHTML = rowsHtml;
         
-        // Render ringkasan teks simpel
         renderSATextSummary(saCounts);
     }
 
-    // Fungsi Baru: Merender rekap harian SA dalam bentuk teks list yang simpel
     function renderSATextSummary(saCounts) {
         var container = document.getElementById("sa_text_summary");
         var keys = Object.keys(saCounts);
@@ -643,9 +639,8 @@
         container.innerHTML = htmlContent;
     }
 
-    // Fungsi Baru: Menghapus data spesifik per baris nopol (Lokal + Cloud Firebase)
     function hapusSatuItem(nopkb, event) {
-        if (event) event.stopPropagation(); // Mencegah bentrokan pembukaan form edit
+        if (event) event.stopPropagation();
         
         if (confirm("Apakah Anda yakin ingin menghapus permanen riwayat PKB M-" + nopkb + " ini?")) {
             if (window.hapusItemTertentuCloud) {
@@ -705,13 +700,11 @@
         document.getElementById('lbl_sa_signature').innerText = '( NAMA SA )';
         aturWaktuOtomatis();
         aturNoPKBOtomatis();
-        document.getElementById('work-rows-container').innerHTML = '<tr><td style="text-align: center; vertical-align: middle;">1</td><td><input type="text" class="item-desc" placeholder="Ketik jasa atau part di sini..."></td><td><input type="number" class="item-qty" value="1" min="1" oninput="hitungTotal()" style="text-align: center; width: 100%;"></td><td><input type="text" class="item-harga" oninput="formatCurrency(this)" placeholder="Rp 0" style="text-align: right;"></td><td><div style="display: flex; gap: 2px; align-items: center;"><input type="text" class="item-diskon" oninput="formatDiskon(this)" placeholder="0" style="text-align: right; width: 65%;"><select class="item-tipe-diskon" onchange="hitungTotal()" style="width: 35%; padding: 4px 2px;"><option value="%">%</option><option value="Rp">Rp</option></select></div></td><td style="text-align: center; vertical-align: middle;" class="action-col"><button type="button" class="btn-del" onclick="hapusBarisTententu(this)">❌</button></td></tr>';
+        document.getElementById('work-rows-container').innerHTML = '<tr><td style="text-align: center; vertical-align: middle;">1</td><td><input type="text" class="item-desc" placeholder="Ketik jasa atau part di sini..."></td><td><input type="number" class="item-qty" value="1" min="1" oninput="hitungTotal()" style="text-align: center; width: 100%;"></td><td><input type="text" class="item-harga" oninput="formatCurrency(this)" placeholder="Rp 0" style="text-align: right;"></td><td><div style="display: flex; gap: 2px; align-items: center;"><input type="text" class="item-diskon" oninput="formatDiskon(this)" placeholder="0" style="text-align: right; width: 65%;"><select class="item-tipe-diskon" onchange="hitungTotal()" style="width: 35%; padding: 4px 2px;"><option value="%">%</option><option value="Rp">Rp</option></select></div></td><td style="text-align: center; vertical-align: middle;" class="action-col"><button type="button" class="btn-del" onclick="hapusBarisTertentu(this)">❌</button></td></tr>';
         hitungTotal();
     }
 
-    // =======================================================================
-    // PERBAIKAN PRESISI: OTOMATIS DAFTARKAN KE RIWAYAT INVOICE SAAT CETAK PKB
-    // =======================================================================
+    // PERBAIKAN: Format Tanggal Disamakan (Mengunci Mode Update Tanpa Duplikat)
     function sinkronisasiKeInvoice() {
         var rows = document.querySelectorAll('#work-rows-container tr');
         var itemsArr = [];
@@ -750,12 +743,14 @@
         if (payloadInvoice.vPlate.trim() !== "") {
             var historyInvoice = JSON.parse(localStorage.getItem('faktur_service_db')) || [];
             
-            // PERBAIKAN: Kunci deteksi agar hanya meng-update baris data lama jika nopol sama
             var existingIndex = historyInvoice.findIndex(function(x) { 
                 return x.vPlate.toUpperCase().trim() === payloadInvoice.vPlate; 
             });
             
             var invId = (existingIndex > -1) ? historyInvoice[existingIndex].id : "id_" + Date.now();
+            
+            // Gunakan format YYYY-MM-DD agar sama rata dengan filter harian sistem
+            var tglInput = document.getElementById('in_tgl_terima').value || new Date().toISOString().slice(0,10);
             
             var invoiceDataPayload = {
                 id: invId,
@@ -764,10 +759,10 @@
                 compAddress: "Cabang Cakung - Jl. Raya Bekasi KM 26.5",
                 compPhone: "Telp. (021) 8896 8800   Fax. -",
                 vPlate: payloadInvoice.vPlate,
-                tanggalCetak: new Date().toLocaleDateString('id-ID') + " " + new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}),
+                tanggalCetak: tglInput, // Mengunci tanggal murni untuk dibaca pencarian lokal & harian
                 compTaxId: "0312862253006000",
                 vType: payloadInvoice.vType,
-                vBuildDate: new Date().toLocaleDateString('id-ID'),
+                vBuildDate: tglInput,
                 vColor: (existingIndex > -1) ? (historyInvoice[existingIndex].vColor || "") : "",
                 vSA: payloadInvoice.vSA,
                 vKM: payloadInvoice.vKM,
@@ -790,52 +785,7 @@
             localStorage.setItem('faktur_service_db', JSON.stringify(historyInvoice));
         }
     }
-        // UTAMA: Suntikkan data langsung ke database Riwayat Faktur Invoice (faktur_service_db)
-        if (payloadInvoice.vPlate.trim() !== "") {
-            var historyInvoice = JSON.parse(localStorage.getItem('faktur_service_db')) || [];
-            
-            // Periksa apakah nomor polisi ini sudah terdaftar sebelumnya di database Faktur
-            var existingIndex = historyInvoice.findIndex(function(x) { 
-                return x.vPlate.toUpperCase().trim() === payloadInvoice.vPlate; 
-            });
-            
-            // Pertahankan ID lama jika ada, atau buat ID acak baru jika unit baru
-            var invId = (existingIndex > -1) ? historyInvoice[existingIndex].id : "id_" + Date.now();
-            
-            var invoiceDataPayload = {
-                id: invId,
-                compName: "DAYA ADICIPTA SANDIKA",
-                compBranch: "Daya Toyota Cakung",
-                compAddress: "Cabang Cakung - Jl. Raya Bekasi KM 26.5",
-                compPhone: "Telp. (021) 8896 8800   Fax. -",
-                vPlate: payloadInvoice.vPlate,
-                tanggalCetak: new Date().toLocaleDateString('id-ID') + " " + new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}),
-                compTaxId: "0312862253006000",
-                vType: payloadInvoice.vType,
-                vBuildDate: new Date().toLocaleDateString('id-ID'),
-                vColor: (existingIndex > -1) ? (historyInvoice[existingIndex].vColor || "") : "",
-                vSA: payloadInvoice.vSA,
-                vKM: payloadInvoice.vKM,
-                cName: payloadInvoice.cName || "Umum",
-                cAddress: payloadInvoice.cAddress,
-                cTaxId: payloadInvoice.cTaxId,
-                cPhone: payloadInvoice.cPhone,
-                cWa: payloadInvoice.cPhone,
-                jasaItems: payloadInvoice.pkbItems, // Transfer rincian nama pekerjaan PKB ke Jasa Invoice
-                barangItems: (existingIndex > -1) ? (historyInvoice[existingIndex].barangItems || []) : [],
-                dpValue: (existingIndex > -1) ? (historyInvoice[existingIndex].dpValue || 0) : 0,
-                adminSignature: (existingIndex > -1) ? (historyInvoice[existingIndex].adminSignature || "") : ""
-            };
-            
-            if (existingIndex > -1) {
-                historyInvoice[existingIndex] = invoiceDataPayload; // Update data jika nopol sama
-            } else {
-                historyInvoice.push(invoiceDataPayload); // Tambah data jika benar-benar unit baru
-            }
-            
-            localStorage.setItem('faktur_service_db', JSON.stringify(historyInvoice));
-        }
-    }
+
     function bukaHalamanInvoice() {
         sinkronisasiKeInvoice();
         window.location.href = 'invoice.html';

@@ -251,9 +251,6 @@
     </div>
 </div>
 
-<!-- ========================================== -->
-<!-- 1. KODE FIREBASE REALTIME DATABASE UTAMA -->
-<!-- ========================================== -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, set, onValue, remove, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -315,7 +312,6 @@
             .catch((err) => console.error(err));
     }
 
-    // PERBAIKAN PRESISI MULTI-USER: Ambil data paling tinggi secara real-time langsung dari server cloud sebelum menyimpan data
     window.ambilNomorPKBValidTerbaruCloud = async function() {
         try {
             const snapshot = await get(ref(db, 'laporan_pkb'));
@@ -335,9 +331,6 @@
     }
 </script>
 
-<!-- ========================================== -->
-<!-- 2. KODE INTERAKSI HALAMAN & LOGIKA FORM ASLI -->
-<!-- ========================================== -->
 <script>
     function syncKeluhanPrint(val) {
         var formatted = val.replace(/\n/g, '<br>');
@@ -463,7 +456,6 @@
         document.getElementById('txt_total').innerText = total.toLocaleString('id-ID');
     }
 
-    // PERBAIKAN RADIKAL & PRESISI: Mencegah tabrakan nomor PKB antar SA (Anti-Collision Lock)
     async function simpanKeLaporan() {
         var nopol = document.getElementById('in_nopol').value.toUpperCase().trim(); 
         var nama = document.getElementById('in_nama').value; 
@@ -489,7 +481,6 @@
             return false; 
         }
 
-        // 1. Cek duplikasi nopol harian terlebih dahulu agar tetap berfungsi sebagai update jika unitnya sama
         var barisTabel = document.querySelectorAll('#report-rows tr');
         var nomorPkbLama = "";
         
@@ -505,10 +496,8 @@
 
         var nopkb = "";
         if (nomorPkbLama !== "") {
-            // Mode Update: Pertahankan nomor lama jika unitnya sama
             nopkb = nomorPkbLama;
         } else {
-            // Mode Transaksi Baru: Validasi real-time ke Cloud Firebase untuk mencegah tabrakan nomor antar SA
             if (window.ambilNomorPKBValidTerbaruCloud) {
                 var nomorAmanCloud = await window.ambilNomorPKBValidTerbaruCloud();
                 nopkb = String(nomorAmanCloud).padStart(4, '0');
@@ -517,7 +506,6 @@
             }
         }
 
-        // Terapkan nomor terverifikasi ke kotak layar kerja
         document.getElementById('in_nopkb').value = nopkb;
         
         var rows = document.querySelectorAll('#work-rows-container tr');
@@ -611,9 +599,10 @@
         alert("📋 Data PKB M-" + nopkb + " berhasil dimuat!");
     }
 
+    // PERBAIKAN UTAMA: Pemindaian Multi-Keyword Berbasis Spasi (Pencarian Kombinasi Tanggal + Nama SA)
     window.tampilkanLaporanBerdasarkanFilter = function() {
         var dataLaporan = JSON.parse(localStorage.getItem('laporan_final_datetime')) || [];
-        var searchKeyword = document.getElementById('search_laporan_input').value.toLowerCase().trim();
+        var searchInputRaw = document.getElementById('search_laporan_input').value.toLowerCase().trim();
         
         var sekarang = new Date();
         var tglHariIni = sekarang.getFullYear() + '-' + String(sekarang.getMonth() + 1).padStart(2, '0') + '-' + String(sekarang.getDate()).padStart(2, '0');
@@ -621,6 +610,9 @@
         var rowsHtml = "";
         var counter = 1;
         var saCounts = {};
+
+        // Pecah input pencarian menjadi potongan kata berdasarkan spasi
+        var kumpulanKataKunci = searchInputRaw.split(/\s+/).filter(function(x) { return x.length > 0; });
 
         for(var i = 0; i < dataLaporan.length; i++) {
             var item = dataLaporan[i];
@@ -642,12 +634,21 @@
             }
 
             var lolosFilter = false;
-            if (searchKeyword === "") {
+            if (kumpulanKataKunci.length === 0) {
+                // Default: jika kotak kosong, hanya tampilkan data hari ini
                 if (tglTerimaNormal === tglHariIni) lolosFilter = true;
             } else {
-                if (tglTerimaNormal.includes(searchKeyword) || tglTerima.includes(searchKeyword) || nopol.includes(searchKeyword) || hp.includes(searchKeyword) || saNama.toLowerCase().includes(searchKeyword)) {
-                    lolosFilter = true;
+                // Semua potongan kata kunci harus terpenuhi di dalam record data ini
+                var barisTeksGabungan = (tglTerimaNormal + " " + tglTerima + " " + nopol + " " + hp + " " + saNama.toLowerCase());
+                var mencocokkanSemuaKata = true;
+
+                for (var k = 0; k < kumpulanKataKunci.length; k++) {
+                    if (barisTeksGabungan.indexOf(kumpulanKataKunci[k]) === -1) {
+                        mencocokkanSemuaKata = false;
+                        break;
+                    }
                 }
+                if (mencocokkanSemuaKata) lolosFilter = true;
             }
 
             if (lolosFilter) {
@@ -695,7 +696,7 @@
         });
         
         var htmlContent = "<div style='color: #1a365d; margin-bottom: 8px; font-size: 12pt; border-bottom: 1px dashed #cbd5e0; padding-bottom: 5px;'>" +
-                            "📈 TOTAL PENERIMAAN SERVICE HARI INI: <span style='color: #b91c1c; font-size: 14pt; font-weight: bold;'>" + totalUnitHariIni + "</span> UNIT" +
+                            "📈 TOTAL PENERIMAAN SERVICE HARI INI: <span style='color: #b91c1c; font-size: 14pt; font-weight: bold;'> " + totalUnitHariIni + "</span> UNIT" +
                           "</div>";
                           
         htmlContent += "<div style='color: #4a5568; margin-bottom: 5px; font-size: 10pt; font-weight: normal;'>RINCIAN PER SERVICE ADVISOR:</div>";
@@ -755,12 +756,18 @@
                 return tglTerima >= tglMulai && tglTerima <= tglSelesai;
             });
         } else if (searchKeyword !== "") {
+            var kataKunciArr = searchKeyword.split(/\s+/);
             isiLaporanDisaring = dataLaporan.filter(function(item) {
                 var nopol = (item.nopol || "").toLowerCase();
                 var hp = (item.hp || "").toLowerCase();
                 var saNama = (item.sa || "").toLowerCase();
                 var tglTerima = (item.tgl_terima || "").toLowerCase();
-                return nopol.includes(searchKeyword) || hp.includes(searchKeyword) || saNama.includes(searchKeyword) || tglTerima.includes(searchKeyword);
+                var gabunganStr = nopol + " " + hp + " " + saNama + " " + tglTerima;
+                
+                for(var k=0; k<kataKunciArr.length; k++) {
+                    if(gabunganStr.indexOf(kataKunciArr[k]) === -1) return false;
+                }
+                return true;
             });
         } else {
             isiLaporanDisaring = dataLaporan;
@@ -901,7 +908,7 @@
     }
 
     window.onload = function() { 
-        aturWaktuOtomatis(); 
+        aturWaktuOtimatis(); 
         tampilkanLaporanBerdasarkanFilter();
     };
 </script>

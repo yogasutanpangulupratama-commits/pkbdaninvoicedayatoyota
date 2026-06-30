@@ -251,9 +251,12 @@
     </div>
 </div>
 
+<!-- ========================================== -->
+<!-- 1. KODE FIREBASE REALTIME DATABASE UTAMA -->
+<!-- ========================================== -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, onValue, remove, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBvgLFjfpyvHf3MCgrmJ_nPgkM4uyerXuQ",
@@ -291,7 +294,6 @@
         localStorage.setItem('last_pkb_number', lastNo);
         
         var inputNoPkb = document.getElementById('in_nopkb');
-        // Kunci proteksi agar form pengisian tidak terganti nomor PKB-nya saat SA sedang mengetik
         if (!inputNoPkb.value) {
             inputNoPkb.value = String(lastNo + 1).padStart(4, '0');
         }
@@ -312,8 +314,30 @@
             .then(() => console.log("Cloud item " + nopkb + " berhasil dihapus."))
             .catch((err) => console.error(err));
     }
+
+    // PERBAIKAN PRESISI MULTI-USER: Ambil data paling tinggi secara real-time langsung dari server cloud sebelum menyimpan data
+    window.ambilNomorPKBValidTerbaruCloud = async function() {
+        try {
+            const snapshot = await get(ref(db, 'laporan_pkb'));
+            const data = snapshot.val();
+            let maxNo = 0;
+            if (data) {
+                Object.keys(data).forEach((key) => {
+                    let num = parseInt(data[key].nopkb) || 0;
+                    if (num > maxNo) maxNo = num;
+                });
+            }
+            return maxNo + 1;
+        } catch (e) {
+            console.error("Gagal verifikasi real-time increment lock:", e);
+            return (parseInt(localStorage.getItem('last_pkb_number')) || 0) + 1;
+        }
+    }
 </script>
 
+<!-- ========================================== -->
+<!-- 2. KODE INTERAKSI HALAMAN & LOGIKA FORM ASLI -->
+<!-- ========================================== -->
 <script>
     function syncKeluhanPrint(val) {
         var formatted = val.replace(/\n/g, '<br>');
@@ -439,8 +463,8 @@
         document.getElementById('txt_total').innerText = total.toLocaleString('id-ID');
     }
 
-    // PERBAIKAN PRESISI MUTLAK: Deteksi Duplikat Berbasis Pemindaian Baris Tabel HTML di Layar Browser
-    function simpanKeLaporan() {
+    // PERBAIKAN RADIKAL & PRESISI: Mencegah tabrakan nomor PKB antar SA (Anti-Collision Lock)
+    async function simpanKeLaporan() {
         var nopol = document.getElementById('in_nopol').value.toUpperCase().trim(); 
         var nama = document.getElementById('in_nama').value; 
         var tipe = document.getElementById('in_tipe').value; 
@@ -465,24 +489,35 @@
             return false; 
         }
 
-        // PEMINDAIAN BARIS TABEL SEKETIKA: Mencari kecocokan nomor polisi langsung di elemen visual HTML tabel bawah
+        // 1. Cek duplikasi nopol harian terlebih dahulu agar tetap berfungsi sebagai update jika unitnya sama
         var barisTabel = document.querySelectorAll('#report-rows tr');
         var nomorPkbLama = "";
         
         for (var i = 0; i < barisTabel.length; i++) {
             var kolomNopol = barisTabel[i].querySelector('td:nth-child(3)');
             if (kolomNopol) {
-                var teksNopolTabel = kolomNopol.innerText.toUpperCase().trim();
-                if (teksNopolTabel === nopol) {
-                    // Jika nopol cocok, ambil Nomor PKB lama dari kolom ke-2
+                if (kolomNopol.innerText.toUpperCase().trim() === nopol) {
                     nomorPkbLama = barisTabel[i].querySelector('td:nth-child(2)').innerText.trim();
                     break;
                 }
             }
         }
 
-        // Kunci nomor PKB: gunakan nomor pkb lama jika terdeteksi duplikat, atau biarkan nomor pkb baru dari form
-        var nopkb = (nomorPkbLama !== "") ? nomorPkbLama : document.getElementById('in_nopkb').value;
+        var nopkb = "";
+        if (nomorPkbLama !== "") {
+            // Mode Update: Pertahankan nomor lama jika unitnya sama
+            nopkb = nomorPkbLama;
+        } else {
+            // Mode Transaksi Baru: Validasi real-time ke Cloud Firebase untuk mencegah tabrakan nomor antar SA
+            if (window.ambilNomorPKBValidTerbaruCloud) {
+                var nomorAmanCloud = await window.ambilNomorPKBValidTerbaruCloud();
+                nopkb = String(nomorAmanCloud).padStart(4, '0');
+            } else {
+                nopkb = document.getElementById('in_nopkb').value;
+            }
+        }
+
+        // Terapkan nomor terverifikasi ke kotak layar kerja
         document.getElementById('in_nopkb').value = nopkb;
         
         var rows = document.querySelectorAll('#work-rows-container tr');
@@ -512,12 +547,12 @@
         }
         
         sinkronisasiKeInvoice();
-        alert("💾 Data PKB M-" + nopkb + " Berhasil Di-Update ke Cloud!");
+        alert("💾 Data PKB M-" + nopkb + " Berhasil Disimpan ke Cloud!");
         return true;
     }
 
-    function cetakDanSimpan() {
-        var statusSimpan = simpanKeLaporan();
+    async function cetakDanSimpan() {
+        var statusSimpan = await simpanKeLaporan();
         if(statusSimpan) { window.print(); }
     }
 
@@ -645,9 +680,6 @@
         renderSATextSummary(saCounts);
     }
 
-    // =======================================================================
-    // PERBAIKAN PRESISI: MENAMPILKAN TOTAL AKUMULASI UNIT SERVICE HARI INI
-    // =======================================================================
     function renderSATextSummary(saCounts) {
         var container = document.getElementById("sa_text_summary");
         var keys = Object.keys(saCounts);
@@ -657,15 +689,13 @@
             return;
         }
         
-        // Hitung total akumulasi unit dari semua SA hari ini
         var totalUnitHariIni = 0;
         keys.forEach(function(sa) {
             totalUnitHariIni += saCounts[sa];
         });
         
-        // Render Teks Simpel (Menampilkan Total Akumulasi di Baris Paling Atas)
         var htmlContent = "<div style='color: #1a365d; margin-bottom: 8px; font-size: 12pt; border-bottom: 1px dashed #cbd5e0; padding-bottom: 5px;'>" +
-                            "📈 TOTAL PENERIMAAN SERVICE HARI INI: <span style='color: #b91c1c; font-size: 14pt; font-weight: dashed;'>" + totalUnitHariIni + "</span> UNIT" +
+                            "📈 TOTAL PENERIMAAN SERVICE HARI INI: <span style='color: #b91c1c; font-size: 14pt; font-weight: bold;'>" + totalUnitHariIni + "</span> UNIT" +
                           "</div>";
                           
         htmlContent += "<div style='color: #4a5568; margin-bottom: 5px; font-size: 10pt; font-weight: normal;'>RINCIAN PER SERVICE ADVISOR:</div>";
@@ -677,22 +707,13 @@
         container.innerHTML = htmlContent;
     }
 
-    // =======================================================================
-    // PERBAIKAN PRESISI: MENAMBAHKAN VERIFIKASI PIN UNTUK MENGHAPUS DATA PKB
-    // =======================================================================
     function hapusSatuItem(nopkb, event) {
-        if (event) event.stopPropagation(); // Mencegah bentrokan pembukaan form edit
+        if (event) event.stopPropagation();
         
-        // 1. Konfirmasi tahap pertama
         if (confirm("Apakah Anda yakin ingin menghapus permanen riwayat PKB M-" + nopkb + " ini?")) {
-            
-            // 2. Meminta PIN / Kode Persetujuan (Contoh di bawah menggunakan PIN: 1234)
             var pinInput = prompt("🔒 Masukkan PIN / Kode Persetujuan untuk menghapus data:");
             
-            // Anda bisa mengganti "qwerty" di bawah ini dengan PIN rahasia sesuai kebutuhan Anda
             if (pinInput === "qwerty") {
-                
-                // Jika PIN benar, eksekusi penghapusan (Cloud & Lokal)
                 if (window.hapusItemTertentuCloud) {
                     window.hapusItemTertentuCloud(nopkb);
                 } else {
@@ -702,12 +723,9 @@
                     tampilkanLaporanBerdasarkanFilter();
                 }
                 alert("🗑️ Data PKB M-" + nopkb + " Berhasil Dihapus!");
-                
             } else if (pinInput === null) {
-                // Jika user menekan tombol Batal (Cancel)
                 alert("❌ Penghapusan dibatalkan.");
             } else {
-                // Jika PIN salah
                 alert("⚠️ PIN Salah! Anda tidak memiliki otoritas untuk menghapus data ini.");
             }
         }
@@ -717,10 +735,46 @@
         var dataLaporan = JSON.parse(localStorage.getItem('laporan_final_datetime')) || [];
         if(dataLaporan.length === 0) { alert("Tidak ada data laporan untuk di-download."); return; }
         
+        var searchKeyword = document.getElementById('search_laporan_input').value.toLowerCase().trim();
+        var formatRentang = /^\d{4}-\d{2}-\d{2}\s+s\/d\s+\d{4}-\d{2}-\d{2}$/;
+        var isiLaporanDisaring = [];
+
+        if (formatRentang.test(searchKeyword)) {
+            var bagianTanggal = searchKeyword.split(" s/d ");
+            var tglMulai = bagianTanggal[0];
+            var tglSelesai = bagianTanggal[1];
+
+            isiLaporanDisaring = dataLaporan.filter(function(item) {
+                var tglTerima = item.tgl_terima || "";
+                if (tglTerima.includes("/")) {
+                    var parts = tglTerima.split("/");
+                    if (parts[2] && parts[2].length === 4) {
+                        tglTerima = parts[2] + "-" + String(parts[1]).padStart(2, '0') + "-" + String(parts[0]).padStart(2, '0');
+                    }
+                }
+                return tglTerima >= tglMulai && tglTerima <= tglSelesai;
+            });
+        } else if (searchKeyword !== "") {
+            isiLaporanDisaring = dataLaporan.filter(function(item) {
+                var nopol = (item.nopol || "").toLowerCase();
+                var hp = (item.hp || "").toLowerCase();
+                var saNama = (item.sa || "").toLowerCase();
+                var tglTerima = (item.tgl_terima || "").toLowerCase();
+                return nopol.includes(searchKeyword) || hp.includes(searchKeyword) || saNama.includes(searchKeyword) || tglTerima.includes(searchKeyword);
+            });
+        } else {
+            isiLaporanDisaring = dataLaporan;
+        }
+
+        if(isiLaporanDisaring.length === 0) { 
+            alert("Hasil filter kosong! Tidak ada data data pada rentang tanggal tersebut untuk di-download."); 
+            return; 
+        }
+
         var csvContent = "\uFEFFsep=;\n"; 
         csvContent += "No;No PKB;No Polisi;Nama Pelanggan;No KTP;No HP;Alamat;Kode Bengkel;Nama SA;Model Tipe;KM;No Rangka;Keluhan Utama;Total Biaya\n";
         
-        dataLaporan.forEach(function(item, idx) {
+        isiLaporanDisaring.forEach(function(item, idx) {
             var row = [
                 idx + 1,
                 "M-" + item.nopkb,
@@ -744,7 +798,7 @@
         var link = document.createElement("a");
         var url = URL.createObjectURL(blob);
         link.setAttribute("href", url);
-        link.setAttribute("download", "Rekap_Laporan_PKB_" + new Date().toISOString().slice(0,10) + ".csv");
+        link.setAttribute("download", "Rekap_Laporan_PKB_Filtered_" + new Date().toISOString().slice(0,10) + ".csv");
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();

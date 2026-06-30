@@ -66,8 +66,8 @@
 <div class="container">
     <div class="admin-panel">
         <strong>🛠️ PANEL KONTROL OPERASIONAL:</strong> &nbsp;
-        <button type="button" class="btn btn-green" onclick="simpanKeLaporan()">💾 Simpan ke Laporan</button>
-        <button type="button" class="btn btn-blue" onclick="cetakDanSimpan()">🖨️ Cetak PKB (Ctrl + P)</button>
+        <button type="button" class="btn btn-green" onclick="eksekusiSimpanSaja()">💾 Simpan ke Laporan</button>
+        <button type="button" class="btn btn-blue" onclick="eksekusiCetakDanSimpan()">🖨️ Cetak PKB (Ctrl + P)</button>
         <button type="button" class="btn btn-red" onclick="resetForm()">🔄 Reset Form PKB Baru</button>
         <button type="button" class="btn btn-orange" onclick="bukaHalamanInvoice()">📄 MENU INVOICE</button>
     </div>
@@ -251,9 +251,12 @@
     </div>
 </div>
 
+<!-- =================================================== -->
+<!-- 1. KODE FIREBASE REALTIME DATABASE UTAMA + TRANSACTION LOCK -->
+<!-- =================================================== -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue, remove, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, onValue, remove, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBvgLFjfpyvHf3MCgrmJ_nPgkM4uyerXuQ",
@@ -269,6 +272,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
+    // Sinkronisasi data real-time untuk tabel rekap bawah
     const laporanRef = ref(db, 'laporan_pkb');
     onValue(laporanRef, (snapshot) => {
         const data = snapshot.val();
@@ -300,37 +304,64 @@
         }
     });
 
-    window.simpanKeFirebaseCloud = function(nopkb, payload) {
-        set(ref(db, 'laporan_pkb/' + nopkb), payload)
-            .then(() => console.log("Cloud Sinkronisasi Sukses."))
-            .catch((err) => console.error("Cloud Error:", err));
-    }
-
     window.hapusItemTertentuCloud = function(nopkb) {
         remove(ref(db, 'laporan_pkb/' + nopkb))
             .then(() => console.log("Cloud item " + nopkb + " berhasil dihapus."))
             .catch((err) => console.error(err));
     }
 
-    window.ambilNomorPKBValidTerbaruCloud = async function() {
-        try {
-            const snapshot = await get(ref(db, 'laporan_pkb'));
-            const data = snapshot.val();
-            let maxNo = 0;
-            if (data) {
-                Object.keys(data).forEach((key) => {
-                    let num = parseInt(data[key].nopkb) || 0;
-                    if (num > maxNo) maxNo = num;
-                });
+    // SOLUSI MUTLAK MULTI-USER: Amankan counter nomor menggunakan Metode Transaksi Terkunci di Server Cloud
+    window.simpanTransaksiPkbPastiAmanCloud = function(nopkbFormAktif, payloadData, isUpdateMode, callbackSukses) {
+        const targetRef = ref(db, 'laporan_pkb');
+        
+        runTransaction(targetRef, (currentData) => {
+            if (isUpdateMode) {
+                // JIKA MODE UPDATE: Langsung timpa data lama di nomor PKB tersebut tanpa merubah susunan nomor lain
+                if (!currentData) currentData = {};
+                currentData[nopkbFormAktif] = payloadData;
+                return currentData;
+            } else {
+                // JIKA TRANSAKSI BARU: Cari nomor tertinggi yang terdaftar nyata di server cloud saat detik ini juga
+                let maxNoInCloud = 0;
+                if (currentData) {
+                    Object.keys(currentData).forEach((key) => {
+                        let kNum = parseInt(currentData[key].nopkb) || 0;
+                        if (kNum > maxNoInCloud) maxNoInCloud = kNum;
+                    });
+                }
+                
+                // Rumus Increment Kunci Otomatis
+                let nomorPkbSahMurni = String(maxNoInCloud + 1).padStart(4, '0');
+                
+                // Terapkan nomor pkb hasil kalkulasi server cloud yang bebas bentrok
+                payloadData.nopkb = nomorPkbSahMurni;
+                
+                if (!currentData) currentData = {};
+                currentData[nomorPkbSahMurni] = payloadData;
+                
+                // Amankan variabel lokal untuk dilempar ke Invoice halaman sebelah
+                window.nomorPkbAmanHasilCloud = nomorPkbSahMurni;
+                return currentData;
             }
-            return maxNo + 1;
-        } catch (e) {
-            console.error("Gagal verifikasi real-time increment lock:", e);
-            return (parseInt(localStorage.getItem('last_pkb_number')) || 0) + 1;
-        }
+        }).then((result) => {
+            if (result.committed) {
+                if (!isUpdateMode && window.nomorPkbAmanHasilCloud) {
+                    document.getElementById('in_nopkb').value = window.nomorPkbAmanHasilCloud;
+                }
+                callbackSukses();
+            } else {
+                alert("⚠️ Gagal mengunci antrean Cloud. Silakan coba klik tombol simpan kembali.");
+            }
+        }).catch((error) => {
+            console.error("Transaction failed: ", error);
+            alert("⚠️ Terjadi kesalahan koneksi database. Silakan klik simpan kembali.");
+        });
     }
 </script>
 
+<!-- ========================================== -->
+<!-- 2. KODE INTERAKSI HALAMAN & LOGIKA FORM ASLI -->
+<!-- ========================================== -->
 <script>
     function syncKeluhanPrint(val) {
         var formatted = val.replace(/\n/g, '<br>');
@@ -456,7 +487,8 @@
         document.getElementById('txt_total').innerText = total.toLocaleString('id-ID');
     }
 
-    async function simpanKeLaporan() {
+    // PROSES SAVE UTAMA BERBASIS LOCK TRANSACTION (ANTI-TINDIH DATA)
+    function simpanKeLaporanMurni(callbackSelesai) {
         var nopol = document.getElementById('in_nopol').value.toUpperCase().trim(); 
         var nama = document.getElementById('in_nama').value; 
         var tipe = document.getElementById('in_tipe').value; 
@@ -478,9 +510,11 @@
 
         if(!nopol || !nama) { 
             alert("⚠️ Gagal! Mohon lengkapi No Polisi dan Nama Pelanggan."); 
-            return false; 
+            if(callbackSelesai) callbackSelesai(false);
+            return; 
         }
 
+        // Cek apakah nopol ini sudah masuk tabel rekap hari ini (Mode Update)
         var barisTabel = document.querySelectorAll('#report-rows tr');
         var nomorPkbLama = "";
         
@@ -494,19 +528,8 @@
             }
         }
 
-        var nopkb = "";
-        if (nomorPkbLama !== "") {
-            nopkb = nomorPkbLama;
-        } else {
-            if (window.ambilNomorPKBValidTerbaruCloud) {
-                var nomorAmanCloud = await window.ambilNomorPKBValidTerbaruCloud();
-                nopkb = String(nomorAmanCloud).padStart(4, '0');
-            } else {
-                nopkb = document.getElementById('in_nopkb').value;
-            }
-        }
-
-        document.getElementById('in_nopkb').value = nopkb;
+        var isUpdateMode = (nomorPkbLama !== "");
+        var nopkbTarget = isUpdateMode ? nomorPkbLama : document.getElementById('in_nopkb').value;
         
         var rows = document.querySelectorAll('#work-rows-container tr');
         var itemsArr = [];
@@ -528,20 +551,33 @@
             itemsArr.push({ desc: desc, qty: qty, harga: harga, diskon: diskonVal, tipe_diskon: tipeDiskon });
         });
         
-        var payload = { nopkb: nopkb, nopol: nopol, nama: nama, ktp: ktp, bengkel: bengkel, tipe: tipe, keluhan: keluhan, total: total, hp: hp, alamat: alamat, sa: sa, km: km, norangka: norangka, tgl_terima: tgl_terima, jam_terima: jam_terima, tgl_serah: tgl_serah, jam_serah: jam_serah, stnk: stnk, buku: buku, partbekas: partbekas, items: itemsArr };
+        var payload = { nopkb: nopkbTarget, nopol: nopol, nama: nama, ktp: ktp, bengkel: bengkel, tipe: tipe, keluhan: keluhan, total: total, hp: hp, alamat: alamat, sa: sa, km: km, norangka: norangka, tgl_terima: tgl_terima, jam_terima: jam_terima, tgl_serah: tgl_serah, jam_serah: jam_serah, stnk: stnk, buku: buku, partbekas: partbekas, items: itemsArr };
         
-        if (window.simpanKeFirebaseCloud) {
-            window.simpanKeFirebaseCloud(nopkb, payload);
+        if (window.simpanTransaksiPkbPastiAmanCloud) {
+            window.simpanTransaksiPkbPastiAmanCloud(nopkbTarget, payload, isUpdateMode, function() {
+                sinkronisasiKeInvoice();
+                if(callbackSelesai) callbackSelesai(true);
+            });
         }
-        
-        sinkronisasiKeInvoice();
-        alert("💾 Data PKB M-" + nopkb + " Berhasil Disimpan ke Cloud!");
-        return true;
     }
 
-    async function cetakDanSimpan() {
-        var statusSimpan = await simpanKeLaporan();
-        if(statusSimpan) { window.print(); }
+    function simpanKeLaporan() {
+        simpanKeLaporanMurni(function(sukses) {
+            if(sukses) {
+                var currentPkb = document.getElementById('in_nopkb').value;
+                alert("💾 Data PKB M-" + currentPkb + " Berhasil Disimpan ke Cloud dengan Aman!");
+            }
+        });
+    }
+
+    function eksekusiSimpanSaja() {
+        simpanKeLaporan();
+    }
+
+    function eksekusiCetakDanSimpan() {
+        simpanKeLaporanMurni(function(sukses) {
+            if(sukses) { window.print(); }
+        });
     }
 
     function editLaporan(nopkb) {
@@ -599,7 +635,6 @@
         alert("📋 Data PKB M-" + nopkb + " berhasil dimuat!");
     }
 
-    // PERBAIKAN UTAMA: Pemindaian Multi-Keyword Berbasis Spasi (Pencarian Kombinasi Tanggal + Nama SA)
     window.tampilkanLaporanBerdasarkanFilter = function() {
         var dataLaporan = JSON.parse(localStorage.getItem('laporan_final_datetime')) || [];
         var searchInputRaw = document.getElementById('search_laporan_input').value.toLowerCase().trim();
@@ -611,7 +646,6 @@
         var counter = 1;
         var saCounts = {};
 
-        // Pecah input pencarian menjadi potongan kata berdasarkan spasi
         var kumpulanKataKunci = searchInputRaw.split(/\s+/).filter(function(x) { return x.length > 0; });
 
         for(var i = 0; i < dataLaporan.length; i++) {
@@ -635,10 +669,8 @@
 
             var lolosFilter = false;
             if (kumpulanKataKunci.length === 0) {
-                // Default: jika kotak kosong, hanya tampilkan data hari ini
                 if (tglTerimaNormal === tglHariIni) lolosFilter = true;
             } else {
-                // Semua potongan kata kunci harus terpenuhi di dalam record data ini
                 var barisTeksGabungan = (tglTerimaNormal + " " + tglTerima + " " + nopol + " " + hp + " " + saNama.toLowerCase());
                 var mencocokkanSemuaKata = true;
 
@@ -908,7 +940,7 @@
     }
 
     window.onload = function() { 
-        aturWaktuOtimatis(); 
+        aturWaktuOtomatis(); 
         tampilkanLaporanBerdasarkanFilter();
     };
 </script>

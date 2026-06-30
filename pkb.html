@@ -272,7 +272,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // Sinkronisasi data real-time untuk tabel rekap bawah
     const laporanRef = ref(db, 'laporan_pkb');
     onValue(laporanRef, (snapshot) => {
         const data = snapshot.val();
@@ -295,8 +294,9 @@
         localStorage.setItem('last_pkb_number', lastNo);
         
         var inputNoPkb = document.getElementById('in_nopkb');
-        if (!inputNoPkb.value) {
+        if (!inputNoPkb.value || inputNoPkb.getAttribute('data-mode') !== 'edit') {
             inputNoPkb.value = String(lastNo + 1).padStart(4, '0');
+            inputNoPkb.setAttribute('data-mode', 'baru');
         }
         
         if (window.tampilkanLaporanBerdasarkanFilter) {
@@ -310,43 +310,39 @@
             .catch((err) => console.error(err));
     }
 
-    // SOLUSI MUTLAK MULTI-USER: Amankan counter nomor menggunakan Metode Transaksi Terkunci di Server Cloud
+    // MAKSIMALISASI: Sistem Kunci Transaksi dengan Deteksi Status Form Layar Aktif
     window.simpanTransaksiPkbPastiAmanCloud = function(nopkbFormAktif, payloadData, isUpdateMode, callbackSukses) {
         const targetRef = ref(db, 'laporan_pkb');
         
         runTransaction(targetRef, (currentData) => {
+            if (!currentData) currentData = {};
+            
             if (isUpdateMode) {
-                // JIKA MODE UPDATE: Langsung timpa data lama di nomor PKB tersebut tanpa merubah susunan nomor lain
-                if (!currentData) currentData = {};
+                // KUNCI MATI MODE UPDATE: Gunakan nomor aktif saat ini dan timpa, tidak boleh membuat nomor baru!
                 currentData[nopkbFormAktif] = payloadData;
+                window.nomorPkbAmanHasilCloud = nopkbFormAktif;
                 return currentData;
             } else {
-                // JIKA TRANSAKSI BARU: Cari nomor tertinggi yang terdaftar nyata di server cloud saat detik ini juga
+                // KUNCI TRANSAKSI BARU: Cari nomor tertinggi yang sah di database server cloud detik ini juga
                 let maxNoInCloud = 0;
-                if (currentData) {
-                    Object.keys(currentData).forEach((key) => {
-                        let kNum = parseInt(currentData[key].nopkb) || 0;
-                        if (kNum > maxNoInCloud) maxNoInCloud = kNum;
-                    });
-                }
+                Object.keys(currentData).forEach((key) => {
+                    let kNum = parseInt(currentData[key].nopkb) || 0;
+                    if (kNum > maxNoInCloud) maxNoInCloud = kNum;
+                });
                 
-                // Rumus Increment Kunci Otomatis
                 let nomorPkbSahMurni = String(maxNoInCloud + 1).padStart(4, '0');
-                
-                // Terapkan nomor pkb hasil kalkulasi server cloud yang bebas bentrok
                 payloadData.nopkb = nomorPkbSahMurni;
-                
-                if (!currentData) currentData = {};
                 currentData[nomorPkbSahMurni] = payloadData;
                 
-                // Amankan variabel lokal untuk dilempar ke Invoice halaman sebelah
                 window.nomorPkbAmanHasilCloud = nomorPkbSahMurni;
                 return currentData;
             }
         }).then((result) => {
             if (result.committed) {
-                if (!isUpdateMode && window.nomorPkbAmanHasilCloud) {
-                    document.getElementById('in_nopkb').value = window.nomorPkbAmanHasilCloud;
+                if (window.nomorPkbAmanHasilCloud) {
+                    var inputNoPkb = document.getElementById('in_nopkb');
+                    inputNoPkb.value = window.nomorPkbAmanHasilCloud;
+                    inputNoPkb.setAttribute('data-mode', 'edit'); // Kunci status menjadi Mode Edit setelah sukses tersimpan
                 }
                 callbackSukses();
             } else {
@@ -433,7 +429,9 @@
     function aturNoPKBOtomatis() {
         var currentNo = localStorage.getItem('last_pkb_number') || 0;
         var nextNo = parseInt(currentNo) + 1;
-        document.getElementById('in_nopkb').value = String(nextNo).padStart(4, '0');
+        var inputNoPkb = document.getElementById('in_nopkb');
+        inputNoPkb.value = String(nextNo).padStart(4, '0');
+        inputNoPkb.setAttribute('data-mode', 'baru');
     }
 
     function aturWaktuOtomatis() {
@@ -487,7 +485,7 @@
         document.getElementById('txt_total').innerText = total.toLocaleString('id-ID');
     }
 
-    // PROSES SAVE UTAMA BERBASIS LOCK TRANSACTION (ANTI-TINDIH DATA)
+    // MAKSIMALISASI: Logika Penguncian Berlapis Menggunakan Status Penanda Layar Aktif
     function simpanKeLaporanMurni(callbackSelesai) {
         var nopol = document.getElementById('in_nopol').value.toUpperCase().trim(); 
         var nama = document.getElementById('in_nama').value; 
@@ -514,22 +512,24 @@
             return; 
         }
 
-        // Cek apakah nopol ini sudah masuk tabel rekap hari ini (Mode Update)
+        var inputNoPkb = document.getElementById('in_nopkb');
+        var currentPkbValue = inputNoPkb.value.trim();
+        var currentModeAttr = inputNoPkb.getAttribute('data-mode') || 'baru';
+
+        // Cari berdasarkan Nomor PKB yang tertulis nyata di layar untuk menentukan status Update
         var barisTabel = document.querySelectorAll('#report-rows tr');
-        var nomorPkbLama = "";
+        var nomorPkbTerdaftarDiTabel = false;
         
         for (var i = 0; i < barisTabel.length; i++) {
-            var kolomNopol = barisTabel[i].querySelector('td:nth-child(3)');
-            if (kolomNopol) {
-                if (kolomNopol.innerText.toUpperCase().trim() === nopol) {
-                    nomorPkbLama = barisTabel[i].querySelector('td:nth-child(2)').innerText.trim();
-                    break;
-                }
+            var kolomPkb = barisTabel[i].querySelector('td:nth-child(2)');
+            if (kolomPkb && kolomPkb.innerText.trim() === currentPkbValue) {
+                nomorPkbTerdaftarDiTabel = true;
+                break;
             }
         }
 
-        var isUpdateMode = (nomorPkbLama !== "");
-        var nopkbTarget = isUpdateMode ? nomorPkbLama : document.getElementById('in_nopkb').value;
+        // KUNCI INDIKATOR: Jika mode layar adalah 'edit' ATAU nomor pkb sudah terdaftar di tabel, paksa beralih ke Mode Update murni
+        var isUpdateMode = (currentModeAttr === 'edit' || nomorPkbTerdaftarDiTabel);
         
         var rows = document.querySelectorAll('#work-rows-container tr');
         var itemsArr = [];
@@ -551,10 +551,10 @@
             itemsArr.push({ desc: desc, qty: qty, harga: harga, diskon: diskonVal, tipe_diskon: tipeDiskon });
         });
         
-        var payload = { nopkb: nopkbTarget, nopol: nopol, nama: nama, ktp: ktp, bengkel: bengkel, tipe: tipe, keluhan: keluhan, total: total, hp: hp, alamat: alamat, sa: sa, km: km, norangka: norangka, tgl_terima: tgl_terima, jam_terima: jam_terima, tgl_serah: tgl_serah, jam_serah: jam_serah, stnk: stnk, buku: buku, partbekas: partbekas, items: itemsArr };
+        var payload = { nopkb: currentPkbValue, nopol: nopol, nama: nama, ktp: ktp, bengkel: bengkel, tipe: tipe, keluhan: keluhan, total: total, hp: hp, alamat: alamat, sa: sa, km: km, norangka: norangka, tgl_terima: tgl_terima, jam_terima: jam_terima, tgl_serah: tgl_serah, jam_serah: jam_serah, stnk: stnk, buku: buku, partbekas: partbekas, items: itemsArr };
         
         if (window.simpanTransaksiPkbPastiAmanCloud) {
-            window.simpanTransaksiPkbPastiAmanCloud(nopkbTarget, payload, isUpdateMode, function() {
+            window.simpanTransaksiPkbPastiAmanCloud(currentPkbValue, payload, isUpdateMode, function() {
                 sinkronisasiKeInvoice();
                 if(callbackSelesai) callbackSelesai(true);
             });
@@ -585,8 +585,11 @@
         var item = dataLaporan.find(function(x) { return x.nopkb === nopkb; });
         if(!item) return;
         
+        var inputNoPkb = document.getElementById('in_nopkb');
+        inputNoPkb.value = item.nopkb || '';
+        inputNoPkb.setAttribute('data-mode', 'edit'); // Kunci status layar menjadi Mode Edit
+        
         document.getElementById('in_nopol').value = item.nopol || '';
-        document.getElementById('in_nopkb').value = item.nopkb || '';
         document.getElementById('in_nama').value = item.nama || '';
         document.getElementById('in_ktp').value = item.ktp || '';
         document.getElementById('in_hp').value = item.hp || '';

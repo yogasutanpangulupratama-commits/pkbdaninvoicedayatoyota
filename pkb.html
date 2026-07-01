@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <title>Sistem PKB Manual - Versi Cetak Laser Jet Premium</title>
     <style>
-        body { font-family: Arial, sans-serif; font-size: 11pt; margin: 10px; background-color: #fff; color: #000; }
-        .container { max-width: 820px; margin: 0 auto; background: #fff; padding: 10px; }
+        body { font-family: Arial, sans-serif; font-size: 11pt; margin: 10px; background-color: #f7fafc; color: #000; }
+        .container { max-width: 820px; margin: 0 auto; background: #fff; padding: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
         th, td { border-bottom: 1px solid #ddd; border-top: 1px solid #ddd; border-left: none; border-right: none; padding: 6px; vertical-align: top; }
         th { background-color: #f9f9f9; font-weight: bold; }
@@ -17,7 +17,11 @@
         .title { font-size: 16pt; font-weight: bold; letter-spacing: 1px; }
         .nopol-container { text-align: right; width: 250px; float: right; }
         .nopol-container input { font-size: 24pt; font-weight: bold; text-align: right; border: none; text-transform: uppercase; width: 100%; padding: 0; background: transparent; }
-        .admin-panel { background: #f0f4f8; padding: 12px; border-radius: 4px; margin-bottom: 15px; border: 1px solid #cbd5e0; }
+        
+        /* Panel Utama */
+        .admin-panel { background: #f0f4f8; padding: 12px; border-radius: 4px; margin-bottom: 15px; border: 1px solid #cbd5e0; display: flex; align-items: center; justify-content: space-between; }
+        .user-badge { background: #1a365d; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 10pt; text-transform: uppercase; }
+        
         .btn { padding: 6px 12px; font-weight: bold; border-radius: 4px; cursor: pointer; border: none; margin-right: 5px; font-size: 11pt; }
         .btn-green { background: #2f855a; color: white; }
         .btn-blue { background: #1a365d; color: white; }
@@ -25,6 +29,16 @@
         .btn-orange { background: #dd6b20; color: white; }
         .btn-small { padding: 3px 8px; font-size: 10pt; background: #4a5568; color: white; margin-top: 5px; border: none; border-radius: 4px; cursor: pointer; }
         .btn-del { background: #e53e3e; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-weight: bold; font-size: 9pt; }
+        
+        /* Login Overlay */
+        #login-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: #1a365d; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .login-box { background: white; padding: 30px; border-radius: 8px; width: 350px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); }
+        .login-box h2 { margin-top:0; margin-bottom: 20px; color: #1a365d; text-align: center; font-size: 16pt; border-bottom: 2px solid #cbd5e0; padding-bottom: 10px; }
+        .login-group { margin-bottom: 15px; }
+        .login-group label { display:block; font-weight: bold; margin-bottom: 5px; font-size: 10pt; color: #4a5568; }
+        .login-group input, .login-group select { width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 11pt; box-sizing: border-box; }
+        .btn-login { width: 100%; padding: 10px; background: #2f855a; color: white; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; font-size: 12pt; margin-top: 10px; }
+        
         .fuel-bar-print { font-family: "Courier New", Courier, monospace; font-size: 10pt; font-weight: bold; letter-spacing: 1px; display: inline-block; }
         .report-section { margin-top: 30px; background: white; padding: 15px; border-top: 2px dashed #ccc; }
         .report-table th, .report-table td { border: 1px solid #ddd; padding: 6px; font-size: 10pt; }
@@ -33,29 +47,28 @@
         
         .search-filter-box { width: 100%; padding: 8px; margin-bottom: 12px; font-size: 11pt; border: 2px solid #1a365d; border-radius: 4px; box-sizing: border-box; }
         .summary-sa-box { margin-bottom: 15px; padding: 10px; background: #f8fafc; border-left: 4px solid #1a365d; font-weight: bold; line-height: 1.6; font-size: 11pt; }
-        
         .legal-text { font-size: 8.5pt; border-bottom: 1px solid #000; border-top: 1px solid #000; padding: 5px; line-height: 1.25; margin-top: 5px; text-align: justify; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .legal-text ul { margin: 2px 0 2px 12px; padding: 0; }
         .note-footer { margin-top: 10px; border: 1px dashed #000; padding: 6px; background-color: #fff; font-size: 10pt; line-height: 1.3; text-align: center; }
-        
         .print-keluhan-mirror { display: none; white-space: pre-wrap; word-wrap: break-word; font-family: Arial, sans-serif; font-size: 11pt; padding: 4px 0; text-transform: uppercase; }
-        
         .wa-link { color: #1a365d; text-decoration: underline; font-weight: bold; }
-        .wa-link:hover { color: #2f855a; }
+        
+        .tag-pembeban { font-size: 8pt; font-weight: bold; color: #fff; padding: 2px 5px; border-radius: 3px; display: inline-block; margin-top: 3px; text-transform: uppercase; }
+        .bg-sa { background: #1a365d; }
+        .bg-part { background: #dd6b20; }
+        .bg-bahan { background: #319795; }
 
         @media print {
-            .admin-panel, .btn, .btn-small, .report-section, .btn-red, #btn-tambah, .btn-del, td.action-col, th.action-col, .summary-sa-box, .search-filter-box { display: none !important; }
-            body { margin: 0; padding: 0; }
-            .container { max-width: 100%; }
+            #login-overlay, .admin-panel, .btn, .btn-small, .report-section, .btn-red, #btn-tambah, .btn-del, td.action-col, th.action-col, .summary-sa-box, .search-filter-box, .tag-pembeban { display: none !important; }
+            body { margin: 0; padding: 0; background: #fff; }
+            .container { max-width: 100%; box-shadow: none; padding: 0; }
             th, td { border-bottom: 1px solid #000 !important; border-top: 1px solid #000 !important; }
-            input, textarea, select { border: none !important; background: transparent !important; padding: 0 !important; }
+            input, textarea, select { border: none !important; background: transparent !important; padding: 0 !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             select { appearance: none; -webkit-appearance: none; }
             .nopol-container input { font-size: 26pt !important; text-align: right !important; }
             input[type="date"]::-webkit-calendar-picker-indicator, input[type="time"]::-webkit-calendar-picker-indicator { display: none; }
-            
             #in_keluhan { display: none !important; }
             .print-keluhan-mirror { display: block !important; }
-            
             .legal-text { font-size: 7.5pt !important; gap: 10px !important; line-height: 1.15 !important; padding: 4px !important; }
             .legal-text ul { margin-left: 10px !important; }
             .note-footer { margin-top: 5px !important; padding: 4px !important; font-size: 9pt !important; }
@@ -63,14 +76,59 @@
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="admin-panel">
-        <strong>🛠️ PANEL KONTROL OPERASIONAL:</strong> &nbsp;
-        <button type="button" class="btn btn-green" onclick="eksekusiSimpanSaja()">💾 Simpan ke Laporan</button>
-        <button type="button" class="btn btn-blue" onclick="eksekusiCetakDanSimpan()">🖨️ Cetak PKB (Ctrl + P)</button>
-        <button type="button" class="btn btn-red" onclick="resetForm()">🔄 Reset Form PKB Baru</button>
-        <button type="button" class="btn btn-orange" onclick="bukaHalamanInvoice()">📄 MENU INVOICE</button>
+
+<!-- SCREEN LOGIN SYSTEM -->
+<div id="login-overlay">
+    <div class="login-box">
+        <h2>🔑 DAYA TOYOTA CAKUNG<br><span style="font-size: 10pt; color: #718096;">Sistem PKB Manual & Otoritas</span></h2>
+        <div class="login-group">
+            <label>PILIH JABATAN / USER ID</label>
+            <select id="login_userid" onchange="kondisiFormLogin(this.value)">
+                <option value="">-- PILIH USER --</option>
+                <option value="SA">SERVICE ADVISOR (SA)</option>
+                <option value="SparepartDaya">SPAREPART (SparepartDaya)</option>
+                <option value="BahanDaya">BAHAN MATERIAL (BahanDaya)</option>
+                <option value="ViewDaya">VIEW ONLY MANAGEMENT (ViewDaya)</option>
+            </select>
+        </div>
+        
+        <!-- Dropdown khusus jika memilih Service Advisor -->
+        <div class="login-group" id="box_select_sa" style="display:none;">
+            <label>NAMA SERVICE ADVISOR</label>
+            <select id="login_nama_sa">
+                <option value="YOGA PRATAMA ELIN">YOGA PRATAMA ELIN</option>
+                <option value="SARIPUDIN">SARIPUDIN</option>
+                <option value="DODY RIYAGUS">DODY RIYAGUS</option>
+                <option value="I PUTU INDRA">I PUTU INDRA</option>
+                <option value="RIDUANSYAH YUDHA">RIDUANSYAH YUDHA</option>
+                <option value="SLAMET">SLAMET</option>
+                <option value="IMRON">IMRON</option>
+                <option value="GURUH TRI HANDOKO">GURUH TRI HANDOKO</option>
+                <option value="DANI RAHMAN ISKANDAR">DANI RAHMAN ISKANDAR</option>
+                <option value="APRIANTO">APRIANTO</option>
+            </select>
+        </div>
+
+        <div class="login-group">
+            <label>PASSWORD AKSES</label>
+            <input type="password" id="login_password" placeholder="••••••••">
+        </div>
+        <button type="button" class="btn-login" onclick="prosesValidasiLogin()">MASUK KE SISTEM</button>
     </div>
+</div>
+
+<!-- APLIKASI UTAMA PKB -->
+<div class="container" id="main-app-content" style="display: none;">
+    <div class="admin-panel">
+        <div>
+            <button type="button" class="btn btn-green" id="btn_aksi_simpan" onclick="eksekusiSimpanSaja()">💾 Simpan ke Laporan</button>
+            <button type="button" class="btn btn-blue" id="btn_aksi_cetak" onclick="eksekusiCetakDanSimpan()">🖨️ Cetak PKB (Ctrl + P)</button>
+            <button type="button" class="btn btn-red" id="btn_aksi_reset" onclick="resetForm()">🔄 Reset Form PKB Baru</button>
+            <button type="button" class="btn btn-orange" id="btn_aksi_invoice" onclick="bukaHalamanInvoice()">📄 MENU INVOICE</button>
+        </div>
+        <div class="user-badge" id="display_user_login">USER: -</div>
+    </div>
+    
     <table class="no-border" style="margin-bottom: 5px;">
         <tr>
             <td style="vertical-align: middle;">
@@ -88,7 +146,7 @@
         </tr>
     </table>
     
-    <table style="margin-bottom: 5px;">
+    <table style="margin-bottom: 5px;" id="form_master_pelanggan">
         <tr>
             <td style="width: 50%; padding: 2px 6px;">
                 <strong style="display:block; margin-bottom: 2px; background: #f9f9f9; padding: 2px;">DATA PELANGGAN</strong>
@@ -135,7 +193,7 @@
             </td>
             <td style="width: 50%; padding: 2px 6px;">
                 <strong style="display:block; margin-bottom: 2px; background: #f9f9f9; padding: 2px;">CHECKLIST FISIK & LAYANAN</strong>
-                <table class="no-border">
+                <table class="no-border" id="form_checklist_layanan">
                     <tr><td style="width: 35%;">STNK</td><td>: <select id="in_stnk"><option value="Ada">Ada</option><option value="Tidak">Tidak</option></select></td></tr>
                     <tr><td>Buku Service</td><td>: <select id="in_buku"><option value="Ada">Ada</option><option value="Tidak">Tidak</option></select></td></tr>
                     <tr><td>Part Bekas</td><td>: <select id="in_partbekas"><option value="Bawa Pulang">Bawa Pulang</option><option value="Buang">Buang / Hancurkan</option></select></td></tr>
@@ -162,9 +220,12 @@
             </tr>
         </thead>
         <tbody id="work-rows-container">
-            <tr>
+            <tr data-pembeban="sa">
                 <td style="text-align: center; vertical-align: middle;">1</td>
-                <td><input type="text" class="item-desc" placeholder="Ketik jasa atau part di sini..."></td>
+                <td>
+                    <input type="text" class="item-desc" placeholder="Ketik jasa atau part di sini...">
+                    <span class="tag-pembeban bg-sa">SA</span>
+                </td>
                 <td><input type="number" class="item-qty" value="1" min="1" oninput="hitungTotal()" style="text-align: center; width: 100%;"></td>
                 <td><input type="text" class="item-harga" oninput="formatCurrency(this)" placeholder="Rp 0" style="text-align: right;"></td>
                 <td>
@@ -230,7 +291,7 @@
         <strong style="color: #b91c1c;">⚠️ PERINGATAN:</strong> Mohon Untuk tidak meninggalkan barang-barang berharga di dalam kendaraan.
     </div>
 
-    <div class="report-section">
+    <div class="report-section" id="section_rekap_laporan_bawah">
         <h3 style="margin-top: 0; color: #1a365d; border-bottom: 2px solid #000; padding-bottom: 5px;">📊 REKAP LAPORAN & PRODUKTIVITAS ADVISOR</h3>
         
         <div id="sa_text_summary" class="summary-sa-box">
@@ -239,7 +300,7 @@
 
         <input type="text" id="search_laporan_input" class="search-filter-box" placeholder="🔍 Filter & Cari Data Berdasarkan: TANGGAL (YYYY-MM-DD) / NO POLISI / NO TELPON HP / ADVISOR..." oninput="tampilkanLaporanBerdasarkanFilter()">
         
-        <button type="button" class="btn btn-blue" style="font-size: 11px; padding: 4px 10px; margin-bottom: 10px;" onclick="downloadLaporanCSV()">📥 Download Report Rekap (.CSV)</button>
+        <button type="button" class="btn btn-blue" id="btn_aksi_download" style="font-size: 11px; padding: 4px 10px; margin-bottom: 10px;" onclick="downloadLaporanCSV()">📥 Download Report Rekap (.CSV)</button>
         <table class="report-table">
             <thead>
                 <tr>
@@ -252,7 +313,7 @@
 </div>
 
 <!-- =================================================== -->
-<!-- 1. KODE FIREBASE REALTIME DATABASE UTAMA + TRANSACTION LOCK -->
+<!-- 1. KODE FIREBASE REALTIME DATABASE + TRANSACTION LOCK -->
 <!-- =================================================== -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -310,7 +371,6 @@
             .catch((err) => console.error(err));
     }
 
-    // MAKSIMALISASI: Sistem Kunci Transaksi dengan Deteksi Status Form Layar Aktif
     window.simpanTransaksiPkbPastiAmanCloud = function(nopkbFormAktif, payloadData, isUpdateMode, callbackSukses) {
         const targetRef = ref(db, 'laporan_pkb');
         
@@ -318,12 +378,30 @@
             if (!currentData) currentData = {};
             
             if (isUpdateMode) {
-                // KUNCI MATI MODE UPDATE: Gunakan nomor aktif saat ini dan timpa, tidak boleh membuat nomor baru!
+                // MERGE DATA: Pertahankan data barang/jasa lama milik tim lain yang tidak tersentuh form saat ini
+                let dataLama = currentData[nopkbFormAktif];
+                if (dataLama && dataLama.items) {
+                    let itemsMurni = [...payloadData.items];
+                    
+                    // Ambil item dari data lama yang rolenya berbeda dengan role pengedit saat ini
+                    let currentRole = window.currentUserRole;
+                    dataLama.items.forEach(function(oldItem) {
+                        let oldPembeban = oldItem.pembeban || 'sa';
+                        if (currentRole === 'sparepart' && oldPembeban !== 'sparepart') {
+                            itemsMurni.push(oldItem);
+                        } else if (currentRole === 'bahan' && oldPembeban !== 'bahan') {
+                            itemsMurni.push(oldItem);
+                        } else if (currentRole === 'sa' && oldPembeban !== 'sa') {
+                            itemsMurni.push(oldItem);
+                        }
+                    });
+                    payloadData.items = itemsMurni;
+                }
+                
                 currentData[nopkbFormAktif] = payloadData;
                 window.nomorPkbAmanHasilCloud = nopkbFormAktif;
                 return currentData;
             } else {
-                // KUNCI TRANSAKSI BARU: Cari nomor tertinggi yang sah di database server cloud detik ini juga
                 let maxNoInCloud = 0;
                 Object.keys(currentData).forEach((key) => {
                     let kNum = parseInt(currentData[key].nopkb) || 0;
@@ -342,23 +420,121 @@
                 if (window.nomorPkbAmanHasilCloud) {
                     var inputNoPkb = document.getElementById('in_nopkb');
                     inputNoPkb.value = window.nomorPkbAmanHasilCloud;
-                    inputNoPkb.setAttribute('data-mode', 'edit'); // Kunci status menjadi Mode Edit setelah sukses tersimpan
+                    inputNoPkb.setAttribute('data-mode', 'edit');
                 }
                 callbackSukses();
-            } else {
-                alert("⚠️ Gagal mengunci antrean Cloud. Silakan coba klik tombol simpan kembali.");
             }
-        }).catch((error) => {
-            console.error("Transaction failed: ", error);
-            alert("⚠️ Terjadi kesalahan koneksi database. Silakan klik simpan kembali.");
-        });
+        }).catch((error) => console.error("Transaction failed: ", error));
     }
 </script>
 
 <!-- ========================================== -->
-<!-- 2. KODE INTERAKSI HALAMAN & LOGIKA FORM ASLI -->
+<!-- 2. KODE UTAMA INTERAKSI OTORITAS & SISTEM -->
 <!-- ========================================== -->
 <script>
+    // Penampung data session login lokal
+    window.currentUserRole = ""; 
+    window.currentUserName = "";
+
+    function kondisiFormLogin(val) {
+        var boxSa = document.getElementById('box_select_sa');
+        if (val === 'SA') {
+            boxSa.style.display = 'block';
+        } else {
+            boxSa.style.display = 'none';
+        }
+    }
+
+    function prosesValidasiLogin() {
+        var userId = document.getElementById('login_userid').value;
+        var passInput = document.getElementById('login_password').value;
+        var saSelect = document.getElementById('login_nama_sa').value;
+        
+        if (!userId) { alert("Pilih Jabatan Akun Terlebih Dahulu!"); return; }
+
+        let loginValid = false;
+        let roleMurni = "";
+        let namaMurni = "";
+
+        // Pengecekan Kredensial Akun Sesuai Perintah Ketat User
+        if (userId === "SA" && passInput === "Daya@1234") {
+            loginValid = true;
+            roleMurni = "sa";
+            namaMurni = saSelect;
+        } else if (userId === "SparepartDaya" && passInput === "PartDaya@1234") {
+            loginValid = true;
+            roleMurni = "sparepart";
+            namaMurni = "TEAM SPAREPART";
+        } else if (userId === "BahanDaya" && passInput === "BahanDaya@1234") {
+            loginValid = true;
+            roleMurni = "bahan";
+            namaMurni = "TEAM BAHAN MATERIAL";
+        } else if (userId === "ViewDaya" && passInput === "ViewpkbDaya@1234") {
+            loginValid = true;
+            roleMurni = "viewer";
+            namaMurni = "MANAGEMENT AUDITOR";
+        }
+
+        if (loginValid) {
+            window.currentUserRole = roleMurni;
+            window.currentUserName = namaMurni;
+            
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('main-app-content').style.display = 'block';
+            document.getElementById('display_user_login').innerText = "AKUN: " + namaMurni;
+            
+            terapkanKunciHakAksesOtoritas();
+            resetForm();
+        } else {
+            alert("🔒 Password Akses Salah! Gagal masuk ke sistem.");
+        }
+    }
+
+    function terapkanKunciHakAksesOtoritas() {
+        var role = window.currentUserRole;
+        
+        // RESET DEFAULT STATE
+        document.querySelectorAll('input, textarea, select').forEach(el => el.disabled = false);
+        document.getElementById('btn_aksi_simpan').style.display = 'inline-block';
+        document.getElementById('btn_aksi_cetak').style.display = 'inline-block';
+        document.getElementById('btn_aksi_reset').style.display = 'inline-block';
+        document.getElementById('btn-tambah').style.display = 'inline-block';
+        document.getElementById('btn_aksi_download').style.display = 'inline-block';
+
+        if (role === 'viewer') {
+            // BATASAN MUTLAK VIEWER: Semua tombol kontrol hilang, form mati total
+            document.getElementById('btn_aksi_simpan').style.display = 'none';
+            document.getElementById('btn_aksi_cetak').style.display = 'none';
+            document.getElementById('btn_aksi_reset').style.display = 'none';
+            document.getElementById('btn-tambah').style.display = 'none';
+            document.querySelectorAll('input, textarea, select').forEach(el => el.disabled = true);
+            document.getElementById('search_laporan_input').disabled = false; // Kolom pencarian tetap aktif
+            
+        } else if (role === 'sparepart' || role === 'bahan') {
+            // BATASAN SPAREPART & BAHAN: Tidak bisa ubah Master data pelanggan & Keluhan
+            document.getElementById('in_nopol').disabled = true;
+            document.getElementById('in_nopkb').disabled = true;
+            document.getElementById('in_nama').disabled = true;
+            document.getElementById('in_ktp').disabled = true;
+            document.getElementById('in_hp').disabled = true;
+            document.getElementById('in_alamat').disabled = true;
+            document.getElementById('in_bengkel').disabled = true;
+            document.getElementById('in_sa').disabled = true;
+            document.getElementById('in_tipe').disabled = true;
+            document.getElementById('in_km').disabled = true;
+            document.getElementById('in_norangka').disabled = true;
+            document.getElementById('in_tgl_terima').disabled = true;
+            document.getElementById('in_jam_terima').disabled = true;
+            document.getElementById('in_tgl_serah').disabled = true;
+            document.getElementById('in_jam_serah').disabled = true;
+            document.getElementById('in_keluhan').disabled = true;
+            document.getElementById('in_stnk').disabled = true;
+            document.getElementById('in_buku').disabled = true;
+            document.getElementById('in_partbekas').disabled = true;
+            document.getElementById('btn_aksi_reset').style.display = 'none';
+        }
+    }
+
     function syncKeluhanPrint(val) {
         var formatted = val.replace(/\n/g, '<br>');
         document.getElementById('lbl_keluhan_print').innerHTML = formatted || '-';
@@ -372,12 +548,7 @@
         var saSelect = document.getElementById('in_sa');
         saSelect.innerHTML = '<option value="">-- PILIH SA --</option>';
         
-        var listSA = [];
-        if (bengkel === "S001") {
-            listSA = ["YOGA PRATAMA ELIN", "SARIPUDIN", "DODY RIYAGUS", "I PUTU INDRA", "RIDUANSYAH YUDHA", "SLAMET", "IMRON"];
-        } else if (bengkel === "S002") {
-            listSA = ["GURUH TRI HANDOKO", "DANI RAHMAN ISKANDAR", "APRIANTO"];
-        }
+        var listSA = ["YOGA PRATAMA ELIN", "SARIPUDIN", "DODY RIYAGUS", "I PUTU INDRA", "RIDUANSYAH YUDHA", "SLAMET", "IMRON", "GURUH TRI HANDOKO", "DANI RAHMAN ISKANDAR", "APRIANTO"];
 
         listSA.forEach(function(sa) {
             var option = document.createElement('option');
@@ -386,7 +557,6 @@
             if (sa === selectedSA) { option.selected = true; }
             saSelect.appendChild(option);
         });
-
         if (selectedSA) { syncNamaSA(selectedSA); } else { syncNamaSA(""); }
     }
 
@@ -394,8 +564,7 @@
         var value = input.value.replace(/[^0-9]/g, '');
         if (value === "") { input.value = ""; } 
         else {
-            var numberValue = parseFloat(value);
-            input.value = "Rp " + numberValue.toLocaleString('id-ID');
+            input.value = "Rp " + parseFloat(value).toLocaleString('id-ID');
         }
         hitungTotal();
     }
@@ -442,25 +611,61 @@
         document.getElementById('in_jam_terima').value = formatJam;
     }
 
-    function tambahBarisPekerjaan() {
+    function tambahBarisPekerjaan(descValue = "", qtyValue = 1, hargaValue = "", diskonValue = "", tipeDiskonValue = "%", pembebanRole = "") {
         var container = document.getElementById('work-rows-container');
         var tr = document.createElement('tr');
+        
+        // Jika parameter pembebanRole kosong, otomatis gunakan role akun yang sedang login saat ini
+        var currentRole = pembebanRole || window.currentUserRole || 'sa';
+        tr.setAttribute('data-pembeban', currentRole);
+        
+        let labelClass = "bg-sa";
+        if(currentRole === 'sparepart') labelClass = "bg-part";
+        if(currentRole === 'bahan') labelClass = "bg-bahan";
+
         tr.innerHTML = '<td style="text-align: center; vertical-align: middle;" class="row-num"></td>' +
-                       '<td><input type="text" class="item-desc" placeholder="Ketik jasa atau part baru..."></td>' +
-                       '<td><input type="number" class="item-qty" value="1" min="1" oninput="hitungTotal()" style="text-align: center; width: 100%;"></td>' +
-                       '<td><input type="text" class="item-harga" oninput="formatCurrency(this)" placeholder="Rp 0" style="text-align: right;"></td>' +
-                       '<td><div style="display: flex; gap: 2px; align-items: center;"><input type="text" class="item-diskon" oninput="formatDiskon(this)" placeholder="0" style="text-align: right; width: 65%;"><select class="item-tipe-diskon" onchange="hitungTotal()" style="width: 35%; padding: 4px 2px;"><option value="%">%</option><option value="Rp">Rp</option></select></div></td>' +
+                       '<td>' +
+                       '  <input type="text" class="item-desc" value="'+descValue+'" placeholder="Ketik deskripsi perbaikan...">' +
+                       '  <span class="tag-pembeban '+labelClass+'">'+currentRole+'</span>' +
+                       '</td>' +
+                       '<td><input type="number" class="item-qty" value="'+qtyValue+'" min="1" oninput="hitungTotal()" style="text-align: center; width: 100%;"></td>' +
+                       '<td><input type="text" class="item-harga" oninput="formatCurrency(this)" value="'+hargaValue+'" placeholder="Rp 0" style="text-align: right;"></td>' +
+                       '<td><div style="display: flex; gap: 2px; align-items: center;"><input type="text" class="item-diskon" oninput="formatDiskon(this)" value="'+diskonValue+'" placeholder="0" style="text-align: right; width: 65%;"><select class="item-tipe-diskon" onchange="hitungTotal()" style="width: 35%; padding: 4px 2px;"><option value="%" '+(tipeDiskonValue==='%'?'selected':'')+'>%</option><option value="Rp" '+(tipeDiskonValue==='Rp'?'selected':'')+'>Rp</option></select></div></td>' +
                        '<td style="text-align: center; vertical-align: middle;" class="action-col"><button type="button" class="btn-del" onclick="hapusBarisTertentu(this)">❌</button></td>';
+        
         container.appendChild(tr); 
         urutkanNomorTabel();
+        evaluasiProteksiInputBarisTabel(tr);
+    }
+
+    function evaluasiProteksiInputBarisTabel(row) {
+        var itemRole = row.getAttribute('data-pembeban') || 'sa';
+        var activeUserRole = window.currentUserRole;
+
+        // PROTEKSI INTER-AKUN: Hanya role pembeban asli yang boleh mengedit kolom barisnya sendiri
+        if (activeUserRole !== 'viewer' && activeUserRole !== itemRole) {
+            row.querySelectorAll('input, select').forEach(el => el.disabled = true);
+            var btnDel = row.querySelector('.btn-del');
+            if(btnDel) btnDel.style.display = 'none'; // Sembunyikan tombol x jika bukan hak miliknya
+        }
     }
 
     function hapusBarisTertentu(btn) {
         var container = document.getElementById('work-rows-container');
+        var row = btn.parentNode.parentNode;
+        var itemRole = row.getAttribute('data-pembeban') || 'sa';
+        var activeUserRole = window.currentUserRole;
+
+        // PENGUNCIAN MUTLAK ATURAN HAPUS BARIS
+        if (activeUserRole !== itemRole) {
+            alert("⚠️ Otoritas Ditolak! Anda tidak bisa menghapus beban milik bagian " + itemRole.toUpperCase());
+            return;
+        }
+
         if(container.rows.length > 1) {
-            var row = btn.parentNode.parentNode; row.parentNode.removeChild(row);
+            row.parentNode.removeChild(row);
             urutkanNomorTabel(); hitungTotal();
-        } else { alert("Minimal harus menyisakan 1 baris urian pekerjaan!"); }
+        } else { alert("Minimal harus menyisakan 1 baris uraian pekerjaan!"); }
     }
 
     function urutkanNomorTabel() {
@@ -485,7 +690,6 @@
         document.getElementById('txt_total').innerText = total.toLocaleString('id-ID');
     }
 
-    // MAKSIMALISASI: Logika Penguncian Berlapis Menggunakan Status Penanda Layar Aktif
     function simpanKeLaporanMurni(callbackSelesai) {
         var nopol = document.getElementById('in_nopol').value.toUpperCase().trim(); 
         var nama = document.getElementById('in_nama').value; 
@@ -516,7 +720,6 @@
         var currentPkbValue = inputNoPkb.value.trim();
         var currentModeAttr = inputNoPkb.getAttribute('data-mode') || 'baru';
 
-        // Cari berdasarkan Nomor PKB yang tertulis nyata di layar untuk menentukan status Update
         var barisTabel = document.querySelectorAll('#report-rows tr');
         var nomorPkbTerdaftarDiTabel = false;
         
@@ -528,7 +731,6 @@
             }
         }
 
-        // KUNCI INDIKATOR: Jika mode layar adalah 'edit' ATAU nomor pkb sudah terdaftar di tabel, paksa beralih ke Mode Update murni
         var isUpdateMode = (currentModeAttr === 'edit' || nomorPkbTerdaftarDiTabel);
         
         var rows = document.querySelectorAll('#work-rows-container tr');
@@ -536,22 +738,58 @@
         var total = 0;
         
         rows.forEach(function(row) {
-            var desc = row.querySelector('.item-desc').value;
-            var qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-            var harga = getPureNumber(row.querySelector('.item-harga').value);
-            var diskonVal = getPureNumber(row.querySelector('.item-diskon').value);
-            var tipeDiskon = row.querySelector('.item-tipe-diskon').value;
+            var currentRole = window.currentUserRole || 'sa';
+            var itemRole = row.getAttribute('data-pembeban') || 'sa';
             
-            var subTotal = harga * qty;
-            var potongan = (tipeDiskon === "%") ? (subTotal * (diskonVal / 100)) : diskonVal;
-            var netRow = subTotal - potongan;
-            if(netRow < 0) netRow = 0;
-            total += netRow;
-            
-            itemsArr.push({ desc: desc, qty: qty, harga: harga, diskon: diskonVal, tipe_diskon: tipeDiskon });
+            // Hanya tarik data dari elemen form input yang aktif/diperbolehkan diedit oleh role user saat ini
+            if (currentRole === itemRole) {
+                var desc = row.querySelector('.item-desc').value;
+                var qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+                var harga = getPureNumber(row.querySelector('.item-harga').value);
+                var diskonVal = getPureNumber(row.querySelector('.item-diskon').value);
+                var tipeDiskon = row.querySelector('.item-tipe-diskon').value;
+                
+                var subTotal = harga * qty;
+                var potongan = (tipeDiskon === "%") ? (subTotal * (diskonVal / 100)) : diskonVal;
+                var netRow = subTotal - potongan;
+                if(netRow < 0) netRow = 0;
+                
+                if (desc.trim() !== "") {
+                    itemsArr.push({ desc: desc, qty: qty, harga: harga, diskon: diskonVal, tipe_diskon: tipeDiskon, pembeban: itemRole });
+                }
+            }
         });
         
-        var payload = { nopkb: currentPkbValue, nopol: nopol, nama: nama, ktp: ktp, bengkel: bengkel, tipe: tipe, keluhan: keluhan, total: total, hp: hp, alamat: alamat, sa: sa, km: km, norangka: norangka, tgl_terima: tgl_terima, jam_terima: jam_terima, tgl_serah: tgl_serah, jam_serah: jam_serah, stnk: stnk, buku: buku, partbekas: partbekas, items: itemsArr };
+        // Gabungkan kalkulasi total dengan item pasif milik tim lain
+        var localDataStore = JSON.parse(localStorage.getItem('laporan_final_datetime')) || [];
+        var activePkbOldRecord = localDataStore.find(x => x.nopkb === currentPkbValue);
+        if (isUpdateMode && activePkbOldRecord && activePkbOldRecord.items) {
+            activePkbOldRecord.items.forEach(function(oldItem){
+                if (oldItem.pembeban !== window.currentUserRole) {
+                    var sub = oldItem.harga * oldItem.qty;
+                    var pot = (oldItem.tipe_diskon === "%") ? (sub * (oldItem.diskon / 100)) : oldItem.diskon;
+                    total += (sub - pot);
+                }
+            });
+        }
+        
+        // Tambahkan kalkulasi dari item baru yang diinput
+        rows.forEach(function(row) {
+            if (row.getAttribute('data-pembeban') === window.currentUserRole) {
+                var qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+                var harga = getPureNumber(row.querySelector('.item-harga').value);
+                var diskonVal = getPureNumber(row.querySelector('.item-diskon').value);
+                var tipeDiskon = row.querySelector('.item-tipe-diskon').value;
+                var subTotal = harga * qty;
+                var potongan = (tipeDiskon === "%") ? (subTotal * (diskonVal / 100)) : diskonVal;
+                total += (subTotal - potongan);
+            }
+        });
+        
+        // Amankan nilai SA penanggung jawab
+        var saFinalFix = isUpdateMode && activePkbOldRecord ? (activePkbOldRecord.sa || sa) : sa;
+
+        var payload = { nopkb: currentPkbValue, nopol: nopol, nama: nama, ktp: ktp, bengkel: bengkel, tipe: tipe, keluhan: keluhan, total: total, hp: hp, alamat: alamat, sa: saFinalFix, km: km, norangka: norangka, tgl_terima: tgl_terima, jam_terima: jam_terima, tgl_serah: tgl_serah, jam_serah: jam_serah, stnk: stnk, buku: buku, partbekas: partbekas, items: itemsArr };
         
         if (window.simpanTransaksiPkbPastiAmanCloud) {
             window.simpanTransaksiPkbPastiAmanCloud(currentPkbValue, payload, isUpdateMode, function() {
@@ -565,7 +803,7 @@
         simpanKeLaporanMurni(function(sukses) {
             if(sukses) {
                 var currentPkb = document.getElementById('in_nopkb').value;
-                alert("💾 Data PKB M-" + currentPkb + " Berhasil Disimpan ke Cloud dengan Aman!");
+                alert("💾 Data PKB M-" + currentPkb + " Berhasil Disimpan ke Cloud!");
             }
         });
     }
@@ -585,9 +823,15 @@
         var item = dataLaporan.find(function(x) { return x.nopkb === nopkb; });
         if(!item) return;
         
+        // BATASAN EDIT SA: SA hanya boleh mengedit dokumen PKB miliknya sendiri
+        if (window.currentUserRole === 'sa' && item.sa.toUpperCase() !== window.currentUserName.toUpperCase()) {
+            alert("⚠️ Otoritas Ditolak! Dokumen PKB M-" + nopkb + " ini milik SA " + item.sa + ". Anda tidak bisa mengeditnya.");
+            return;
+        }
+
         var inputNoPkb = document.getElementById('in_nopkb');
         inputNoPkb.value = item.nopkb || '';
-        inputNoPkb.setAttribute('data-mode', 'edit'); // Kunci status layar menjadi Mode Edit
+        inputNoPkb.setAttribute('data-mode', 'edit'); 
         
         document.getElementById('in_nopol').value = item.nopol || '';
         document.getElementById('in_nama').value = item.nama || '';
@@ -611,31 +855,24 @@
         document.getElementById('in_partbekas').value = item.partbekas || 'Bawa Pulang';
         
         syncKeluhanPrint(item.keluhan || '');
-        
+        terapkanKunciHakAksesOtoritas();
+
         var container = document.getElementById('work-rows-container');
         container.innerHTML = '';
         if(item.items && item.items.length > 0) {
-            item.items.forEach(function(subItem, index) {
-                var tr = document.createElement('tr');
+            item.items.forEach(function(subItem) {
                 var formattedHarga = subItem.harga ? "Rp " + parseFloat(subItem.harga).toLocaleString('id-ID') : "";
                 var formattedDiskon = subItem.diskon ? (subItem.tipe_diskon === "Rp" ? parseFloat(subItem.diskon).toLocaleString('id-ID') : subItem.diskon) : "";
-                var selPct = subItem.tipe_diskon === "%" ? "selected" : "";
-                var selRp = subItem.tipe_diskon === "Rp" ? "selected" : "";
-
-                tr.innerHTML = '<td style="text-align: center; vertical-align: middle;">' + (index + 1) + '</td>' +
-                               '<td><input type="text" class="item-desc" value="' + (subItem.desc || '') + '" placeholder="Ketik jasa atau part di sini..."></td>' +
-                               '<td><input type="number" class="item-qty" value="' + (subItem.qty || 1) + '" min="1" oninput="hitungTotal()" style="text-align: center; width: 100%;"></td>' +
-                               '<td><input type="text" class="item-harga" oninput="formatCurrency(this)" value="' + formattedHarga + '" placeholder="Rp 0" style="text-align: right;"></td>' +
-                               '<td><div style="display: flex; gap: 2px; align-items: center;"><input type="text" class="item-diskon" oninput="formatDiskon(this)" value="' + formattedDiskon + '" placeholder="0" style="text-align: right; width: 65%;"><select class="item-tipe-diskon" onchange="hitungTotal()" style="width: 35%; padding: 4px 2px;"><option value="%" ' + selPct + '>%</option><option value="Rp" ' + selRp + '>Rp</option></select></div></td>' +
-                               '<td style="text-align: center; vertical-align: middle;" class="action-col"><button type="button" class="btn-del" onclick="hapusBarisTertentu(this)">❌</button></td>';
-                container.appendChild(tr);
+                var pRole = subItem.pembeban || 'sa';
+                
+                tambahBarisPekerjaan(subItem.desc || '', subItem.qty || 1, formattedHarga, formattedDiskon, subItem.tipe_diskon || '%', pRole);
             });
         } else {
-            container.innerHTML = '<tr><td style="text-align: center; vertical-align: middle;">1</td><td><input type="text" class="item-desc" placeholder="Ketik jasa atau part di sini..."></td><td><input type="number" class="item-qty" value="1" min="1" oninput="hitungTotal()" style="text-align: center; width: 100%;"></td><td><input type="text" class="item-harga" oninput="formatCurrency(this)" placeholder="Rp 0" style="text-align: right;"></td><td><div style="display: flex; gap: 2px; align-items: center;"><input type="text" class="item-diskon" oninput="formatDiskon(this)" placeholder="0" style="text-align: right; width: 65%;"><select class="item-tipe-diskon" onchange="hitungTotal()" style="width: 35%; padding: 4px 2px;"><option value="%">%</option><option value="Rp">Rp</option></select></div></td><td style="text-align: center; vertical-align: middle;" class="action-col"><button type="button" class="btn-del" onclick="hapusBarisTertentu(this)">❌</button></td></tr>';
+            tambahBarisPekerjaan("", 1, "", "", "%", "sa");
         }
         hitungTotal();
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        alert("📋 Data PKB M-" + nopkb + " berhasil dimuat!");
+        alert("📋 Data PKB M-" + nopkb + " Berhasil Dimuat di Layar!");
     }
 
     window.tampilkanLaporanBerdasarkanFilter = function() {
@@ -701,7 +938,7 @@
                             "<td>" + item.keluhan + "</td>" +
                             "<td style='text-align:right; font-weight:bold;'>Rp " + item.total.toLocaleString('id-ID') + "</td>" +
                             "<td style='text-align:center;' class='action-col'>" +
-                            "<button type='button' class='btn-del' onclick='hapusSatuItem(\""+item.nopkb+"\", event)'>×</button>" +
+                            "<button type='button' class='btn-del' onclick='hapusSatuItem(\""+item.nopkb+"\", \"" + item.sa + "\", event)'>×</button>" +
                             "</td>" +
                             "</tr>";
                 counter++;
@@ -743,8 +980,23 @@
         container.innerHTML = htmlContent;
     }
 
-    function hapusSatuItem(nopkb, event) {
+    function hapusSatuItem(nopkb, saPembuatPkb, event) {
         if (event) event.stopPropagation();
+        
+        var activeRole = window.currentUserRole;
+        var activeName = window.currentUserName;
+
+        // PENGUNCIAN KETAT REKAP BAWAH: Akun selain SA / Manager dilarang keras menghapus PKB utama
+        if (activeRole !== 'sa' && activeRole !== 'viewer') {
+            alert("⚠️ Otoritas Ditolak! Hanya Akun Service Advisor yang berhak menghapus berkas PKB.");
+            return;
+        }
+
+        // Batasan SA: Hanya bisa menghapus PKB milik dirinya sendiri
+        if (activeRole === 'sa' && saPembuatPkb.toUpperCase() !== activeName.toUpperCase()) {
+            alert("⚠️ Ditolak! Dokumen PKB M-" + nopkb + " ini diterbitkan oleh SA " + saPembuatPkb + ". Anda tidak berhak menghapusnya.");
+            return;
+        }
         
         if (confirm("Apakah Anda yakin ingin menghapus permanen riwayat PKB M-" + nopkb + " ini?")) {
             var pinInput = prompt("🔒 Masukkan PIN / Kode Persetujuan untuk menghapus data:");
@@ -752,17 +1004,12 @@
             if (pinInput === "qwerty") {
                 if (window.hapusItemTertentuCloud) {
                     window.hapusItemTertentuCloud(nopkb);
-                } else {
-                    var dataLaporan = JSON.parse(localStorage.getItem('laporan_final_datetime')) || [];
-                    var filtered = dataLaporan.filter(function(x) { return x.nopkb !== nopkb; });
-                    localStorage.setItem('laporan_final_datetime', JSON.stringify(filtered));
-                    tampilkanLaporanBerdasarkanFilter();
                 }
                 alert("🗑️ Data PKB M-" + nopkb + " Berhasil Dihapus!");
             } else if (pinInput === null) {
                 alert("❌ Penghapusan dibatalkan.");
             } else {
-                alert("⚠️ PIN Salah! Anda tidak memiliki otoritas untuk menghapus data ini.");
+                alert("⚠️ PIN Salah! Anda tidak memiliki otoritas.");
             }
         }
     }
@@ -776,29 +1023,15 @@
         var isiLaporanDisaring = [];
 
         if (formatRentang.test(searchKeyword)) {
-            var bagianTanggal = searchKeyword.split(" s/d ");
-            var tglMulai = bagianTanggal[0];
-            var tglSelesai = bagianTanggal[1];
-
+            var sampleSplit = searchKeyword.split(" s/d ");
             isiLaporanDisaring = dataLaporan.filter(function(item) {
                 var tglTerima = item.tgl_terima || "";
-                if (tglTerima.includes("/")) {
-                    var parts = tglTerima.split("/");
-                    if (parts[2] && parts[2].length === 4) {
-                        tglTerima = parts[2] + "-" + String(parts[1]).padStart(2, '0') + "-" + String(parts[0]).padStart(2, '0');
-                    }
-                }
-                return tglTerima >= tglMulai && tglTerima <= tglSelesai;
+                return tglTerima >= sampleSplit[0] && tglTerima <= sampleSplit[1];
             });
         } else if (searchKeyword !== "") {
             var kataKunciArr = searchKeyword.split(/\s+/);
             isiLaporanDisaring = dataLaporan.filter(function(item) {
-                var nopol = (item.nopol || "").toLowerCase();
-                var hp = (item.hp || "").toLowerCase();
-                var saNama = (item.sa || "").toLowerCase();
-                var tglTerima = (item.tgl_terima || "").toLowerCase();
-                var gabunganStr = nopol + " " + hp + " " + saNama + " " + tglTerima;
-                
+                var gabunganStr = (item.nopol + " " + item.hp + " " + item.sa + " " + item.tgl_terima).toLowerCase();
                 for(var k=0; k<kataKunciArr.length; k++) {
                     if(gabunganStr.indexOf(kataKunciArr[k]) === -1) return false;
                 }
@@ -808,43 +1041,16 @@
             isiLaporanDisaring = dataLaporan;
         }
 
-        if(isiLaporanDisaring.length === 0) { 
-            alert("Hasil filter kosong! Tidak ada data data pada rentang tanggal tersebut untuk di-download."); 
-            return; 
-        }
-
-        var csvContent = "\uFEFFsep=;\n"; 
-        csvContent += "No;No PKB;No Polisi;Nama Pelanggan;No KTP;No HP;Alamat;Kode Bengkel;Nama SA;Model Tipe;KM;No Rangka;Keluhan Utama;Total Biaya\n";
-        
+        var csvContent = "\uFEFFsep=;\nNo;No PKB;No Polisi;Nama Pelanggan;No KTP;No HP;Alamat;Kode Bengkel;Nama SA;Model Tipe;KM;No Rangka;Keluhan Utama;Total Biaya\n";
         isiLaporanDisaring.forEach(function(item, idx) {
-            var row = [
-                idx + 1,
-                "M-" + item.nopkb,
-                item.nopol.toUpperCase(),
-                '"' + (item.nama || '').replace(/"/g, '""') + '"',
-                '"' + (item.ktp || '') + '"',
-                '"' + (item.hp || '') + '"',
-                '"' + (item.alamat || '').replace(/"/g, '""') + '"',
-                '"' + (item.bengkel || '') + '"',
-                '"' + (item.sa || '') + '"',
-                '"' + (item.tipe || '').replace(/"/g, '""') + '"',
-                '"' + (item.km || '') + '"',
-                '"' + (item.norangka || '') + '"',
-                '"' + (item.keluhan || '').replace(/"/g, '""').replace(/\r?\n/g, ' ') + '"',
-                item.total
-            ];
-            csvContent += row.join(";") + "\n";
+            csvContent += [idx+1, "M-"+item.nopkb, item.nopol.toUpperCase(), '"'+item.nama+'"', '"'+item.ktp+'"', '"'+item.hp+'"', '"'+item.alamat+'"', item.bengkel, item.sa, item.tipe, item.km, item.norangka, '"'+item.keluhan+'"', item.total].join(";") + "\n";
         });
         
         var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         var link = document.createElement("a");
-        var url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
+        link.setAttribute("href", URL.createObjectURL(blob));
         link.setAttribute("download", "Rekap_Laporan_PKB_Filtered_" + new Date().toISOString().slice(0,10) + ".csv");
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
     }
 
     function resetForm() {
@@ -852,9 +1058,13 @@
         document.getElementById('in_tgl_serah').value = ''; document.getElementById('in_jam_serah').value = ''; 
         document.getElementById('lbl_keluhan_print').innerHTML = '';
         document.getElementById('lbl_sa_signature').innerText = '( NAMA SA )';
+        
         aturWaktuOtomatis();
         aturNoPKBOtomatis();
-        document.getElementById('work-rows-container').innerHTML = '<tr><td style="text-align: center; vertical-align: middle;">1</td><td><input type="text" class="item-desc" placeholder="Ketik jasa atau part di sini..."></td><td><input type="number" class="item-qty" value="1" min="1" oninput="hitungTotal()" style="text-align: center; width: 100%;"></td><td><input type="text" class="item-harga" oninput="formatCurrency(this)" placeholder="Rp 0" style="text-align: right;"></td><td><div style="display: flex; gap: 2px; align-items: center;"><input type="text" class="item-diskon" oninput="formatDiskon(this)" placeholder="0" style="text-align: right; width: 65%;"><select class="item-tipe-diskon" onchange="hitungTotal()" style="width: 35%; padding: 4px 2px;"><option value="%">%</option><option value="Rp">Rp</option></select></div></td><td style="text-align: center; vertical-align: middle;" class="action-col"><button type="button" class="btn-del" onclick="hapusBarisTertentu(this)">❌</button></td></tr>';
+        terapkanKunciHakAksesOtoritas();
+        
+        document.getElementById('work-rows-container').innerHTML = '';
+        tambahBarisPekerjaan("", 1, "", "", "%", "sa");
         hitungTotal();
     }
 
@@ -870,12 +1080,7 @@
             var tipeDiskon = row.querySelector('.item-tipe-diskon').value;
             
             if(desc.trim() !== "") {
-                var potPercent = 0;
-                if (tipeDiskon === "Rp" && harga > 0) {
-                    potPercent = (diskonVal / (harga * qty)) * 100;
-                } else {
-                    potPercent = diskonVal;
-                }
+                var potPercent = (tipeDiskon === "Rp" && harga > 0) ? ((diskonVal / (harga * qty)) * 100) : diskonVal;
                 itemsArr.push({ name: desc, price: harga, qty: qty, pot: potPercent });
             }
         });
@@ -892,60 +1097,12 @@
             pkbItems: itemsArr
         };
         localStorage.setItem('shared_pkb_to_invoice', JSON.stringify(payloadInvoice));
-
-        if (payloadInvoice.vPlate.trim() !== "") {
-            var historyInvoice = JSON.parse(localStorage.getItem('faktur_service_db')) || [];
-            
-            var existingIndex = historyInvoice.findIndex(function(x) { 
-                return x.vPlate.toUpperCase().trim() === payloadInvoice.vPlate; 
-            });
-            
-            var invId = (existingIndex > -1) ? historyInvoice[existingIndex].id : "id_" + Date.now();
-            var tglInput = document.getElementById('in_tgl_terima').value || new Date().toISOString().slice(0,10);
-            
-            var invoiceDataPayload = {
-                id: invId,
-                compName: "DAYA ADICIPTA SANDIKA",
-                compBranch: "Daya Toyota Cakung",
-                compAddress: "Cabang Cakung - Jl. Raya Bekasi KM 26.5",
-                compPhone: "Telp. (021) 8896 8800   Fax. -",
-                vPlate: payloadInvoice.vPlate,
-                tanggalCetak: tglInput, 
-                compTaxId: "0312862253006000",
-                vType: payloadInvoice.vType,
-                vBuildDate: tglInput,
-                vColor: (existingIndex > -1) ? (historyInvoice[existingIndex].vColor || "") : "",
-                vSA: payloadInvoice.vSA,
-                vKM: payloadInvoice.vKM,
-                cName: payloadInvoice.cName || "Umum",
-                cAddress: payloadInvoice.cAddress,
-                cTaxId: payloadInvoice.cTaxId,
-                cPhone: payloadInvoice.cPhone,
-                cWa: payloadInvoice.cPhone,
-                jasaItems: payloadInvoice.pkbItems, 
-                barangItems: (existingIndex > -1) ? (historyInvoice[existingIndex].barangItems || []) : [],
-                dpValue: (existingIndex > -1) ? (historyInvoice[existingIndex].dpValue || 0) : 0,
-                adminSignature: (existingIndex > -1) ? (historyInvoice[existingIndex].adminSignature || "") : ""
-            };
-            
-            if (existingIndex > -1) {
-                historyInvoice[existingIndex] = invoiceDataPayload;
-            } else {
-                historyInvoice.push(invoiceDataPayload);
-            }
-            localStorage.setItem('faktur_service_db', JSON.stringify(historyInvoice));
-        }
     }
 
     function bukaHalamanInvoice() {
         sinkronisasiKeInvoice();
         window.location.href = 'invoice.html';
     }
-
-    window.onload = function() { 
-        aturWaktuOtomatis(); 
-        tampilkanLaporanBerdasarkanFilter();
-    };
 </script>
 </body>
 </html>

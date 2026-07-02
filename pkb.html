@@ -92,7 +92,6 @@
             </select>
         </div>
         
-        <!-- Dropdown khusus jika memilih Service Advisor -->
         <div class="login-group" id="box_select_sa" style="display:none;">
             <label>NAMA SERVICE ADVISOR</label>
             <select id="login_nama_sa">
@@ -126,7 +125,10 @@
             <button type="button" class="btn btn-red" id="btn_aksi_reset" onclick="resetForm()">🔄 Reset Form PKB Baru</button>
             <button type="button" class="btn btn-orange" id="btn_aksi_invoice" onclick="bukaHalamanInvoice()">📄 MENU INVOICE</button>
         </div>
-        <div class="user-badge" id="display_user_login">USER: -</div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="user-badge" id="display_user_login">USER: -</div>
+            <button type="button" class="btn btn-red btn-small" style="margin:0; padding: 4px 8px; font-size: 9pt;" onclick="logoutSistem()">🚪 LOGOUT</button>
+        </div>
     </div>
     
     <table class="no-border" style="margin-bottom: 5px;">
@@ -378,12 +380,9 @@
             if (!currentData) currentData = {};
             
             if (isUpdateMode) {
-                // MERGE DATA: Pertahankan data barang/jasa lama milik tim lain yang tidak tersentuh form saat ini
                 let dataLama = currentData[nopkbFormAktif];
                 if (dataLama && dataLama.items) {
                     let itemsMurni = [...payloadData.items];
-                    
-                    // Ambil item dari data lama yang rolenya berbeda dengan role pengedit saat ini
                     let currentRole = window.currentUserRole;
                     dataLama.items.forEach(function(oldItem) {
                         let oldPembeban = oldItem.pembeban || 'sa';
@@ -432,9 +431,42 @@
 <!-- 2. KODE UTAMA INTERAKSI OTORITAS & SISTEM -->
 <!-- ========================================== -->
 <script>
-    // Penampung data session login lokal
     window.currentUserRole = ""; 
     window.currentUserName = "";
+
+    // FITUR SESI 24 JAM (PERSISTENT LOGIN)
+    function cekSessionAktif() {
+        var savedDate = localStorage.getItem('auth_date');
+        var todayStr = new Date().toISOString().slice(0, 10);
+        
+        if (savedDate === todayStr && localStorage.getItem('auth_role')) {
+            window.currentUserRole = localStorage.getItem('auth_role');
+            window.currentUserName = localStorage.getItem('auth_name');
+            
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('main-app-content').style.display = 'block';
+            document.getElementById('display_user_login').innerText = "AKUN: " + window.currentUserName;
+            
+            terapkanKunciHakAksesOtoritas();
+            resetForm();
+        } else {
+            localStorage.removeItem('auth_role');
+            localStorage.removeItem('auth_name');
+            localStorage.removeItem('auth_date');
+            document.getElementById('login-overlay').style.display = 'flex';
+            document.getElementById('main-app-content').style.display = 'none';
+        }
+    }
+
+    // FITUR TOMBOL LOGOUT MANUAL
+    window.logoutSistem = function() {
+        if(confirm("Apakah Anda yakin ingin keluar dari sistem?")) {
+            localStorage.removeItem('auth_role');
+            localStorage.removeItem('auth_name');
+            localStorage.removeItem('auth_date');
+            location.reload();
+        }
+    }
 
     function kondisiFormLogin(val) {
         var boxSa = document.getElementById('box_select_sa');
@@ -456,7 +488,6 @@
         let roleMurni = "";
         let namaMurni = "";
 
-        // Pengecekan Kredensial Akun Sesuai Perintah Ketat User
         if (userId === "SA" && passInput === "Daya@1234") {
             loginValid = true;
             roleMurni = "sa";
@@ -479,6 +510,11 @@
             window.currentUserRole = roleMurni;
             window.currentUserName = namaMurni;
             
+            var todayStr = new Date().toISOString().slice(0, 10);
+            localStorage.setItem('auth_role', roleMurni);
+            localStorage.setItem('auth_name', namaMurni);
+            localStorage.setItem('auth_date', todayStr);
+            
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('main-app-content').style.display = 'block';
             document.getElementById('display_user_login').innerText = "AKUN: " + namaMurni;
@@ -493,7 +529,6 @@
     function terapkanKunciHakAksesOtoritas() {
         var role = window.currentUserRole;
         
-        // RESET DEFAULT STATE
         document.querySelectorAll('input, textarea, select').forEach(el => el.disabled = false);
         document.getElementById('btn_aksi_simpan').style.display = 'inline-block';
         document.getElementById('btn_aksi_cetak').style.display = 'inline-block';
@@ -502,16 +537,14 @@
         document.getElementById('btn_aksi_download').style.display = 'inline-block';
 
         if (role === 'viewer') {
-            // BATASAN MUTLAK VIEWER: Semua tombol kontrol hilang, form mati total
             document.getElementById('btn_aksi_simpan').style.display = 'none';
             document.getElementById('btn_aksi_cetak').style.display = 'none';
             document.getElementById('btn_aksi_reset').style.display = 'none';
             document.getElementById('btn-tambah').style.display = 'none';
             document.querySelectorAll('input, textarea, select').forEach(el => el.disabled = true);
-            document.getElementById('search_laporan_input').disabled = false; // Kolom pencarian tetap aktif
+            document.getElementById('search_laporan_input').disabled = false; 
             
         } else if (role === 'sparepart' || role === 'bahan') {
-            // BATASAN SPAREPART & BAHAN: Tidak bisa ubah Master data pelanggan & Keluhan
             document.getElementById('in_nopol').disabled = true;
             document.getElementById('in_nopkb').disabled = true;
             document.getElementById('in_nama').disabled = true;
@@ -544,11 +577,21 @@
         document.getElementById('lbl_sa_signature').innerText = val ? val.toUpperCase() : "( NAMA SA )";
     }
 
+    // PERBAIKAN LOGIKA LAMA: Mengembalikan Filter SA Berdasarkan Bengkel S001 / S002
     function updateSAOptions(bengkel, selectedSA = "") {
         var saSelect = document.getElementById('in_sa');
         saSelect.innerHTML = '<option value="">-- PILIH SA --</option>';
         
-        var listSA = ["YOGA PRATAMA ELIN", "SARIPUDIN", "DODY RIYAGUS", "I PUTU INDRA", "RIDUANSYAH YUDHA", "SLAMET", "IMRON", "GURUH TRI HANDOKO", "DANI RAHMAN ISKANDAR", "APRIANTO"];
+        var listSA = [];
+        
+        if (bengkel === "S001") {
+            listSA = ["YOGA PRATAMA ELIN", "SARIPUDIN", "DODY RIYAGUS", "I PUTU INDRA", "RIDUANSYAH YUDHA", "SLAMET", "IMRON"];
+        } else if (bengkel === "S002") {
+            listSA = ["GURUH TRI HANDOKO", "DANI RAHMAN ISKANDAR", "APRIANTO"];
+        } else {
+            // Jika tidak ada bengkel terpilih, munculkan semua (opsional, untuk fleksibilitas load data)
+            listSA = ["YOGA PRATAMA ELIN", "SARIPUDIN", "DODY RIYAGUS", "I PUTU INDRA", "RIDUANSYAH YUDHA", "SLAMET", "IMRON", "GURUH TRI HANDOKO", "DANI RAHMAN ISKANDAR", "APRIANTO"];
+        }
 
         listSA.forEach(function(sa) {
             var option = document.createElement('option');
@@ -557,6 +600,7 @@
             if (sa === selectedSA) { option.selected = true; }
             saSelect.appendChild(option);
         });
+        
         if (selectedSA) { syncNamaSA(selectedSA); } else { syncNamaSA(""); }
     }
 
@@ -615,7 +659,6 @@
         var container = document.getElementById('work-rows-container');
         var tr = document.createElement('tr');
         
-        // Jika parameter pembebanRole kosong, otomatis gunakan role akun yang sedang login saat ini
         var currentRole = pembebanRole || window.currentUserRole || 'sa';
         tr.setAttribute('data-pembeban', currentRole);
         
@@ -642,11 +685,10 @@
         var itemRole = row.getAttribute('data-pembeban') || 'sa';
         var activeUserRole = window.currentUserRole;
 
-        // PROTEKSI INTER-AKUN: Hanya role pembeban asli yang boleh mengedit kolom barisnya sendiri
         if (activeUserRole !== 'viewer' && activeUserRole !== itemRole) {
             row.querySelectorAll('input, select').forEach(el => el.disabled = true);
             var btnDel = row.querySelector('.btn-del');
-            if(btnDel) btnDel.style.display = 'none'; // Sembunyikan tombol x jika bukan hak miliknya
+            if(btnDel) btnDel.style.display = 'none'; 
         }
     }
 
@@ -656,7 +698,6 @@
         var itemRole = row.getAttribute('data-pembeban') || 'sa';
         var activeUserRole = window.currentUserRole;
 
-        // PENGUNCIAN MUTLAK ATURAN HAPUS BARIS
         if (activeUserRole !== itemRole) {
             alert("⚠️ Otoritas Ditolak! Anda tidak bisa menghapus beban milik bagian " + itemRole.toUpperCase());
             return;
@@ -741,7 +782,6 @@
             var currentRole = window.currentUserRole || 'sa';
             var itemRole = row.getAttribute('data-pembeban') || 'sa';
             
-            // Hanya tarik data dari elemen form input yang aktif/diperbolehkan diedit oleh role user saat ini
             if (currentRole === itemRole) {
                 var desc = row.querySelector('.item-desc').value;
                 var qty = parseFloat(row.querySelector('.item-qty').value) || 0;
@@ -760,7 +800,6 @@
             }
         });
         
-        // Gabungkan kalkulasi total dengan item pasif milik tim lain
         var localDataStore = JSON.parse(localStorage.getItem('laporan_final_datetime')) || [];
         var activePkbOldRecord = localDataStore.find(x => x.nopkb === currentPkbValue);
         if (isUpdateMode && activePkbOldRecord && activePkbOldRecord.items) {
@@ -773,7 +812,6 @@
             });
         }
         
-        // Tambahkan kalkulasi dari item baru yang diinput
         rows.forEach(function(row) {
             if (row.getAttribute('data-pembeban') === window.currentUserRole) {
                 var qty = parseFloat(row.querySelector('.item-qty').value) || 0;
@@ -786,7 +824,6 @@
             }
         });
         
-        // Amankan nilai SA penanggung jawab
         var saFinalFix = isUpdateMode && activePkbOldRecord ? (activePkbOldRecord.sa || sa) : sa;
 
         var payload = { nopkb: currentPkbValue, nopol: nopol, nama: nama, ktp: ktp, bengkel: bengkel, tipe: tipe, keluhan: keluhan, total: total, hp: hp, alamat: alamat, sa: saFinalFix, km: km, norangka: norangka, tgl_terima: tgl_terima, jam_terima: jam_terima, tgl_serah: tgl_serah, jam_serah: jam_serah, stnk: stnk, buku: buku, partbekas: partbekas, items: itemsArr };
@@ -823,7 +860,6 @@
         var item = dataLaporan.find(function(x) { return x.nopkb === nopkb; });
         if(!item) return;
         
-        // BATASAN EDIT SA: SA hanya boleh mengedit dokumen PKB miliknya sendiri
         if (window.currentUserRole === 'sa' && item.sa.toUpperCase() !== window.currentUserName.toUpperCase()) {
             alert("⚠️ Otoritas Ditolak! Dokumen PKB M-" + nopkb + " ini milik SA " + item.sa + ". Anda tidak bisa mengeditnya.");
             return;
@@ -986,13 +1022,11 @@
         var activeRole = window.currentUserRole;
         var activeName = window.currentUserName;
 
-        // PENGUNCIAN KETAT REKAP BAWAH: Akun selain SA / Manager dilarang keras menghapus PKB utama
         if (activeRole !== 'sa' && activeRole !== 'viewer') {
             alert("⚠️ Otoritas Ditolak! Hanya Akun Service Advisor yang berhak menghapus berkas PKB.");
             return;
         }
 
-        // Batasan SA: Hanya bisa menghapus PKB milik dirinya sendiri
         if (activeRole === 'sa' && saPembuatPkb.toUpperCase() !== activeName.toUpperCase()) {
             alert("⚠️ Ditolak! Dokumen PKB M-" + nopkb + " ini diterbitkan oleh SA " + saPembuatPkb + ". Anda tidak berhak menghapusnya.");
             return;
@@ -1103,6 +1137,13 @@
         sinkronisasiKeInvoice();
         window.location.href = 'invoice.html';
     }
+    
+    // EKSEKUSI SAAT HALAMAN DIMUAT (LOAD)
+    window.onload = function() { 
+        cekSessionAktif();
+        aturWaktuOtomatis(); 
+        tampilkanLaporanBerdasarkanFilter();
+    };
 </script>
 </body>
 </html>

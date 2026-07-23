@@ -8,12 +8,12 @@
         .container { max-width: 820px; margin: 0 auto; background: #fff; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; }
         
         /* Panel Utama */
-        .admin-panel { background: #f0f4f8; padding: 12px; border-radius: 4px; margin-bottom: 15px; border: 1px solid #cbd5e0; display: flex; align-items: center; justify-content: flex-start; gap: 10px; }
+        .admin-panel { background: #f0f4f8; padding: 12px; border-radius: 4px; margin-bottom: 15px; border: 1px solid #cbd5e0; display: flex; align-items: center; justify-content: flex-start; gap: 10px; flex-wrap: wrap; }
         .btn { padding: 6px 12px; font-weight: bold; border-radius: 4px; cursor: pointer; border: none; font-size: 11pt; }
         .btn-green { background: #2f855a; color: white; }
         .btn-blue { background: #1a365d; color: white; }
         .btn-red { background: #9b2c2c; color: white; }
-        .btn-small { padding: 3px 8px; font-size: 10pt; background: #4a5568; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-orange { background: #dd6b20; color: white; }
 
         input, textarea { font-family: Arial, sans-serif; font-size: 11pt; padding: 4px; box-sizing: border-box; }
         input[type="text"] { border: 1px solid #ccc; width: 100%; }
@@ -48,10 +48,19 @@
         .signature-name { font-weight: bold; text-decoration: underline; text-transform: uppercase; }
         .signature-title { font-size: 10pt; }
 
+        /* Style untuk Tabel Riwayat */
+        .history-section { margin-top: 40px; border-top: 2px dashed #cbd5e0; padding-top: 20px; }
+        .search-box { width: 100%; padding: 8px; margin-bottom: 10px; font-size: 11pt; border: 2px solid #1a365d; border-radius: 4px; box-sizing: border-box; }
+        table.report-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        table.report-table th, table.report-table td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 10pt; }
+        table.report-table th { background-color: #f0f4f8; }
+        .clickable-row { cursor: pointer; }
+        .clickable-row:hover { background-color: #e2e8f0; }
+
         @media print {
             body { background-color: #fff; margin: 0; padding: 0; }
             .container { box-shadow: none; max-width: 100%; padding: 0; }
-            .admin-panel { display: none !important; }
+            .admin-panel, .history-section { display: none !important; }
             input, textarea { border: none !important; background: transparent !important; resize: none; overflow: hidden; padding: 0 !important; }
             .date-doc-row input, .signature-date input { border-bottom: none !important; }
             .main-box { border: 1.5px solid #000; }
@@ -65,9 +74,10 @@
 
 <div class="container">
     <div class="admin-panel">
+        <button type="button" class="btn btn-orange" onclick="window.location.href='pkb.html'">⬅️ KEMBALI KE PKB</button>
         <button type="button" class="btn btn-green" onclick="simpanKuitansi()">💾 Simpan Kuitansi</button>
         <button type="button" class="btn btn-blue" onclick="window.print()">🖨️ Cetak / Simpan PDF</button>
-        <button type="button" class="btn btn-red" onclick="resetForm()">🔄 Reset Form</button>
+        <button type="button" class="btn btn-red" onclick="resetForm()">🔄 Reset Form Kuitansi Baru</button>
     </div>
 
     <!-- HEADER -->
@@ -96,7 +106,7 @@
     <!-- DATE & DOC NO -->
     <div class="date-doc-row">
         <input type="text" id="header_date" readonly>
-        <input type="text" id="doc_no">
+        <input type="text" id="doc_no" data-key="">
     </div>
 
     <!-- MAIN FORM BOX -->
@@ -153,12 +163,33 @@
             <div class="signature-title">KEPALA ADMINISTRASI</div>
         </div>
     </div>
+
+    <!-- HISTORY / DATA TERSIMPAN SECTION -->
+    <div class="history-section">
+        <h3 style="color: #1a365d; margin-top: 0; margin-bottom: 10px;">📂 PENCARIAN & RIWAYAT KUITANSI</h3>
+        <input type="text" id="search_kuitansi" class="search-box" placeholder="🔍 Cari berdasarkan No Dokumen, Nama Pelanggan, atau Tanggal..." oninput="tampilkanRiwayatKuitansi()">
+        
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th style="width: 5%;">No</th>
+                    <th style="width: 15%;">Tanggal</th>
+                    <th style="width: 25%;">No Dokumen</th>
+                    <th style="width: 35%;">Telah Terima Dari</th>
+                    <th style="width: 20%; text-align: right;">Jumlah Uang</th>
+                </tr>
+            </thead>
+            <tbody id="riwayat_kuitansi_body">
+                <tr><td colspan="5" style="text-align: center; color: #718096;">Memuat data dari database...</td></tr>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <!-- FIREBASE INTEGRATION -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, push, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBvgLFjfpyvHf3MCgrmJ_nPgkM4uyerXuQ",
@@ -174,15 +205,45 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    window.simpanKeFirebase = function(data) {
-        const kuitansiRef = ref(db, 'laporan_kuitansi');
-        const newRef = push(kuitansiRef);
-        set(newRef, data).then(() => {
-            alert("✅ Data Kuitansi berhasil disimpan ke sistem!");
-        }).catch((error) => {
-            console.error(error);
-            alert("❌ Gagal menyimpan data.");
-        });
+    let globalKuitansiData = [];
+
+    // REALTIME LISTENER UNTUK RIWAYAT
+    const kuitansiRef = ref(db, 'laporan_kuitansi');
+    onValue(kuitansiRef, (snapshot) => {
+        const data = snapshot.val();
+        globalKuitansiData = [];
+        if(data) {
+            Object.keys(data).forEach(key => {
+                let item = data[key];
+                item.fb_key = key; // Menyimpan kunci unik Firebase
+                globalKuitansiData.push(item);
+            });
+            // Urutkan dari yang terbaru (opsional)
+            globalKuitansiData.reverse(); 
+        }
+        window.globalKuitansiData = globalKuitansiData;
+        window.tampilkanRiwayatKuitansi();
+    });
+
+    window.simpanKeFirebase = function(payload, keyToUpdate) {
+        if(keyToUpdate) {
+            // Update mode
+            const updateRef = ref(db, 'laporan_kuitansi/' + keyToUpdate);
+            update(updateRef, payload).then(() => {
+                alert("✅ Data Kuitansi berhasil diperbarui!");
+            }).catch((error) => {
+                console.error(error); alert("❌ Gagal memperbarui data.");
+            });
+        } else {
+            // Insert mode
+            const newRef = push(kuitansiRef);
+            set(newRef, payload).then(() => {
+                alert("✅ Data Kuitansi baru berhasil disimpan ke sistem!");
+                document.getElementById('doc_no').setAttribute('data-key', newRef.key);
+            }).catch((error) => {
+                console.error(error); alert("❌ Gagal menyimpan data.");
+            });
+        }
     }
 </script>
 
@@ -255,12 +316,14 @@
 
     window.resetForm = function() {
         document.getElementById('doc_no').value = '';
+        document.getElementById('doc_no').setAttribute('data-key', ''); // Kosongkan state edit
         document.getElementById('terima_dari').value = '';
         document.getElementById('uang_senilai').value = '';
         document.getElementById('uang_terbilang').innerText = '';
         document.getElementById('untuk_pembayaran').value = '';
         
         setTanggalOtomatis();
+        alert("Form Kuitansi berhasil direset.");
     }
 
     window.simpanKuitansi = function() {
@@ -270,6 +333,7 @@
         }
 
         const rawUang = document.getElementById('uang_senilai').value.replace(/[^0-9]/g, '');
+        const currentKey = document.getElementById('doc_no').getAttribute('data-key');
 
         const payload = {
             doc_no: document.getElementById('doc_no').value,
@@ -281,7 +345,59 @@
             tgl_ttd: document.getElementById('sign_date').value
         };
 
-        window.simpanKeFirebase(payload);
+        window.simpanKeFirebase(payload, currentKey);
+    }
+
+    window.tampilkanRiwayatKuitansi = function() {
+        if(!window.globalKuitansiData) return;
+        const searchInput = document.getElementById('search_kuitansi').value.toLowerCase().trim();
+        const tbody = document.getElementById('riwayat_kuitansi_body');
+        
+        let htmlRows = "";
+        let counter = 1;
+
+        window.globalKuitansiData.forEach((item) => {
+            const docNo = (item.doc_no || "").toLowerCase();
+            const terimaDari = (item.terima_dari || "").toLowerCase();
+            const tgl = (item.tgl_kuitansi || "").toLowerCase();
+            
+            if(docNo.includes(searchInput) || terimaDari.includes(searchInput) || tgl.includes(searchInput)) {
+                htmlRows += `
+                    <tr class="clickable-row" onclick="muatDataKuitansiLama('${item.fb_key}')">
+                        <td style="text-align:center;">${counter}</td>
+                        <td>${item.tgl_kuitansi}</td>
+                        <td><strong>${item.doc_no || '-'}</strong></td>
+                        <td>${item.terima_dari || '-'}</td>
+                        <td style="text-align:right; font-weight:bold;">Rp ${(parseInt(item.uang_senilai) || 0).toLocaleString('id-ID')}</td>
+                    </tr>
+                `;
+                counter++;
+            }
+        });
+
+        if(htmlRows === "") {
+            htmlRows = "<tr><td colspan='5' style='text-align:center; color:#999;'>Tidak ada data kuitansi yang ditemukan.</td></tr>";
+        }
+        
+        tbody.innerHTML = htmlRows;
+    }
+
+    window.muatDataKuitansiLama = function(fb_key) {
+        const dataList = window.globalKuitansiData;
+        const item = dataList.find(x => x.fb_key === fb_key);
+        if(!item) return;
+
+        document.getElementById('doc_no').value = item.doc_no || '';
+        document.getElementById('doc_no').setAttribute('data-key', fb_key);
+        
+        document.getElementById('header_date').value = item.tgl_kuitansi || '';
+        document.getElementById('terima_dari').value = item.terima_dari || '';
+        document.getElementById('uang_senilai').value = item.uang_senilai ? parseInt(item.uang_senilai).toLocaleString('id-ID') : '';
+        document.getElementById('uang_terbilang').innerText = item.uang_terbilang || '';
+        document.getElementById('untuk_pembayaran').value = item.untuk_pembayaran || '';
+        document.getElementById('sign_date').value = item.tgl_ttd || '';
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     window.onload = function() {

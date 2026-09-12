@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Sistem Bengkel Daya Toyota Cakung</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; font-size: 11pt; margin: 0; padding: 30px 20px 40px 46px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; color: #1a202c; }
+
+        /* ===== SIDEBAR (Model Portal Antrian, sama seperti halaman lain) ===== */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 280px;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-right: 1px solid rgba(255,255,255,0.5);
+            box-shadow: 10px 0 30px rgba(0,0,0,0.15);
+            transition: left 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-tab {
+            position: absolute;
+            top: 30px;
+            right: -55px;
+            width: 55px;
+            height: 130px;
+            background: linear-gradient(135deg, #e53935, #c62828);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0 15px 15px 0;
+            cursor: pointer;
+            box-shadow: 5px 5px 15px rgba(229, 57, 53, 0.3);
+            transition: transform 0.2s;
+        }
+        .sidebar-tab:hover { transform: translateX(5px); }
+        .sidebar-tab .icon { font-size: 24px; margin-bottom: 8px; font-weight: bold; }
+        .sidebar-tab .menu-text { transform: rotate(-90deg); letter-spacing: 3px; font-size: 13px; font-weight: 700; margin-top: 20px; }
+        .sidebar:hover { left: 0; }
+        .sidebar-header { padding: 30px 20px 20px; text-align: center; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .sidebar-header img { max-height: 45px; margin-bottom: 15px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+        .sidebar-header h2 { color: #c62828; margin: 0; font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .sidebar-user { text-align: center; padding: 10px 15px 0; }
+        .sidebar-user .user-badge { display: inline-block; background: #1a365d; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .sidebar-menu { list-style: none; padding: 20px 0; margin: 0; flex-grow: 1; overflow-y: auto; }
+        .sidebar-menu li { margin: 5px 15px; }
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: #4a5568;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .sidebar-menu a:hover { background-color: #ffebee; color: #d32f2f; transform: translateX(5px); }
+        .sidebar-menu a.active { background: linear-gradient(135deg, #e53935, #c62828); color: #fff; box-shadow: 0 4px 10px rgba(198, 40, 40, 0.35); }
+        .sidebar-menu a.disabled { opacity: 0.35; pointer-events: none; }
+        .sidebar-menu li.menu-keluar { border-top: 1px solid rgba(0,0,0,0.08); margin-top: auto; }
+
+        /* ===== KONTEN DASHBOARD ===== */
+        .dash-wrap { max-width: 1150px; margin: 0 auto; }
+        .dash-header { display: flex; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap; margin-bottom: 22px; }
+        .dash-title { color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+        .dash-title h1 { margin: 0; font-size: 22pt; letter-spacing: 0.5px; }
+        .dash-title p { margin: 4px 0 0; opacity: 0.9; font-size: 11pt; }
+        .dash-date { background: rgba(255,255,255,0.18); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.35); color: #fff; padding: 10px 18px; border-radius: 12px; font-weight: bold; text-align: center; line-height: 1.4; }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
+        .stat-card { background: rgba(255,255,255,0.94); border-radius: 16px; padding: 16px 18px; box-shadow: 0 10px 25px rgba(0,0,0,0.12); display: flex; align-items: center; gap: 14px; }
+        .stat-card .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20pt; color: #fff; flex-shrink: 0; box-shadow: inset 0 -2px 4px rgba(0,0,0,0.15); }
+        .stat-card .stat-info { line-height: 1.3; min-width: 0; }
+        .stat-card .stat-label { font-size: 9pt; color: #718096; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-card .stat-value { font-size: 17pt; font-weight: bold; color: #1a202c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ic-pkb { background: linear-gradient(135deg, #2b6cb0, #1a365d); }
+        .ic-opl { background: linear-gradient(135deg, #805ad5, #553c9a); }
+        .ic-inv { background: linear-gradient(135deg, #38a169, #276749); }
+        .ic-kui { background: linear-gradient(135deg, #dd6b20, #9c4221); }
+
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
+        .menu-card {
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 22px 20px;
+            cursor: pointer;
+            text-align: left;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            position: relative;
+            overflow: hidden;
+        }
+        .menu-card:hover { transform: translateY(-5px); box-shadow: 0 14px 28px rgba(0,0,0,0.22); }
+        .menu-card::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 5px; }
+        .menu-card .mc-top { display: flex; align-items: center; gap: 14px; }
+        .menu-card .mc-icon { width: 54px; height: 54px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24pt; color: #fff; flex-shrink: 0; box-shadow: inset 0 -3px 5px rgba(0,0,0,0.18); }
+        .menu-card .mc-title { font-size: 14pt; font-weight: bold; color: #1a202c; }
+        .menu-card .mc-desc { font-size: 9.5pt; color: #718096; line-height: 1.45; }
+        .menu-card .mc-go { font-size: 9.5pt; font-weight: bold; color: #2b6cb0; letter-spacing: 0.5px; }
+        .mc-pkb::after { background: linear-gradient(90deg, #2b6cb0, #1a365d); }
+        .mc-pkb .mc-icon { background: linear-gradient(135deg, #2b6cb0, #1a365d); }
+        .mc-pkb:hover { border-color: #2b6cb0; }
+        .mc-opl::after { background: linear-gradient(90deg, #805ad5, #553c9a); }
+        .mc-opl .mc-icon { background: linear-gradient(135deg, #805ad5, #553c9a); }
+        .mc-opl:hover { border-color: #805ad5; }
+        .mc-inv::after { background: linear-gradient(90deg, #38a169, #276749); }
+        .mc-inv .mc-icon { background: linear-gradient(135deg, #38a169, #276749); }
+        .mc-inv:hover { border-color: #38a169; }
+        .mc-kui::after { background: linear-gradient(90deg, #dd6b20, #9c4221); }
+        .mc-kui .mc-icon { background: linear-gradient(135deg, #dd6b20, #9c4221); }
+        .mc-kui:hover { border-color: #dd6b20; }
+        .mc-db:hover { border-color: #a0aec0; }
+
+        /* ===== LOGIN OVERLAY ===== */
+        #login-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: #1a365d; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .login-box { background: white; padding: 30px; border-radius: 8px; width: 350px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); }
+        .login-box h2 { margin-top:0; margin-bottom: 20px; color: #1a365d; text-align: center; font-size: 16pt; border-bottom: 2px solid #cbd5e0; padding-bottom: 10px; }
+        .login-group { margin-bottom: 15px; }
+        .login-group label { display:block; font-weight: bold; margin-bottom: 5px; font-size: 10pt; color: #4a5568; }
+        .login-group input, .login-group select { width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 11pt; box-sizing: border-box; text-transform: none; }
+        .btn-login { width: 100%; padding: 10px; background: #2f855a; color: white; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; font-size: 12pt; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<!-- SCREEN LOGIN SYSTEM -->
+<div id="login-overlay">
+    <div class="login-box">
+        <h2>🔑 DAYA TOYOTA CAKUNG<br><span style="font-size: 10pt; color: #718096;">Portal Sistem Bengkel</span></h2>
+        <div class="login-group">
+            <label>PILIH JABATAN / USER ID</label>
+            <select id="login_userid" onchange="kondisiFormLogin(this.value)">
+                <option value="">-- PILIH USER --</option>
+                <option value="SA">SERVICE ADVISOR (SA)</option>
+                <option value="SparepartDaya">SPAREPART (SparepartDaya)</option>
+                <option value="BahanDaya">BAHAN MATERIAL (BahanDaya)</option>
+                <option value="ViewDaya">VIEW ONLY MANAGEMENT (ViewDaya)</option>
+            </select>
+        </div>
+
+        <div class="login-group" id="box_select_sa" style="display:none;">
+            <label>NAMA SERVICE ADVISOR</label>
+            <select id="login_nama_sa">
+                <option value="YOGA PRATAMA ELIN">YOGA PRATAMA ELIN</option>
+                <option value="SARIPUDIN">SARIPUDIN</option>
+                <option value="DODY RIYAGUS">DODY RIYAGUS</option>
+                <option value="I PUTU INDRA">I PUTU INDRA</option>
+                <option value="RIDUANSYAH YUDHA">RIDUANSYAH YUDHA</option>
+                <option value="SLAMET">SLAMET</option>
+                <option value="IMRON">IMRON</option>
+                <option value="GURUH TRI HANDOKO">GURUH TRI HANDOKO</option>
+                <option value="DANI RAHMAN ISKANDAR">DANI RAHMAN ISKANDAR</option>
+                <option value="APRIANTO">APRIANTO</option>
+            </select>
+        </div>
+
+        <div class="login-group">
+            <label>PASSWORD AKSES</label>
+            <input type="password" id="login_password" placeholder="••••••••">
+        </div>
+        <button type="button" class="btn-login" onclick="prosesValidasiLogin()">MASUK KE SISTEM</button>
+    </div>
+</div>
+
+<!-- SIDEBAR MENU KIRI -->
+<div class="sidebar" id="sidebar-menu">
+    <div class="sidebar-tab" title="Buka Menu">
+        <div class="icon">≡</div>
+        <div class="menu-text">MENU</div>
+    </div>
+    <div class="sidebar-header">
+        <img src="LOGO DAYA.webp" alt="Daya Toyota" onerror="this.style.display='none'">
+        <h2>Dashboard</h2>
+    </div>
+    <div class="sidebar-user">
+        <div class="user-badge" id="display_user_login">USER: -</div>
+    </div>
+    <ul class="sidebar-menu">
+        <li><a class="active">🏠 Dashboard</a></li>
+        <li><a onclick="window.location.href='pkb.html'">📋 Menu PKB</a></li>
+        <li><a onclick="window.location.href='opl.html'">🛠️ Menu OPL Manual</a></li>
+        <li><a onclick="window.location.href='invoice.html'">📄 Menu Invoice</a></li>
+        <li><a onclick="window.location.href='kuitansi.html'">🧾 Menu Kuitansi</a></li>
+        <li class="menu-keluar"><a onclick="logoutSistem()">🚪 Keluar</a></li>
+    </ul>
+</div>
+
+<!-- KONTEN UTAMA -->
+<div class="dash-wrap" id="main-app-content" style="display: none;">
+    <div class="dash-header">
+        <div class="dash-title">
+            <h1>🏠 Dashboard Sistem Bengkel</h1>
+            <p>PT. Daya Adicipta Sandika — Daya Toyota Cakung</p>
+        </div>
+        <div class="dash-date" id="dash_tanggal">-</div>
+    </div>
+
+    <!-- STATISTIK LIVE -->
+    <div class="stat-grid">
+        <div class="stat-card">
+            <div class="stat-icon ic-pkb">📋</div>
+            <div class="stat-info">
+                <div class="stat-label">Total PKB</div>
+                <div class="stat-value" id="st_pkb">…</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon ic-opl">🛠️</div>
+            <div class="stat-info">
+                <div class="stat-label">Total OPL</div>
+                <div class="stat-value" id="st_opl">…</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon ic-inv">📄</div>
+            <div class="stat-info">
+                <div class="stat-label">Total Invoice</div>
+                <div class="stat-value" id="st_inv">…</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon ic-kui">🧾</div>
+            <div class="stat-info">
+                <div class="stat-label">Total Kuitansi</div>
+                <div class="stat-value" id="st_kui">…</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KARTU MENU -->
+    <div class="menu-grid">
+        <button type="button" class="menu-card mc-pkb" onclick="window.location.href='pkb.html'">
+            <div class="mc-top">
+                <div class="mc-icon">📋</div>
+                <div class="mc-title">PKB</div>
+            </div>
+            <div class="mc-desc">Perintah Kerja Bengkel — buat, simpan & cetak PKB baru.</div>
+            <div class="mc-go">BUKA MENU →</div>
+        </button>
+        <button type="button" class="menu-card mc-opl" onclick="window.location.href='opl.html'">
+            <div class="mc-top">
+                <div class="mc-icon">🛠️</div>
+                <div class="mc-title">OPL Manual</div>
+            </div>
+            <div class="mc-desc">Order Pekerjaan Luar — nomor otomatis, vendor & hitung PPN.</div>
+            <div class="mc-go">BUKA MENU →</div>
+        </button>
+        <button type="button" class="menu-card mc-inv" onclick="window.location.href='invoice.html'">
+            <div class="mc-top">
+                <div class="mc-icon">📄</div>
+                <div class="mc-title">Invoice</div>
+            </div>
+            <div class="mc-desc">Faktur servis dengan riwayat, edit ulang & kirim via WhatsApp.</div>
+            <div class="mc-go">BUKA MENU →</div>
+        </button>
+        <button type="button" class="menu-card mc-kui" onclick="window.location.href='kuitansi.html'">
+            <div class="mc-top">
+                <div class="mc-icon">🧾</div>
+                <div class="mc-title">Kuitansi</div>
+            </div>
+            <div class="mc-desc">Bukti pembayaran dengan terbilang otomatis & riwayat.</div>
+            <div class="mc-go">BUKA MENU →</div>
+        </button>
+    </div>
+</div>
+
+<!-- FIREBASE: STATISTIK LIVE -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBvgLFjfpyvHf3MCgrmJ_nPgkM4uyerXuQ",
+        authDomain: "pkbmanualinvoice.firebaseapp.com",
+        projectId: "pkbmanualinvoice",
+        storageBucket: "pkbmanualinvoice.firebasestorage.app",
+        messagingSenderId: "612617167676",
+        appId: "1:612617167676:web:083f0d87d0e172140f3439",
+        measurementId: "G-P4846QRWEW",
+        databaseURL: "https://pkbmanualinvoice-default-rtdb.asia-southeast1.firebasedatabase.app"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const fmtRp = (n) => "Rp " + (n || 0).toLocaleString('id-ID');
+
+    function jml(arr) { return arr.length.toLocaleString('id-ID'); }
+
+    onValue(ref(db, 'laporan_pkb'), (snap) => {
+        const d = snap.val();
+        document.getElementById('st_pkb').innerText = jml(d ? Object.values(d) : []);
+    });
+
+    onValue(ref(db, 'laporan_opl'), (snap) => {
+        const d = snap.val();
+        document.getElementById('st_opl').innerText = jml(d ? Object.values(d) : []);
+    });
+
+    onValue(ref(db, 'riwayat_invoice'), (snap) => {
+        const d = snap.val();
+        document.getElementById('st_inv').innerText = jml(d ? Object.values(d) : []);
+    });
+
+    onValue(ref(db, 'laporan_kuitansi'), (snap) => {
+        const d = snap.val();
+        const arr = d ? Object.values(d) : [];
+        document.getElementById('st_kui').innerText = jml(arr);
+        const nilai = arr.reduce((t, x) => t + (parseInt(x.uang_senilai) || 0), 0);
+        document.getElementById('st_kui').title = "Nilai total: " + fmtRp(nilai);
+    });
+
+
+</script>
+
+<!-- LOGIN & SESSION (Sama seperti PKB/OPL) -->
+<script>
+    window.currentUserRole = "";
+    window.currentUserName = "";
+
+    function cekSessionAktif() {
+        var savedDate = localStorage.getItem('auth_date');
+        var todayStr = new Date().toISOString().slice(0, 10);
+
+        if (savedDate === todayStr && localStorage.getItem('auth_role')) {
+            window.currentUserRole = localStorage.getItem('auth_role');
+            window.currentUserName = localStorage.getItem('auth_name');
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('main-app-content').style.display = 'block';
+            document.getElementById('display_user_login').innerText = "AKUN: " + window.currentUserName;
+        } else {
+            localStorage.removeItem('auth_role');
+            localStorage.removeItem('auth_name');
+            localStorage.removeItem('auth_date');
+            document.getElementById('login-overlay').style.display = 'flex';
+            document.getElementById('main-app-content').style.display = 'none';
+        }
+    }
+
+    window.logoutSistem = function() {
+        if (confirm("Apakah Anda yakin ingin keluar dari sistem?")) {
+            localStorage.removeItem('auth_role');
+            localStorage.removeItem('auth_name');
+            localStorage.removeItem('auth_date');
+            location.reload();
+        }
+    }
+
+    function kondisiFormLogin(val) {
+        document.getElementById('box_select_sa').style.display = (val === 'SA') ? 'block' : 'none';
+    }
+
+    function prosesValidasiLogin() {
+        var userId = document.getElementById('login_userid').value;
+        var passInput = document.getElementById('login_password').value;
+        var saSelect = document.getElementById('login_nama_sa').value;
+
+        if (!userId) { alert("Pilih Jabatan Akun Terlebih Dahulu!"); return; }
+
+        let loginValid = false;
+        let roleMurni = "";
+        let namaMurni = "";
+
+        if (userId === "SA" && passInput === "Daya@1234") {
+            loginValid = true; roleMurni = "sa"; namaMurni = saSelect;
+        } else if (userId === "SparepartDaya" && passInput === "PartDaya@1234") {
+            loginValid = true; roleMurni = "sparepart"; namaMurni = "TEAM SPAREPART";
+        } else if (userId === "BahanDaya" && passInput === "BahanDaya@1234") {
+            loginValid = true; roleMurni = "bahan"; namaMurni = "TEAM BAHAN MATERIAL";
+        } else if (userId === "ViewDaya" && passInput === "ViewDaya@1234") {
+            loginValid = true; roleMurni = "viewer"; namaMurni = "MANAGEMENT (VIEW ONLY)";
+        }
+
+        if (loginValid) {
+            localStorage.setItem('auth_role', roleMurni);
+            localStorage.setItem('auth_name', namaMurni);
+            localStorage.setItem('auth_date', new Date().toISOString().slice(0, 10));
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('main-app-content').style.display = 'block';
+            document.getElementById('display_user_login').innerText = "AKUN: " + namaMurni;
+        } else {
+            alert("❌ Password salah atau User belum dipilih!");
+        }
+    }
+
+    // Tanggal hari ini (Indonesia)
+    (function() {
+        var hari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+        var bulan = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+        var d = new Date();
+        document.getElementById('dash_tanggal').innerHTML = hari[d.getDay()] + ', ' + d.getDate() + ' ' + bulan[d.getMonth()] + ' ' + d.getFullYear();
+    })();
+
+    window.onload = cekSessionAktif;
+</script>
+</body>
+</html>

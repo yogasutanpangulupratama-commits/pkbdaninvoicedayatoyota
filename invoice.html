@@ -89,7 +89,7 @@
             border: 1px solid #e0e0e0;
             border-radius: 5px;
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
             align-items: center;
             gap: 10px;
             flex-wrap: wrap;
@@ -155,6 +155,50 @@
         .btn-back-pkb:hover {
             background-color: #2d3748;
         }
+
+        /* ===== TOOLBAR AKSI MODERN (Sama seperti OPL) ===== */
+        .toolbar-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 9px 18px 9px 10px;
+            cursor: pointer;
+            font-family: Arial, sans-serif;
+            text-align: left;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 18px rgba(26, 54, 93, 0.18);
+            border-color: #a0aec0;
+        }
+        .action-btn:active { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(26, 54, 93, 0.15); }
+        .action-btn .act-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18pt;
+            color: #fff;
+            flex-shrink: 0;
+            box-shadow: inset 0 -2px 4px rgba(0,0,0,0.15);
+        }
+        .action-btn .act-text { display: flex; flex-direction: column; line-height: 1.25; }
+        .action-btn .act-label { font-weight: bold; font-size: 11pt; color: #1a202c; }
+        .action-btn .act-sub { font-size: 8.5pt; color: #718096; }
+        .act-simpan .act-icon { background: linear-gradient(135deg, #38a169, #276749); }
+        .act-simpan:hover { border-color: #38a169; }
+        .act-nav .act-icon { background: linear-gradient(135deg, #718096, #4a5568); }
+        .act-nav:hover { border-color: #718096; }
+        .act-reset .act-icon { background: linear-gradient(135deg, #3182ce, #2b6cb0); }
+        .act-reset:hover { border-color: #3182ce; }
         .header-table {
             width: 100%;
             border-collapse: collapse;
@@ -382,9 +426,9 @@
         <button class="btn-action btn-wa" onclick="sendWhatsApp()">💬 Kirim Estimasi & Link Edit</button>
     </div>
     
-    <button class="btn-action btn-back-pkb" onclick="window.location.href='pkb.html'">⬅️ Kembali ke PKB</button>
-    <button class="btn-action btn-new" onclick="createNewInvoice()">+ Buat Baru</button>
-    <button class="btn-action btn-print" onclick="saveAndPrint()">🖨️ Simpan & Cetak Faktur</button>
+    <button class="action-btn act-nav" onclick="window.location.href='pkb.html'"><span class="act-icon">⬅️</span><span class="act-text"><span class="act-label">Kembali ke PKB</span><span class="act-sub">Menu utama sistem</span></span></button>
+    <button class="action-btn act-reset" onclick="createNewInvoice()"><span class="act-icon">➕</span><span class="act-text"><span class="act-label">Buat Baru</span><span class="act-sub">Mulai faktur kosong</span></span></button>
+    <button class="action-btn act-simpan" onclick="saveAndPrint()"><span class="act-icon">🖨️</span><span class="act-text"><span class="act-label">Simpan & Cetak Faktur</span><span class="act-sub">Shortcut Ctrl + P</span></span></button>
 </div>
 
 <div class="main-layout">
@@ -1063,5 +1107,44 @@
         window.open(waUrl, '_blank');
     }
 </script>
+
+<!-- ===== SIDEBAR NAVIGASI KIRI (Model Portal Antrian, sama seperti PKB/OPL) ===== -->
+<style>
+    .sidenav { position: fixed; top: 0; left: -280px; width: 280px; height: 100vh; background: rgba(255,255,255,0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-right: 1px solid rgba(255,255,255,0.5); box-shadow: 10px 0 30px rgba(0,0,0,0.15); transition: left 0.4s cubic-bezier(0.25,0.8,0.25,1); z-index: 1000; display: flex; flex-direction: column; }
+    .sidenav-tab { position: absolute; top: 30px; right: -55px; width: 55px; height: 130px; background: linear-gradient(135deg,#e53935,#c62828); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 0 15px 15px 0; cursor: pointer; box-shadow: 5px 5px 15px rgba(229,57,53,0.3); transition: transform 0.2s; }
+    .sidenav-tab:hover { transform: translateX(5px); }
+    .sidenav-tab .icon { font-size: 24px; margin-bottom: 8px; font-weight: bold; }
+    .sidenav-tab .menu-text { transform: rotate(-90deg); letter-spacing: 3px; font-size: 13px; font-weight: 700; margin-top: 20px; }
+    .sidenav:hover { left: 0; }
+    .sidenav-header { padding: 30px 20px 20px; text-align: center; border-bottom: 1px solid rgba(0,0,0,0.05); }
+    .sidenav-header img { max-height: 45px; margin-bottom: 15px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+    .sidenav-header h2 { color: #c62828; margin: 0; font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+    .sidenav-menu { list-style: none; padding: 20px 0; margin: 0; flex-grow: 1; overflow-y: auto; }
+    .sidenav-menu li { margin: 5px 15px; }
+    .sidenav-menu a { display: flex; align-items: center; padding: 12px 20px; color: #4a5568; text-decoration: none; font-weight: 600; font-size: 14px; border-radius: 10px; transition: all 0.3s ease; cursor: pointer; }
+    .sidenav-menu a:hover { background-color: #ffebee; color: #d32f2f; transform: translateX(5px); }
+    .sidenav-menu a.active { background: linear-gradient(135deg,#e53935,#c62828); color: #fff; box-shadow: 0 4px 10px rgba(198,40,40,0.35); }
+    .sidenav-menu li.menu-keluar { border-top: 1px solid rgba(0,0,0,0.08); margin-top: auto; }
+    body { padding-left: 40px; }
+    @media print { .sidenav { display: none !important; } body { padding-left: 0 !important; } }
+</style>
+<div class="sidenav" id="sidenav-menu">
+    <div class="sidenav-tab" title="Buka Menu">
+        <div class="icon">≡</div>
+        <div class="menu-text">MENU</div>
+    </div>
+    <div class="sidenav-header">
+        <img src="LOGO DAYA.webp" alt="Daya Toyota" onerror="this.style.display='none'">
+        <h2>Faktur Service</h2>
+    </div>
+    <ul class="sidenav-menu">
+        <li><a onclick="window.location.href='dashboard.html'">🏠 Dashboard</a></li>
+        <li><a onclick="window.location.href='pkb.html'">📋 Menu PKB</a></li>
+        <li><a onclick="window.location.href='opl.html'">🛠️ Menu OPL Manual</a></li>
+        <li><a class="active">📄 Menu Invoice</a></li>
+        <li><a onclick="window.location.href='kuitansi.html'">🧾 Menu Kuitansi</a></li>
+        <li class="menu-keluar"><a onclick="window.location.href='pkb.html'">🚪 Keluar ke Menu PKB</a></li>
+    </ul>
+</div>
 </body>
 </html>

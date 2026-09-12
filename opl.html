@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistem OPL Manual - Order Pekerjaan Luar Manual</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 11pt; margin: 10px; background-color: #f7fafc; color: #000; }
+        .container { max-width: 820px; margin: 0 auto; background: #fff; padding: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+        th, td { border-bottom: 1px solid #ddd; border-top: 1px solid #ddd; border-left: none; border-right: none; padding: 6px; vertical-align: top; }
+        th { background-color: #f9f9f9; font-weight: bold; }
+
+        input[type="text"], input[type="number"], textarea { text-transform: uppercase; }
+
+        input[type="text"], input[type="number"], input[type="date"], input[type="time"], textarea, select { width: 95%; border: 1px solid #ccc; padding: 4px; font-family: Arial, sans-serif; font-size: 11pt; box-sizing: border-box; }
+        .no-border, .no-border td { border: none !important; padding: 3px 0; }
+        .title { font-size: 16pt; font-weight: bold; letter-spacing: 1px; }
+
+        /* Panel Utama */
+        .admin-panel { background: #f0f4f8; padding: 12px; border-radius: 4px; margin-bottom: 15px; border: 1px solid #cbd5e0; display: flex; align-items: center; justify-content: space-between; }
+        .user-badge { background: #1a365d; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 10pt; text-transform: uppercase; }
+
+        /* ===== SIDEBAR MENU KIRI (Model Portal Antrian Daya Toyota) ===== */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 280px;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-right: 1px solid rgba(255,255,255,0.5);
+            box-shadow: 10px 0 30px rgba(0,0,0,0.15);
+            transition: left 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-tab {
+            position: absolute;
+            top: 30px;
+            right: -55px;
+            width: 55px;
+            height: 130px;
+            background: linear-gradient(135deg, #e53935, #c62828);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0 15px 15px 0;
+            cursor: pointer;
+            box-shadow: 5px 5px 15px rgba(229, 57, 53, 0.3);
+            transition: transform 0.2s;
+        }
+        .sidebar-tab:hover { transform: translateX(5px); }
+        .sidebar-tab .icon { font-size: 24px; margin-bottom: 8px; font-weight: bold; }
+        .sidebar-tab .menu-text { transform: rotate(-90deg); letter-spacing: 3px; font-size: 13px; font-weight: 700; margin-top: 20px; }
+        .sidebar:hover { left: 0; }
+        .sidebar-header { padding: 30px 20px 20px; text-align: center; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .sidebar-header img { max-height: 45px; margin-bottom: 15px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+        .sidebar-header h2 { color: #c62828; margin: 0; font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .sidebar-user { text-align: center; padding: 10px 15px 0; }
+        .sidebar-user .user-badge { display: inline-block; font-size: 8.5pt; padding: 4px 8px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .sidebar-menu { list-style: none; padding: 20px 0; margin: 0; flex-grow: 1; overflow-y: auto; }
+        .sidebar-menu li { margin: 5px 15px; }
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: #4a5568;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .sidebar-menu a:hover { background-color: #ffebee; color: #d32f2f; transform: translateX(5px); }
+        .sidebar-menu a.disabled { opacity: 0.35; pointer-events: none; }
+        .sidebar-menu li.menu-keluar { border-top: 1px solid rgba(0,0,0,0.08); margin-top: auto; }
+        body { padding-left: 26px; }
+
+        .btn { padding: 6px 12px; font-weight: bold; border-radius: 4px; cursor: pointer; border: none; margin-right: 5px; font-size: 11pt; }
+        .btn-green { background: #2f855a; color: white; }
+        .btn-blue { background: #1a365d; color: white; }
+        .btn-red { background: #9b2c2c; color: white; }
+        .btn-orange { background: #dd6b20; color: white; }
+        .btn-purple { background: #6b46c1; color: white; }
+        .btn-small { padding: 3px 8px; font-size: 10pt; background: #4a5568; color: white; margin-top: 5px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-del { background: #e53e3e; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-weight: bold; font-size: 9pt; }
+
+        /* ===== TOOLBAR AKSI MODERN (OPL) ===== */
+        .admin-panel.opl-toolbar {
+            background: linear-gradient(135deg, #ffffff 0%, #f7fafc 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 14px 18px;
+            box-shadow: 0 4px 14px rgba(26, 54, 93, 0.08);
+            justify-content: space-between;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .toolbar-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 9px 18px 9px 10px;
+            cursor: pointer;
+            font-family: Arial, sans-serif;
+            text-align: left;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 18px rgba(26, 54, 93, 0.18);
+            border-color: #a0aec0;
+        }
+        .action-btn:active { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(26, 54, 93, 0.15); }
+        .action-btn .act-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18pt;
+            color: #fff;
+            flex-shrink: 0;
+            box-shadow: inset 0 -2px 4px rgba(0,0,0,0.15);
+        }
+        .action-btn .act-text { display: flex; flex-direction: column; line-height: 1.25; }
+        .action-btn .act-label { font-weight: bold; font-size: 11pt; color: #1a202c; }
+        .action-btn .act-sub { font-size: 8.5pt; color: #718096; }
+        .action-btn .act-sub .kbd {
+            background: #edf2f7;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            padding: 0 5px;
+            font-size: 8pt;
+            font-weight: bold;
+            color: #2d3748;
+            font-family: 'Courier New', monospace;
+        }
+        .act-simpan .act-icon { background: linear-gradient(135deg, #38a169, #276749); }
+        .act-simpan:hover { border-color: #38a169; }
+        .act-cetak .act-icon { background: linear-gradient(135deg, #2b6cb0, #1a365d); }
+        .act-cetak:hover { border-color: #2b6cb0; }
+        .act-reset .act-icon { background: linear-gradient(135deg, #e53e3e, #9b2c2c); }
+        .act-reset:hover { border-color: #e53e3e; }
+        .toolbar-user { display: flex; align-items: center; gap: 8px; }
+
+        /* Login Overlay */
+        #login-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: #1a365d; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .login-box { background: white; padding: 30px; border-radius: 8px; width: 350px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); }
+        .login-box h2 { margin-top:0; margin-bottom: 20px; color: #1a365d; text-align: center; font-size: 16pt; border-bottom: 2px solid #cbd5e0; padding-bottom: 10px; }
+        .login-group { margin-bottom: 15px; }
+        .login-group label { display:block; font-weight: bold; margin-bottom: 5px; font-size: 10pt; color: #4a5568; }
+        .login-group input, .login-group select { width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 11pt; box-sizing: border-box; text-transform: none; }
+        .btn-login { width: 100%; padding: 10px; background: #2f855a; color: white; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; font-size: 12pt; margin-top: 10px; }
+
+        /* Header OPL */
+        .opl-header { display: flex; align-items: center; gap: 12px; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 8px; }
+        .opl-header img { width: 90px; height: auto; }
+        .opl-header .company { line-height: 1.3; flex: 1; text-align: center; }
+        .opl-header .company .company-name { font-size: 14pt; font-weight: bold; }
+        .opl-header .company .company-sub { font-size: 10.5pt; font-weight: bold; }
+        .opl-header .company .company-addr { font-size: 9pt; }
+
+        .opl-title-box { text-align: center; margin: 6px 0 10px 0; }
+        .opl-title-box .opl-title { font-size: 14pt; font-weight: bold; letter-spacing: 1px; border: 2px double #000; display: inline-block; padding: 4px 40px; }
+
+        .nomor-opl-line { text-align: right; font-weight: bold; font-size: 11pt; margin-bottom: 4px; }
+        .nomor-opl-line input { font-weight: bold; text-align: left; border: none; border-bottom: 1px solid #000; width: 210px; font-size: 11pt; }
+
+        .report-section { margin-top: 30px; background: white; padding: 15px; border-top: 2px dashed #ccc; }
+        .report-table th, .report-table td { border: 1px solid #ddd; padding: 6px; font-size: 10pt; }
+        .clickable-row { cursor: pointer; }
+        .clickable-row:hover { background-color: #f0f4f8; }
+
+        .search-filter-box { width: 100%; padding: 8px; margin-bottom: 12px; font-size: 11pt; border: 2px solid #1a365d; border-radius: 4px; box-sizing: border-box; text-transform: none; }
+        .total-box td { border: none; }
+        .total-row-label { background:#f9f9f9; font-weight:bold; text-align: right; }
+        .total-row-value { background:#f2f2f2; text-align: right; font-weight: bold; }
+
+        .ttd-table td { border: none !important; text-align: center; padding: 4px; }
+        .ttd-sign { height: 70px; }
+
+        .note-footer { margin-top: 10px; border: 1px dashed #000; padding: 6px; background-color: #fff; font-size: 10pt; line-height: 1.3; text-align: center; }
+
+        .mirror-date { display: none; }
+
+        @media print {
+            #login-overlay, .admin-panel, .sidebar, .btn, .btn-small, .report-section, .btn-red, #btn-tambah, .btn-del, td.action-col, th.action-col { display: none !important; }
+            body { margin: 0; padding: 0; background: #fff; padding-left: 0 !important; }
+            .container { max-width: 100%; box-shadow: none; padding: 0; }
+            th, td { border-bottom: 1px solid #000 !important; border-top: 1px solid #000 !important; }
+            input, textarea, select { border: none !important; background: transparent !important; padding: 0 !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            select { appearance: none; -webkit-appearance: none; }
+            input[type="date"]::-webkit-calendar-picker-indicator, input[type="time"]::-webkit-calendar-picker-indicator { display: none; }
+            .ttd-sign { height: 60px !important; }
+            .mirror-date { display: inline !important; }
+            .no-print-date-input { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- SCREEN LOGIN SYSTEM -->
+<div id="login-overlay">
+    <div class="login-box">
+        <h2>🔑 DAYA TOYOTA CAKUNG<br><span style="font-size: 10pt; color: #718096;">Sistem OPL Manual & Otoritas</span></h2>
+        <div class="login-group">
+            <label>PILIH JABATAN / USER ID</label>
+            <select id="login_userid" onchange="kondisiFormLogin(this.value)">
+                <option value="">-- PILIH USER --</option>
+                <option value="SA">SERVICE ADVISOR (SA)</option>
+                <option value="SparepartDaya">SPAREPART (SparepartDaya)</option>
+                <option value="BahanDaya">BAHAN MATERIAL (BahanDaya)</option>
+                <option value="ViewDaya">VIEW ONLY MANAGEMENT (ViewDaya)</option>
+            </select>
+        </div>
+
+        <div class="login-group" id="box_select_sa" style="display:none;">
+            <label>NAMA SERVICE ADVISOR</label>
+            <select id="login_nama_sa">
+                <option value="YOGA PRATAMA ELIN">YOGA PRATAMA ELIN</option>
+                <option value="SARIPUDIN">SARIPUDIN</option>
+                <option value="DODY RIYAGUS">DODY RIYAGUS</option>
+                <option value="I PUTU INDRA">I PUTU INDRA</option>
+                <option value="RIDUANSYAH YUDHA">RIDUANSYAH YUDHA</option>
+                <option value="SLAMET">SLAMET</option>
+                <option value="IMRON">IMRON</option>
+                <option value="GURUH TRI HANDOKO">GURUH TRI HANDOKO</option>
+                <option value="DANI RAHMAN ISKANDAR">DANI RAHMAN ISKANDAR</option>
+                <option value="APRIANTO">APRIANTO</option>
+            </select>
+        </div>
+
+        <div class="login-group">
+            <label>PASSWORD AKSES</label>
+            <input type="password" id="login_password" placeholder="••••••••">
+        </div>
+        <button type="button" class="btn-login" onclick="prosesValidasiLogin()">MASUK KE SISTEM</button>
+    </div>
+</div>
+
+<!-- APLIKASI UTAMA OPL MANUAL -->
+<div class="container" id="main-app-content" style="display: none;">
+    <!-- ===== SIDEBAR MENU KIRI (Model Portal Antrian) ===== -->
+    <div class="sidebar" id="sidebar-menu">
+        <div class="sidebar-tab" title="Buka Menu">
+            <div class="icon">≡</div>
+            <div class="menu-text">MENU</div>
+        </div>
+        <div class="sidebar-header">
+            <img src="LOGO DAYA.webp" alt="Daya Toyota" onerror="this.style.display='none'">
+            <h2>OPL Manual</h2>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a onclick="window.location.href='dashboard.html'">🏠 Dashboard</a></li>
+            <li><a onclick="window.location.href='pkb.html'">📋 Menu PKB</a></li>
+            <li><a class="active">🛠️ Menu OPL Manual</a></li>
+            <li><a onclick="window.location.href='invoice.html'">📄 Menu Invoice</a></li>
+            <li><a onclick="window.location.href='kuitansi.html'">🧾 Menu Kuitansi</a></li>
+            <li class="menu-keluar"><a onclick="logoutSistem()">🚪 Keluar</a></li>
+        </ul>
+    </div>
+
+    <div class="admin-panel opl-toolbar">
+        <div class="toolbar-actions">
+            <button type="button" class="action-btn act-simpan" id="btn_aksi_simpan" onclick="eksekusiSimpanSaja()">
+                <span class="act-icon">💾</span>
+                <span class="act-text">
+                    <span class="act-label">Simpan ke Laporan</span>
+                    <span class="act-sub">Rekam OPL ke database</span>
+                </span>
+            </button>
+            <button type="button" class="action-btn act-cetak" id="btn_aksi_cetak" onclick="eksekusiCetakDanSimpan()">
+                <span class="act-icon">🖨️</span>
+                <span class="act-text">
+                    <span class="act-label">Cetak OPL</span>
+                    <span class="act-sub">Shortcut <span class="kbd">Ctrl + P</span></span>
+                </span>
+            </button>
+            <button type="button" class="action-btn act-reset" id="btn_aksi_reset" onclick="resetForm()">
+                <span class="act-icon">🔄</span>
+                <span class="act-text">
+                    <span class="act-label">Reset Form OPL Baru</span>
+                    <span class="act-sub">Kosongkan & mulai dari awal</span>
+                </span>
+            </button>
+        </div>
+        <div class="toolbar-user">
+            <div class="user-badge" id="display_user_login">USER: -</div>
+            <button type="button" class="btn btn-red btn-small" style="margin:0; padding: 4px 8px; font-size: 9pt;" onclick="logoutSistem()">🚪 LOGOUT</button>
+        </div>
+    </div>
+
+    <!-- HEADER PERUSAHAAN -->
+    <div class="opl-header">
+        <img src="LOGO DAYA.webp" alt="Logo Daya" onerror="this.style.display='none'">
+        <div class="company">
+            <div class="company-name">PT. Daya Adicipta Sandika</div>
+            <div class="company-sub">Daya Toyota Cakung</div>
+            <div class="company-addr">Jl. Raya Bekasi Km. 26,5, Kelurahan Ujung Menteng, Kec. Cakung, Jakarta Timur — (021) 88968800</div>
+        </div>
+        <div style="width: 90px;"></div>
+    </div>
+
+    <div class="opl-title-box">
+        <span class="opl-title">ORDER PEKERJAAN LUAR MANUAL</span>
+    </div>
+
+    <div class="nomor-opl-line">
+        Nomor OPL : <span style="font-weight:bold;">7L0/OPG/</span><input type="text" id="in_no_opl_suffix" placeholder="2609-000001" style="text-transform: none;">
+    </div>
+
+    <!-- DATA VENDOR & WO -->
+    <table style="margin-bottom: 5px;">
+        <tr>
+            <td style="width: 55%; padding: 2px 6px;">
+                <strong style="display:block; margin-bottom: 2px; background: #f9f9f9; padding: 2px;">DATA VENDOR</strong>
+                <table class="no-border">
+                    <tr><td style="width: 32%;">Kode Vendor</td><td>: <input type="text" id="in_kode_vendor" list="dl_kode_vendor" placeholder="VND-000000419" value="VND-000000419" oninput="isiVendorOtomatis(this.value)"><datalist id="dl_kode_vendor"></datalist></td></tr>
+                    <tr><td>Nama Vendor</td><td>: <input type="text" id="in_nama_vendor" value="DHARMESTA SWASTI MANDIRI,PT (OPL)" style="width: 95%;"></td></tr>
+                    <tr><td>Alamat Vendor</td><td>: <input type="text" id="in_alamat_vendor" value="JL. GADING BUKIT INDAH BLOK N NO. 11 KELAPA GADING BARAT"></td></tr>
+                    <tr><td>Telepon</td><td>: <input type="text" id="in_telp_vendor" placeholder="Nomor Telepon"></td></tr>
+                    <tr><td>Dikirim Ke</td><td>: <input type="text" id="in_dikirim_ke" value="Daya Toyota Cakung"></td></tr>
+                </table>
+            </td>
+            <td style="width: 45%; padding: 2px 6px;">
+                <strong style="display:block; margin-bottom: 2px; background: #f9f9f9; padding: 2px;">DATA WORK ORDER</strong>
+                <table class="no-border">
+                    <tr><td style="width: 38%;">No. WO</td><td>: <input type="text" id="in_no_wo" placeholder="7L0/WOG/2609-000415"></td></tr>
+                    <tr><td>Tgl. WO</td><td>: <input type="date" id="in_tgl_wo" class="no-print-date-input" onchange="syncTglWO()"> <span class="mirror-date" id="lbl_tgl_wo_print"></span></td></tr>
+                    <tr><td>No. Polisi</td><td>: <input type="text" id="in_nopol" placeholder="B 1252 RYB"></td></tr>
+                    <tr><td>Service Advisor (SA)</td><td>: <input type="text" id="in_sa_opl" placeholder="NAMA SA - DIISI MANUAL" oninput="syncNamaSAOpl(this.value)"></td></tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <datalist id="dl_pembayaran"><option value="CUSTOMER"><option value="PT. DAYA ADICIPTA SANDIKA"><option value="KARYAWAN"><option value="GRATIS"><option value="KLAIM"></datalist>
+
+    <strong style="display:block; margin: 3px 0;">URAIAN PEKERJAAN</strong>
+
+    <table id="work-table-main" style="margin-bottom: 5px;">
+        <thead>
+            <tr>
+                <th style="width: 5%; text-align: center;">No.</th>
+                <th style="width: 30%;">Uraian Pekerjaan</th>
+                <th style="width: 13%;">Pembayaran</th>
+                <th style="width: 20%;">Notes</th>
+                <th style="width: 7%; text-align: center;">Qty</th>
+                <th style="width: 13%; text-align: right;">Harga Satuan</th>
+                <th style="width: 12%; text-align: right;">Harga Total</th>
+                <th style="width: 5%; text-align: center;" class="action-col">Aksi</th>
+            </tr>
+        </thead>
+        <tbody id="work-rows-container"></tbody>
+    </table>
+    <button type="button" id="btn-tambah" class="btn btn-small" onclick="tambahBarisOPL()" style="margin-top: 0px;">➕ Tambah Baris Uraian Pekerjaan</button>
+
+    <table class="no-border total-box" style="margin-top: 4px; margin-bottom: 5px;">
+        <tr>
+            <td style="width: 55%;"></td>
+            <td style="width: 30%;" class="total-row-label">SUBTOTAL :</td>
+            <td style="width: 15%;" class="total-row-value">Rp <span id="txt_subtotal">0</span></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td class="total-row-label">PPN <input type="number" id="in_ppn_persen" value="11" min="0" max="100" oninput="hitungTotalOPL()" style="width: 50px; text-align: center; font-weight: bold;"> % :</td>
+            <td class="total-row-value">Rp <span id="txt_ppn">0</span></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td class="total-row-label" style="font-size: 12pt;">TOTAL :</td>
+            <td class="total-row-value" style="font-size: 13pt;">Rp <span id="txt_total">0</span></td>
+        </tr>
+    </table>
+
+    <!-- TANDA TANGAN -->
+    <table class="no-border ttd-table" style="margin-top: 20px; text-align: center;">
+        <tr>
+            <td style="width: 25%;"><strong id="lbl_sa_ttd">( NAMA SA )</strong><div class="ttd-sign"></div><span style="border-top: 1px solid #000; display: block; padding-top: 3px;">Service Advisor (SA)</span></td>
+            <td style="width: 25%;"><strong>SYAHRIL</strong><div class="ttd-sign"></div><span style="border-top: 1px solid #000; display: block; padding-top: 3px;">Kepala Bengkel</span></td>
+            <td style="width: 25%;"><strong>&nbsp;</strong><div class="ttd-sign"></div><span style="border-top: 1px solid #000; display: block; padding-top: 3px;">Penerima Order Vendor</span></td>
+            <td style="width: 25%;"><strong>&nbsp;</strong><div class="ttd-sign"></div><span style="border-top: 1px solid #000; display: block; padding-top: 3px;">Pemeriksa Hasil Kerja</span></td>
+        </tr>
+    </table>
+
+    <div class="note-footer">
+        <strong>Distribusi:</strong> Lembar 1 untuk Vendor, Lembar 2 untuk Bengkel
+    </div>
+
+    <div class="report-section" id="section_rekap_laporan_bawah">
+        <h3 style="margin-top: 0; color: #1a365d; border-bottom: 2px solid #000; padding-bottom: 5px;">📊 REKAP LAPORAN ORDER PEKERJAAN LUAR (OPL)</h3>
+
+        <input type="text" id="search_laporan_input" class="search-filter-box" placeholder="🔍 Filter & Cari Data Berdasarkan: TANGGAL (YYYY-MM-DD) / NO OPL / NO WO / VENDOR / NO POLISI / SA..." oninput="tampilkanLaporanOpl()">
+
+        <button type="button" class="btn btn-blue" id="btn_aksi_download" style="font-size: 11px; padding: 4px 10px; margin-bottom: 10px;" onclick="downloadLaporanOplCSV()">📥 Download Report Rekap (.CSV)</button>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th style="width: 5%;">No</th><th>Nomor OPL</th><th>No. WO</th><th>Tgl. WO</th><th>Nama Vendor</th><th>No. Polisi</th><th>SA</th><th>Total (incl. PPN)</th><th style="width: 5%; text-align: center;" class="action-col">Hapus</th>
+                </tr>
+            </thead>
+            <tbody id="report-rows"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- =================================================== -->
+<!-- 1. KODE FIREBASE REALTIME DATABASE + TRANSACTION LOCK -->
+<!-- =================================================== -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, onValue, remove, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBvgLFjfpyvHf3MCgrmJ_nPgkM4uyerXuQ",
+        authDomain: "pkbmanualinvoice.firebaseapp.com",
+        projectId: "pkbmanualinvoice",
+        storageBucket: "pkbmanualinvoice.firebasestorage.app",
+        messagingSenderId: "612617167676",
+        appId: "1:612617167676:web:083f0d87d0e172140f3439",
+        measurementId: "G-P4846QRWEW",
+        databaseURL: "https://pkbmanualinvoice-default-rtdb.asia-southeast1.firebasedatabase.app"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const laporanOplRef = ref(db, 'laporan_opl');
+    onValue(laporanOplRef, (snapshot) => {
+        const data = snapshot.val();
+        let localOplArr = [];
+
+        if (data) {
+            Object.keys(data).forEach((key) => {
+                localOplArr.push(data[key]);
+            });
+            localOplArr.sort((a, b) => (parseInt(a.no_urut) || 0) - (parseInt(b.no_urut) || 0));
+        }
+
+        localStorage.setItem('laporan_opl_arr', JSON.stringify(localOplArr));
+
+        let lastNo = 0;
+        if (localOplArr.length > 0) {
+            lastNo = Math.max(...localOplArr.map(o => parseInt(o.no_urut) || 0));
+        }
+        localStorage.setItem('last_opl_number', lastNo);
+
+        var inputNoOpl = document.getElementById('in_no_opl_suffix');
+        if (!inputNoOpl.value || inputNoOpl.getAttribute('data-mode') !== 'edit') {
+            inputNoOpl.value = aturSuffixOpl(lastNo + 1);
+            inputNoOpl.setAttribute('data-mode', 'baru');
+        }
+
+        // isi datalist kode vendor dari riwayat
+        var dlVendor = document.getElementById('dl_kode_vendor');
+        var vendorDb = JSON.parse(localStorage.getItem('opl_vendor_db')) || {};
+        dlVendor.innerHTML = Object.keys(vendorDb).map(function(k){ return '<option value="' + k + '">'; }).join('');
+
+        // kode vendor terisi otomatis saat halaman dibuka (hanya jika kosong — default permanen tetap)
+        var inKodeVendor = document.getElementById('in_kode_vendor');
+        if (!inKodeVendor.value) {
+            inKodeVendor.value = hitungKodeVendorBerikutnya();
+        }
+
+        if (window.tampilkanLaporanOpl) {
+            window.tampilkanLaporanOpl();
+        }
+    });
+
+    // susun suffix YYMM-000001
+    function aturSuffixOpl(nomor) {
+        var sekarang = new Date();
+        var yy = String(sekarang.getFullYear()).slice(-2);
+        var mm = String(sekarang.getMonth() + 1).padStart(2, '0');
+        return yy + mm + '-' + String(nomor).padStart(6, '0');
+    }
+
+    window.hapusOplTertentuCloud = function(dataKey) {
+        remove(ref(db, 'laporan_opl/' + dataKey))
+            .then(() => console.log("Cloud OPL " + dataKey + " berhasil dihapus."))
+            .catch((err) => console.error(err));
+    }
+
+    window.simpanTransaksiOplAmanCloud = function(dataKey, payloadData, isUpdateMode, callbackSukses) {
+        const targetRef = ref(db, 'laporan_opl');
+
+        runTransaction(targetRef, (currentData) => {
+            if (!currentData) currentData = {};
+
+            if (isUpdateMode) {
+                currentData[dataKey] = payloadData;
+                window.nomorOplAmanHasilCloud = payloadData.no_opl;
+                return currentData;
+            } else {
+                let maxNoInCloud = 0;
+                Object.keys(currentData).forEach((key) => {
+                    let kNum = parseInt(currentData[key].no_urut) || 0;
+                    if (kNum > maxNoInCloud) maxNoInCloud = kNum;
+                });
+
+                let nomorOplSah = maxNoInCloud + 1;
+                payloadData.no_urut = nomorOplSah;
+                payloadData.no_opl_suffix = aturSuffixOpl(nomorOplSah);
+                payloadData.no_opl = "7L0/OPG/" + payloadData.no_opl_suffix;
+                payloadData.dataKey = payloadData.no_opl.replace(/\//g, '_');
+
+                currentData[payloadData.dataKey] = payloadData;
+                window.nomorOplAmanHasilCloud = payloadData.no_opl;
+                return currentData;
+            }
+        }).then((result) => {
+            if (result.committed) {
+                if (window.nomorOplAmanHasilCloud) {
+                    var inputNoOpl = document.getElementById('in_no_opl_suffix');
+                    var finalNo = window.nomorOplAmanHasilCloud;
+                    inputNoOpl.value = finalNo.replace('7L0/OPG/', '');
+                    inputNoOpl.setAttribute('data-mode', 'edit');
+                }
+                callbackSukses();
+            }
+        }).catch((error) => console.error("Transaction failed: ", error));
+    }
+</script>
+
+<!-- ========================================== -->
+<!-- 2. KODE UTAMA INTERAKSI OTORITAS & SISTEM -->
+<!-- ========================================== -->
+<script>
+    window.currentUserRole = "";
+    window.currentUserName = "";
+
+    // FITUR SESI 24 JAM (PERSISTENT LOGIN)
+    function cekSessionAktif() {
+        var savedDate = localStorage.getItem('auth_date');
+        var todayStr = new Date().toISOString().slice(0, 10);
+
+        if (savedDate === todayStr && localStorage.getItem('auth_role')) {
+            window.currentUserRole = localStorage.getItem('auth_role');
+            window.currentUserName = localStorage.getItem('auth_name');
+
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('main-app-content').style.display = 'block';
+            document.getElementById('display_user_login').innerText = "AKUN: " + window.currentUserName;
+
+            terapkanKunciHakAksesOtoritas();
+            resetForm();
+        } else {
+            localStorage.removeItem('auth_role');
+            localStorage.removeItem('auth_name');
+            localStorage.removeItem('auth_date');
+            document.getElementById('login-overlay').style.display = 'flex';
+            document.getElementById('main-app-content').style.display = 'none';
+        }
+    }
+
+    window.logoutSistem = function() {
+        if (confirm("Apakah Anda yakin ingin keluar dari sistem?")) {
+            localStorage.removeItem('auth_role');
+            localStorage.removeItem('auth_name');
+            localStorage.removeItem('auth_date');
+            location.reload();
+        }
+    }
+
+    function kondisiFormLogin(val) {
+        var boxSa = document.getElementById('box_select_sa');
+        if (val === 'SA') {
+            boxSa.style.display = 'block';
+        } else {
+            boxSa.style.display = 'none';
+        }
+    }
+
+    function prosesValidasiLogin() {
+        var userId = document.getElementById('login_userid').value;
+        var passInput = document.getElementById('login_password').value;
+        var saSelect = document.getElementById('login_nama_sa').value;
+
+        if (!userId) { alert("Pilih Jabatan Akun Terlebih Dahulu!"); return; }
+
+        let loginValid = false;
+        let roleMurni = "";
+        let namaMurni = "";
+
+        if (userId === "SA" && passInput === "Daya@1234") {
+            loginValid = true;
+            roleMurni = "sa";
+            namaMurni = saSelect;
+        } else if (userId === "SparepartDaya" && passInput === "PartDaya@1234") {
+            loginValid = true;
+            roleMurni = "sparepart";
+            namaMurni = "TEAM SPAREPART";
+        } else if (userId === "BahanDaya" && passInput === "BahanDaya@1234") {
+            loginValid = true;
+            roleMurni = "bahan";
+            namaMurni = "TEAM BAHAN MATERIAL";
+        } else if (userId === "ViewDaya" && passInput === "ViewpkbDaya@1234") {
+            loginValid = true;
+            roleMurni = "viewer";
+            namaMurni = "MANAGEMENT AUDITOR";
+        }
+
+        if (loginValid) {
+            window.currentUserRole = roleMurni;
+            window.currentUserName = namaMurni;
+
+            var todayStr = new Date().toISOString().slice(0, 10);
+            localStorage.setItem('auth_role', roleMurni);
+            localStorage.setItem('auth_name', namaMurni);
+            localStorage.setItem('auth_date', todayStr);
+
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('main-app-content').style.display = 'block';
+            document.getElementById('display_user_login').innerText = "AKUN: " + namaMurni;
+
+            terapkanKunciHakAksesOtoritas();
+            resetForm();
+        } else {
+            alert("🔒 Password Akses Salah! Gagal masuk ke sistem.");
+        }
+    }
+
+    function terapkanKunciHakAksesOtoritas() {
+        var role = window.currentUserRole;
+
+        document.querySelectorAll('input, textarea, select').forEach(el => el.disabled = false);
+        document.getElementById('btn_aksi_simpan').style.display = 'flex';
+        document.getElementById('btn_aksi_cetak').style.display = 'flex';
+        document.getElementById('btn_aksi_reset').style.display = 'flex';
+        document.getElementById('btn-tambah').style.display = 'inline-block';
+        document.getElementById('btn_aksi_download').style.display = 'inline-block';
+
+        if (role === 'viewer') {
+            document.getElementById('btn_aksi_simpan').style.display = 'none';
+            document.getElementById('btn_aksi_cetak').style.display = 'none';
+            document.getElementById('btn_aksi_reset').style.display = 'none';
+            document.getElementById('btn-tambah').style.display = 'none';
+            document.querySelectorAll('input, textarea, select').forEach(el => el.disabled = true);
+            document.getElementById('search_laporan_input').disabled = false;
+        }
+    }
+
+    function syncNamaSAOpl(val) {
+        document.getElementById('lbl_sa_ttd').innerText = val ? val.toUpperCase() : "( NAMA SA )";
+    }
+
+    function syncTglWO() {
+        var val = document.getElementById('in_tgl_wo').value;
+        var tampil = "-";
+        if (val) {
+            var parts = val.split("-");
+            tampil = parts[2] + "/" + parts[1] + "/" + parts[0];
+        }
+        document.getElementById('lbl_tgl_wo_print').innerText = tampil;
+    }
+
+    function formatCurrency(input) {
+        var value = input.value.replace(/[^0-9]/g, '');
+        if (value === "") { input.value = ""; }
+        else {
+            input.value = "Rp " + parseFloat(value).toLocaleString('id-ID');
+        }
+        hitungTotalOPL();
+    }
+
+    function getPureNumber(valStr) {
+        if (!valStr) return 0;
+        var pure = valStr.replace(/[^0-9]/g, '');
+        return parseFloat(pure) || 0;
+    }
+    window.getPureNumber = getPureNumber;
+
+    // ===== BARIS URAIAN PEKERJAAN OPL =====
+    function tambahBarisOPL(uraian = "", pembayaran = "", notes = "", qtyValue = 1, hargaValue = "") {
+        var container = document.getElementById('work-rows-container');
+        var tr = document.createElement('tr');
+
+        tr.innerHTML = '<td style="text-align: center; vertical-align: middle;" class="row-num"></td>' +
+                       '<td><input type="text" class="item-uraian" value="' + uraian + '" placeholder="Ketik uraian pekerjaan di sini..."></td>' +
+                       '<td><input type="text" class="item-pembayaran" list="dl_pembayaran" value="' + pembayaran + '" placeholder="Customer"></td>' +
+                       '<td><input type="text" class="item-notes" value="' + notes + '" placeholder="Notes"></td>' +
+                       '<td><input type="number" class="item-qty" value="' + qtyValue + '" min="1" oninput="hitungTotalOPL()" style="text-align: center; width: 100%;"></td>' +
+                       '<td><input type="text" class="item-harga" oninput="formatCurrency(this)" value="' + hargaValue + '" placeholder="Rp 0" style="text-align: right;"></td>' +
+                       '<td style="text-align: right; vertical-align: middle; font-weight: bold;" class="cell-row-total">Rp 0</td>' +
+                       '<td style="text-align: center; vertical-align: middle;" class="action-col"><button type="button" class="btn-del" onclick="hapusBarisOPL(this)">❌</button></td>';
+
+        container.appendChild(tr);
+        urutkanNomorTabelOPL();
+        hitungTotalOPL();
+    }
+
+    function hapusBarisOPL(btn) {
+        var container = document.getElementById('work-rows-container');
+        var row = btn.parentNode.parentNode;
+        if (container.rows.length > 1) {
+            row.parentNode.removeChild(row);
+            urutkanNomorTabelOPL(); hitungTotalOPL();
+        } else { alert("Minimal harus menyisakan 1 baris uraian pekerjaan!"); }
+    }
+
+    function urutkanNomorTabelOPL() {
+        var container = document.getElementById('work-rows-container');
+        for (var i = 0; i < container.rows.length; i++) { container.rows[i].cells[0].innerText = i + 1; }
+    }
+
+    function hitungTotalOPL() {
+        var rows = document.querySelectorAll('#work-rows-container tr');
+        var total = 0;
+        rows.forEach(function(row) {
+            var qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+            var harga = getPureNumber(row.querySelector('.item-harga').value);
+            var rowTotal = harga * qty;
+            total += rowTotal;
+            row.querySelector('.cell-row-total').innerText = "Rp " + rowTotal.toLocaleString('id-ID');
+        });
+        var ppnPersen = parseFloat(document.getElementById('in_ppn_persen').value) || 0;
+        var ppn = Math.round(total * (ppnPersen / 100));
+        document.getElementById('txt_subtotal').innerText = total.toLocaleString('id-ID');
+        document.getElementById('txt_ppn').innerText = ppn.toLocaleString('id-ID');
+        document.getElementById('txt_total').innerText = (total + ppn).toLocaleString('id-ID');
+    }
+
+    // ===== DEFAULT VENDOR PERMANEN (tanpa perlu ditulis lagi) =====
+    var DEFAULT_VENDOR = {
+        kode: 'VND-000000419',
+        nama: 'DHARMESTA SWASTI MANDIRI,PT (OPL)',
+        alamat: 'JL. GADING BUKIT INDAH BLOK N NO. 11 KELAPA GADING BARAT'
+    };
+
+    function isiDefaultVendor() {
+        document.getElementById('in_kode_vendor').value = DEFAULT_VENDOR.kode;
+        document.getElementById('in_nama_vendor').value = DEFAULT_VENDOR.nama;
+        document.getElementById('in_alamat_vendor').value = DEFAULT_VENDOR.alamat;
+    }
+
+    // ===== TEMPLATE VENDOR (SESUAI CONTOH: VND-000000419, NAMA,PT (OPL)) =====
+    // Nama vendor diisi manual utuh (contoh: "DHARMASTA SWASTI MANDIRI,PT (OPL)")
+    function namaVendorFinal() {
+        return document.getElementById('in_nama_vendor').value.toUpperCase().trim();
+    }
+
+    // nama tersimpan dipakai apa adanya (sudah utuh dengan suffix)
+    function pisahkanSuffixVendor(namaFinal) {
+        return (namaFinal || '').toUpperCase().trim();
+    }
+
+    function hitungKodeVendorBerikutnya() {
+        var maxNum = 0;
+        var vendorDb = JSON.parse(localStorage.getItem('opl_vendor_db')) || {};
+        Object.keys(vendorDb).forEach(function(k) {
+            var m = k.match(/^VND-(\d+)$/);
+            if (m) { var n = parseInt(m[1], 10); if (n > maxNum) maxNum = n; }
+        });
+        var localArr = JSON.parse(localStorage.getItem('laporan_opl_arr')) || [];
+        localArr.forEach(function(item) {
+            var m = (item.kode_vendor || '').match(/^VND-(\d+)$/);
+            if (m) { var n = parseInt(m[1], 10); if (n > maxNum) maxNum = n; }
+        });
+        return 'VND-' + String(maxNum + 1).padStart(9, '0');
+    }
+
+    // ===== VENDOR OTOMATIS DARI RIWAYAT =====
+    function isiVendorOtomatis(kode) {
+        var vendorDb = JSON.parse(localStorage.getItem('opl_vendor_db')) || {};
+        var data = vendorDb[kode.trim().toUpperCase()];
+        if (data) {
+            document.getElementById('in_nama_vendor').value = pisahkanSuffixVendor(data.nama || '');
+            document.getElementById('in_alamat_vendor').value = data.alamat || '';
+            document.getElementById('in_telp_vendor').value = data.telp || '';
+        }
+    }
+
+    function simpanRiwayatVendor(kode, nama, alamat, telp) {
+        if (!kode || !nama) return;
+        var vendorDb = JSON.parse(localStorage.getItem('opl_vendor_db')) || {};
+        vendorDb[kode.trim().toUpperCase()] = { nama: nama, alamat: alamat, telp: telp };
+        localStorage.setItem('opl_vendor_db', JSON.stringify(vendorDb));
+        var dlVendor = document.getElementById('dl_kode_vendor');
+        dlVendor.innerHTML = Object.keys(vendorDb).map(function(k){ return '<option value="' + k + '">'; }).join('');
+    }
+
+    // ===== SIMPAN / CETAK =====
+    function simpanKeLaporanOplMurni(callbackSelesai) {
+        var kodeVendor = document.getElementById('in_kode_vendor').value.toUpperCase().trim();
+        var namaVendor = namaVendorFinal();
+        var noWO = document.getElementById('in_no_wo').value.toUpperCase().trim();
+
+        if (!kodeVendor || !namaVendor || !noWO) {
+            alert("⚠️ Gagal! Mohon lengkapi Kode Vendor, Nama Vendor, dan No. WO.");
+            if (callbackSelesai) callbackSelesai(false);
+            return;
+        }
+
+        var inputNoOpl = document.getElementById('in_no_opl_suffix');
+        var currentSuffix = inputNoOpl.value.trim();
+        var currentModeAttr = inputNoOpl.getAttribute('data-mode') || 'baru';
+
+        var rows = document.querySelectorAll('#work-rows-container tr');
+        var itemsArr = [];
+        var subtotal = 0;
+
+        rows.forEach(function(row) {
+            var uraian = row.querySelector('.item-uraian').value;
+            var pembayaran = row.querySelector('.item-pembayaran').value;
+            var notes = row.querySelector('.item-notes').value;
+            var qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+            var harga = getPureNumber(row.querySelector('.item-harga').value);
+            var rowTotal = harga * qty;
+            subtotal += rowTotal;
+
+            if (uraian.trim() !== "") {
+                itemsArr.push({ uraian: uraian, pembayaran: pembayaran, notes: notes, qty: qty, harga: harga, total: rowTotal });
+            }
+        });
+
+        if (itemsArr.length === 0) {
+            alert("⚠️ Gagal! Minimal harus ada 1 baris Uraian Pekerjaan yang terisi.");
+            if (callbackSelesai) callbackSelesai(false);
+            return;
+        }
+
+        var ppnPersen = parseFloat(document.getElementById('in_ppn_persen').value) || 0;
+        var ppn = Math.round(subtotal * (ppnPersen / 100));
+        var total = subtotal + ppn;
+
+        var isUpdateMode = (currentModeAttr === 'edit');
+
+        var payload = {
+            no_opl: "7L0/OPG/" + currentSuffix,
+            no_opl_suffix: currentSuffix,
+            no_wo: noWO,
+            tgl_wo: document.getElementById('in_tgl_wo').value,
+            nopol: document.getElementById('in_nopol').value.toUpperCase().trim(),
+            kode_vendor: kodeVendor,
+            nama_vendor: namaVendor,
+            alamat_vendor: document.getElementById('in_alamat_vendor').value.toUpperCase().trim(),
+            telp_vendor: document.getElementById('in_telp_vendor').value.trim(),
+            dikirim_ke: document.getElementById('in_dikirim_ke').value.trim(),
+            items: itemsArr,
+            subtotal: subtotal,
+            ppn_persen: ppnPersen,
+            ppn: ppn,
+            total: total,
+            sa: (document.getElementById('in_sa_opl').value || "").toUpperCase().trim(),
+            tgl_dibuat: new Date().toISOString().slice(0, 10)
+        };
+
+        // mode edit: pertahankan nomor urut lama dari data lokal
+        if (isUpdateMode) {
+            var localArr = JSON.parse(localStorage.getItem('laporan_opl_arr')) || [];
+            var oldRec = localArr.find(x => x.no_opl === payload.no_opl);
+            payload.no_urut = oldRec ? (oldRec.no_urut || 0) : (parseInt(localStorage.getItem('last_opl_number')) || 0);
+            payload.dataKey = oldRec ? oldRec.dataKey : payload.no_opl.replace(/\//g, '_');
+        }
+
+        simpanRiwayatVendor(kodeVendor, namaVendor, payload.alamat_vendor, payload.telp_vendor);
+
+        if (window.simpanTransaksiOplAmanCloud) {
+            window.simpanTransaksiOplAmanCloud(payload.dataKey || payload.no_opl.replace(/\//g, '_'), payload, isUpdateMode, function() {
+                if (callbackSelesai) callbackSelesai(true);
+            });
+        }
+    }
+
+    function eksekusiSimpanSaja() {
+        simpanKeLaporanOplMurni(function(sukses) {
+            if (sukses) {
+                alert("💾 Data OPL " + window.nomorOplAmanHasilCloud + " Berhasil Disimpan ke Cloud!");
+            }
+        });
+    }
+
+    function eksekusiCetakDanSimpan() {
+        simpanKeLaporanOplMurni(function(sukses) {
+            if (sukses) { window.print(); }
+        });
+    }
+
+    // ===== EDIT LAPORAN =====
+    function editLaporanOpl(dataKey) {
+        var dataLaporan = JSON.parse(localStorage.getItem('laporan_opl_arr')) || [];
+        var item = dataLaporan.find(function(x) { return x.dataKey === dataKey; });
+        if (!item) return;
+
+        var inputNoOpl = document.getElementById('in_no_opl_suffix');
+        inputNoOpl.value = (item.no_opl || '').replace('7L0/OPG/', '');
+        inputNoOpl.setAttribute('data-mode', 'edit');
+
+        document.getElementById('in_no_wo').value = item.no_wo || '';
+        document.getElementById('in_tgl_wo').value = item.tgl_wo || '';
+        document.getElementById('in_nopol').value = item.nopol || '';
+        document.getElementById('in_kode_vendor').value = item.kode_vendor || '';
+        var pecahVendor = pisahkanSuffixVendor(item.nama_vendor || '');
+        document.getElementById('in_nama_vendor').value = pecahVendor;
+        document.getElementById('in_alamat_vendor').value = item.alamat_vendor || '';
+        document.getElementById('in_telp_vendor').value = item.telp_vendor || '';
+        document.getElementById('in_dikirim_ke').value = item.dikirim_ke || 'Daya Toyota Cakung';
+        document.getElementById('in_sa_opl').value = item.sa || '';
+        document.getElementById('in_ppn_persen').value = (item.ppn_persen !== undefined && item.ppn_persen !== "") ? item.ppn_persen : 11;
+        syncNamaSAOpl(item.sa || '');
+        syncTglWO();
+        terapkanKunciHakAksesOtoritas();
+
+        var container = document.getElementById('work-rows-container');
+        container.innerHTML = '';
+        if (item.items && item.items.length > 0) {
+            item.items.forEach(function(subItem) {
+                var formattedHarga = subItem.harga ? "Rp " + parseFloat(subItem.harga).toLocaleString('id-ID') : "";
+                tambahBarisOPL(subItem.uraian || '', subItem.pembayaran || '', subItem.notes || '', subItem.qty || 1, formattedHarga);
+            });
+        } else {
+            tambahBarisOPL();
+        }
+        hitungTotalOPL();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        alert("📋 Data OPL " + item.no_opl + " Berhasil Dimuat di Layar!");
+    }
+    window.editLaporanOpl = editLaporanOpl;
+
+    // ===== TAMPILKAN LAPORAN =====
+    window.tampilkanLaporanOpl = function() {
+        var dataLaporan = JSON.parse(localStorage.getItem('laporan_opl_arr')) || [];
+        var searchInputRaw = document.getElementById('search_laporan_input').value.toLowerCase().trim();
+
+        var sekarang = new Date();
+        var tglHariIni = sekarang.getFullYear() + '-' + String(sekarang.getMonth() + 1).padStart(2, '0') + '-' + String(sekarang.getDate()).padStart(2, '0');
+
+        var rowsHtml = "";
+        var counter = 1;
+        var kumpulanKataKunci = searchInputRaw.split(/\s+/).filter(function(x) { return x.length > 0; });
+
+        for (var i = 0; i < dataLaporan.length; i++) {
+            var item = dataLaporan[i];
+            var tglWO = item.tgl_wo || "";
+            var noOpl = (item.no_opl || "").toLowerCase();
+            var noWO = (item.no_wo || "").toLowerCase();
+            var vendor = (item.nama_vendor || "").toLowerCase();
+            var nopol = (item.nopol || "").toLowerCase();
+            var sa = (item.sa || "").toLowerCase();
+
+            var lolosFilter = false;
+            if (kumpulanKataKunci.length === 0) {
+                if (tglWO === tglHariIni) lolosFilter = true;
+            } else {
+                var barisTeksGabungan = (tglWO + " " + noOpl + " " + noWO + " " + vendor + " " + nopol + " " + sa);
+                var mencocokkanSemuaKata = true;
+                for (var k = 0; k < kumpulanKataKunci.length; k++) {
+                    if (barisTeksGabungan.indexOf(kumpulanKataKunci[k]) === -1) {
+                        mencocokkanSemuaKata = false;
+                        break;
+                    }
+                }
+                if (mencocokkanSemuaKata) lolosFilter = true;
+            }
+
+            if (lolosFilter) {
+                rowsHtml += "<tr class='clickable-row' onclick='editLaporanOpl(\"" + (item.dataKey || item.no_opl.replace(/\//g,'_')) + "\")'>" +
+                            "<td style='text-align:center;'>" + counter + "</td>" +
+                            "<td><strong>" + (item.no_opl || '-') + "</strong></td>" +
+                            "<td>" + (item.no_wo || '-') + "</td>" +
+                            "<td>" + (tglWO || '-') + "</td>" +
+                            "<td>" + (item.nama_vendor || '-') + "</td>" +
+                            "<td>" + (item.nopol || '-') + "</td>" +
+                            "<td>" + (item.sa || '-') + "</td>" +
+                            "<td style='text-align:right; font-weight:bold;'>Rp " + (item.total || 0).toLocaleString('id-ID') + "</td>" +
+                            "<td style='text-align:center;' class='action-col'>" +
+                            "<button type='button' class='btn-del' onclick='hapusSatuOpl(\"" + (item.dataKey || item.no_opl.replace(/\//g,'_')) + "\", \"" + (item.no_opl || '') + "\", event)'>×</button>" +
+                            "</td>" +
+                            "</tr>";
+                counter++;
+            }
+        }
+
+        if (rowsHtml === "") {
+            rowsHtml = "<tr><td colspan='9' style='text-align:center; color:#999;'>Tidak ditemukan riwayat OPL yang cocok.</td></tr>";
+        }
+        document.getElementById('report-rows').innerHTML = rowsHtml;
+    }
+
+    function hapusSatuOpl(dataKey, noOpl, event) {
+        if (event) event.stopPropagation();
+
+        if (window.currentUserRole === 'viewer') {
+            alert("⚠️ Otoritas Ditolak! Akun View Only tidak berhak menghapus data.");
+            return;
+        }
+
+        if (confirm("Apakah Anda yakin ingin menghapus permanen OPL " + noOpl + " ini?")) {
+            var pinInput = prompt("🔒 Masukkan PIN / Kode Persetujuan untuk menghapus data:");
+            if (pinInput === "qwerty") {
+                if (window.hapusOplTertentuCloud) {
+                    window.hapusOplTertentuCloud(dataKey);
+                }
+                alert("🗑️ Data OPL " + noOpl + " Berhasil Dihapus!");
+            } else if (pinInput === null) {
+                alert("❌ Penghapusan dibatalkan.");
+            } else {
+                alert("⚠️ PIN Salah! Anda tidak memiliki otoritas.");
+            }
+        }
+    }
+    window.hapusSatuOpl = hapusSatuOpl;
+
+    function downloadLaporanOplCSV() {
+        var dataLaporan = JSON.parse(localStorage.getItem('laporan_opl_arr')) || [];
+        if (dataLaporan.length === 0) { alert("Tidak ada data laporan untuk di-download."); return; }
+
+        var searchKeyword = document.getElementById('search_laporan_input').value.toLowerCase().trim();
+        var formatRentang = /^\d{4}-\d{2}-\d{2}\s+s\/d\s+\d{4}-\d{2}-\d{2}$/;
+        var isiLaporanDisaring = [];
+
+        if (formatRentang.test(searchKeyword)) {
+            var sampleSplit = searchKeyword.split(" s/d ");
+            isiLaporanDisaring = dataLaporan.filter(function(item) {
+                var tglWO = item.tgl_wo || "";
+                return tglWO >= sampleSplit[0] && tglWO <= sampleSplit[1];
+            });
+        } else if (searchKeyword !== "") {
+            var kataKunciArr = searchKeyword.split(/\s+/);
+            isiLaporanDisaring = dataLaporan.filter(function(item) {
+                var gabunganStr = (item.no_opl + " " + item.no_wo + " " + item.nama_vendor + " " + item.nopol + " " + item.sa + " " + item.tgl_wo).toLowerCase();
+                for (var k = 0; k < kataKunciArr.length; k++) {
+                    if (gabunganStr.indexOf(kataKunciArr[k]) === -1) return false;
+                }
+                return true;
+            });
+        } else {
+            isiLaporanDisaring = dataLaporan;
+        }
+
+        var csvContent = "\uFEFFsep=;\nNo;Nomor OPL;No WO;Tgl WO;Kode Vendor;Nama Vendor;Alamat Vendor;No Polisi;SA;Subtotal;PPN;Total\n";
+        isiLaporanDisaring.forEach(function(item, idx) {
+            csvContent += [idx + 1, item.no_opl, '"' + item.no_wo + '"', item.tgl_wo, item.kode_vendor, '"' + item.nama_vendor + '"', '"' + (item.alamat_vendor || '') + '"', item.nopol, item.sa, item.subtotal, item.ppn, item.total].join(";") + "\n";
+        });
+
+        var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        var link = document.createElement("a");
+        link.setAttribute("href", URL.createObjectURL(blob));
+        link.setAttribute("download", "Rekap_Laporan_OPL_Filtered_" + new Date().toISOString().slice(0, 10) + ".csv");
+        link.click();
+    }
+
+    // ===== RESET FORM =====
+    function resetForm() {
+        document.getElementById('in_no_wo').value = '';
+        document.getElementById('in_nopol').value = '';
+        isiDefaultVendor();
+        document.getElementById('in_telp_vendor').value = '';
+        document.getElementById('in_dikirim_ke').value = 'Daya Toyota Cakung';
+        document.getElementById('in_sa_opl').value = window.currentUserName === "MANAGEMENT AUDITOR" ? '' : (window.currentUserName === "TEAM SPAREPART" || window.currentUserName === "TEAM BAHAN MATERIAL" ? '' : (window.currentUserName || ''));
+        document.getElementById('in_ppn_persen').value = 11;
+        syncNamaSAOpl(document.getElementById('in_sa_opl').value);
+
+        // Tgl WO otomatis tanggal hari ini
+        var sekarang = new Date();
+        var formatTanggal = sekarang.getFullYear() + '-' + String(sekarang.getMonth() + 1).padStart(2, '0') + '-' + String(sekarang.getDate()).padStart(2, '0');
+        document.getElementById('in_tgl_wo').value = formatTanggal;
+        syncTglWO();
+
+        var currentNo = localStorage.getItem('last_opl_number') || 0;
+        var nextNo = parseInt(currentNo) + 1;
+        var sekarang2 = new Date();
+        var yy = String(sekarang2.getFullYear()).slice(-2);
+        var mm = String(sekarang2.getMonth() + 1).padStart(2, '0');
+        var inputNoOpl = document.getElementById('in_no_opl_suffix');
+        inputNoOpl.value = yy + mm + '-' + String(nextNo).padStart(6, '0');
+        inputNoOpl.setAttribute('data-mode', 'baru');
+
+        terapkanKunciHakAksesOtoritas();
+
+        document.getElementById('work-rows-container').innerHTML = '';
+        tambahBarisOPL();
+    }
+
+    // EKSEKUSI SAAT HALAMAN DIMUAT (LOAD)
+    window.onload = function() {
+        cekSessionAktif();
+        syncTglWO();
+        if (window.tampilkanLaporanOpl) { window.tampilkanLaporanOpl(); }
+    };
+</script>
+
+</body>
+</html>
